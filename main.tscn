@@ -1,0 +1,226 @@
+[gd_scene format=3 uid="uid://dowldrfhoky1g"]
+
+[ext_resource type="Script" uid="uid://rhxig8gxyrdc" path="res://player.gd" id="1_0xm2m"]
+[ext_resource type="Texture2D" uid="uid://m753onc7et8y" path="res://icon.svg" id="2_h2yge"]
+[ext_resource type="Script" uid="uid://dmiin4p8yvpun" path="res://soil_plot.gd" id="3_h2yge"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6rjdj"]
+size = Vector2(496, 344)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_0xm2m"]
+size = Vector2(96, 64)
+
+[node name="Main" type="Node2D" unique_id=1741138209]
+position = Vector2(225, 145)
+
+[node name="Player" type="CharacterBody2D" parent="." unique_id=694063738]
+position = Vector2(-96, 201)
+motion_mode = 1
+script = ExtResource("1_0xm2m")
+
+[node name="Icon" type="Sprite2D" parent="Player" unique_id=1308617484]
+position = Vector2(112, 49)
+scale = Vector2(0.546875, 0.51562494)
+texture = ExtResource("2_h2yge")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player" unique_id=1192634142]
+position = Vector2(160, -58)
+shape = SubResource("RectangleShape2D_6rjdj")
+
+[node name="SoilPlot" type="Area2D" parent="." unique_id=610237959]
+position = Vector2(356, -158)
+script = ExtResource("3_h2yge")
+
+[node name="PlantLabel" type="Label" parent="SoilPlot" unique_id=666867354]
+offset_left = -303.0
+offset_top = 181.0
+offset_right = -207.0
+offset_bottom = 304.0
+theme_override_font_sizes/font_size = 28
+text = "Test
+
+"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="GrowTimer" type="Timer" parent="SoilPlot" unique_id=1065166647]
+wait_time = 5.0
+one_shot = true
+
+[node name="SoilColor" type="ColorRect" parent="SoilPlot" unique_id=1599481107]
+offset_left = -305.0
+offset_top = 176.0
+offset_right = -209.0
+offset_bottom = 240.0
+color = Color(0.18139222, 0.008802304, 0, 1)
+metadata/_edit_use_anchors_ = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot" unique_id=755647875]
+position = Vector2(131, 191)
+shape = SubResource("RectangleShape2D_0xm2m")
+
+[node name="SoilPlot6" type="Area2D" parent="." unique_id=948524571]
+position = Vector2(357, -61)
+script = ExtResource("3_h2yge")
+
+[node name="PlantLabel" type="Label" parent="SoilPlot6" unique_id=1063902503]
+offset_left = -472.0
+offset_top = 202.0
+offset_right = -376.0
+offset_bottom = 325.0
+theme_override_font_sizes/font_size = 28
+text = "Test
+
+"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="GrowTimer" type="Timer" parent="SoilPlot6" unique_id=662499450]
+wait_time = 5.0
+one_shot = true
+
+[node name="SoilColor" type="ColorRect" parent="SoilPlot6" unique_id=348611353]
+offset_left = -474.0
+offset_top = 197.0
+offset_right = -378.0
+offset_bottom = 261.0
+color = Color(0.18139222, 0.008802304, 0, 1)
+metadata/_edit_use_anchors_ = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot6" unique_id=1018242756]
+position = Vector2(-38, 212)
+shape = SubResource("RectangleShape2D_0xm2m")
+
+[node name="SoilPlot5" type="Area2D" parent="." unique_id=236598396]
+position = Vector2(649, -199)
+script = ExtResource("3_h2yge")
+
+[node name="PlantLabel" type="Label" parent="SoilPlot5" unique_id=818297835]
+offset_left = -303.0
+offset_top = 181.0
+offset_right = -207.0
+offset_bottom = 304.0
+theme_override_font_sizes/font_size = 28
+text = "Test
+
+"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="GrowTimer" type="Timer" parent="SoilPlot5" unique_id=724060958]
+wait_time = 5.0
+one_shot = true
+
+[node name="SoilColor" type="ColorRect" parent="SoilPlot5" unique_id=1447585923]
+offset_left = -305.0
+offset_top = 176.0
+offset_right = -209.0
+offset_bottom = 240.0
+color = Color(0.18139222, 0.008802304, 0, 1)
+metadata/_edit_use_anchors_ = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot5" unique_id=1927352723]
+position = Vector2(131, 191)
+shape = SubResource("RectangleShape2D_0xm2m")
+
+[node name="SoilPlot4" type="Area2D" parent="." unique_id=2016170595]
+position = Vector2(653, -56)
+script = ExtResource("3_h2yge")
+
+[node name="PlantLabel" type="Label" parent="SoilPlot4" unique_id=130399966]
+offset_left = -472.0
+offset_top = 202.0
+offset_right = -376.0
+offset_bottom = 325.0
+theme_override_font_sizes/font_size = 28
+text = "Test
+
+"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="GrowTimer" type="Timer" parent="SoilPlot4" unique_id=2023861260]
+wait_time = 5.0
+one_shot = true
+
+[node name="SoilColor" type="ColorRect" parent="SoilPlot4" unique_id=143651468]
+offset_left = -474.0
+offset_top = 197.0
+offset_right = -378.0
+offset_bottom = 261.0
+color = Color(0.18139222, 0.008802304, 0, 1)
+metadata/_edit_use_anchors_ = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot4" unique_id=135574040]
+position = Vector2(-38, 212)
+shape = SubResource("RectangleShape2D_0xm2m")
+
+[node name="SoilPlot3" type="Area2D" parent="." unique_id=311795311]
+position = Vector2(505, -193)
+script = ExtResource("3_h2yge")
+
+[node name="PlantLabel" type="Label" parent="SoilPlot3" unique_id=1167702322]
+offset_left = -303.0
+offset_top = 181.0
+offset_right = -207.0
+offset_bottom = 304.0
+theme_override_font_sizes/font_size = 28
+text = "Test
+
+"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="GrowTimer" type="Timer" parent="SoilPlot3" unique_id=328151511]
+wait_time = 5.0
+one_shot = true
+
+[node name="SoilColor" type="ColorRect" parent="SoilPlot3" unique_id=230088132]
+offset_left = -305.0
+offset_top = 176.0
+offset_right = -209.0
+offset_bottom = 240.0
+color = Color(0.18139222, 0.008802304, 0, 1)
+metadata/_edit_use_anchors_ = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot3" unique_id=302752602]
+position = Vector2(131, 191)
+shape = SubResource("RectangleShape2D_0xm2m")
+
+[node name="SoilPlot2" type="Area2D" parent="." unique_id=1559835726]
+position = Vector2(530, -50)
+script = ExtResource("3_h2yge")
+
+[node name="PlantLabel" type="Label" parent="SoilPlot2" unique_id=1368112123]
+offset_left = -472.0
+offset_top = 202.0
+offset_right = -376.0
+offset_bottom = 325.0
+theme_override_font_sizes/font_size = 28
+text = "Test
+
+"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="GrowTimer" type="Timer" parent="SoilPlot2" unique_id=735638829]
+wait_time = 5.0
+one_shot = true
+
+[node name="SoilColor" type="ColorRect" parent="SoilPlot2" unique_id=675645173]
+offset_left = -474.0
+offset_top = 197.0
+offset_right = -378.0
+offset_bottom = 261.0
+color = Color(0.18139222, 0.008802304, 0, 1)
+metadata/_edit_use_anchors_ = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot2" unique_id=241495818]
+position = Vector2(-38, 212)
+shape = SubResource("RectangleShape2D_0xm2m")
