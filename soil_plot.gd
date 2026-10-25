@@ -1,5 +1,6 @@
 extends Area2D
 
+const FarmData = preload("res://farm_data.gd")
 const CropData = preload("res://crop_data.gd")
 
 enum PlotState { EMPTY, GROWING, READY }
@@ -17,6 +18,11 @@ var ready_at: float = 0.0
 
 
 func _ready() -> void:
+	plot_id = FarmData.plot_id(FarmData.plot_number(plot_id))
+	position = FarmData.plot_position(FarmData.plot_number(plot_id))
+	add_to_group("fixed_farm_grid")
+	Inventory.inventory_changed.connect(_update_label)
+	add_to_group("farm_interactables")
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 	grow_timer.timeout.connect(_on_grow_timer_timeout)
@@ -25,7 +31,7 @@ func _ready() -> void:
 
 func get_save_data() -> Dictionary:
 	return {
-		"plot_id": plot_id, "state": PlotState.keys()[state],
+		"plot_id": plot_id, "unlocked": is_unlocked(), "state": PlotState.keys()[state],
 		"crop_type": crop_type, "planted_at": planted_at, "ready_at": ready_at
 	}
 
@@ -52,6 +58,11 @@ func restore_save_data(data: Dictionary) -> void:
 
 
 func _update_label() -> void:
+	if not is_unlocked():
+		plant_label.text = "LOCKED\n%d C" % FarmData.plot_price(FarmData.plot_number(plot_id))
+		$SoilColor.color = Color(0.2, 0.2, 0.2, 1)
+		return
+	$SoilColor.color = Color(0.3, 0.15, 0.06, 1)
 	if state == PlotState.EMPTY:
 		plant_label.text = ""
 	elif state == PlotState.GROWING:
@@ -60,18 +71,31 @@ func _update_label() -> void:
 		plant_label.text = crop_type + "\nREADY"
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if player_near and event.is_action_pressed("interact") and not event.is_echo():
-		get_viewport().set_input_as_handled()
-		if state == PlotState.EMPTY:
-			try_plant()
-		elif state == PlotState.READY:
-			harvest()
+func can_interact() -> bool:
+	return player_near
 
+
+func is_unlocked() -> bool:
+	var number: int = FarmData.plot_number(plot_id)
+	return number >= 1 and number <= Inventory.unlocked_plot_count
+
+
+func interact() -> void:
+	if not can_interact():
+		return
+	if not is_unlocked():
+		var hud = get_tree().get_first_node_in_group("farm_hud")
+		if hud != null:
+			hud.open_plot_purchase(FarmData.plot_number(plot_id))
+		return
+	if state == PlotState.EMPTY:
+		try_plant()
+	elif state == PlotState.READY:
+		harvest()
 
 func try_plant() -> void:
 	var selected: String = Inventory.selected_crop
-	if state != PlotState.EMPTY or not Inventory.can_plant(selected):
+	if not is_unlocked() or state != PlotState.EMPTY or not Inventory.can_plant(selected):
 		return
 	# Finish the plot state BEFORE consuming seed and saving the whole game.
 	crop_type = selected
@@ -97,7 +121,10 @@ func _on_grow_timer_timeout() -> void:
 
 
 func harvest() -> void:
-	if state != PlotState.READY:
+	if not is_unlocked() or state != PlotState.READY:
+		return
+	if not Inventory.can_add_item(crop_type.to_lower(), 1):
+		Inventory.fail("Silo full! Crop stays ready until there is space.")
 		return
 	var harvested_crop: String = crop_type
 	_clear_crop()

@@ -50,6 +50,14 @@ func _start_idle() -> void:
 	_update_visual()
 
 
+func set_home_point(point: Node2D) -> void:
+	home_point = point
+	# Stop walking toward an old target when a Dog House is built.
+	if global_position.distance_to(point.global_position) > wander_radius:
+		global_position = point.global_position
+	_start_idle()
+
+
 func _update_visual() -> void:
 	# Replace this Label with AnimatedSprite2D animations later.
 	visual.text = "DOG >" if walking else "DOG"

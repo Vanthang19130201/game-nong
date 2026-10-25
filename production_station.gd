@@ -2,24 +2,31 @@ extends Area2D
 
 signal state_changed
 
-@export_enum("feed_mill", "chicken_coop") var station_id: String = "feed_mill"
+const Progression = preload("res://progression_data.gd")
+@export_enum("feed_mill", "chicken_coop", "cow_shed") var station_id: String = "feed_mill"
 
 var state: String = "IDLE"
 var production_type: String = ""
 var started_at: float = 0.0
 var ready_at: float = 0.0
-var chicken_count: int = 3
 var player_near: bool = false
+var chicken_count: int:
+	get: return Inventory.chicken_count
+var cow_count: int:
+	get: return Inventory.cow_count
 
 @onready var status_label: Label = $StatusLabel
 @onready var production_timer: Timer = $ProductionTimer
 
 
 func _ready() -> void:
+	add_to_group("farm_interactables")
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 	production_timer.timeout.connect(_finish_production)
+	Inventory.inventory_changed.connect(_update_ownership)
 	SaveManager.register_station(self)
+	_update_ownership()
 
 
 func get_save_data() -> Dictionary:
@@ -29,6 +36,8 @@ func get_save_data() -> Dictionary:
 	}
 	if station_id == "chicken_coop":
 		data["chicken_count"] = chicken_count
+	elif station_id == "cow_shed":
+		data["cow_count"] = cow_count
 	return data
 
 
@@ -38,7 +47,6 @@ func restore_save_data(data: Dictionary) -> void:
 	production_type = data["production_type"]
 	started_at = data["started_at"]
 	ready_at = data["ready_at"]
-	chicken_count = data.get("chicken_count", 3)
 	if state == "PRODUCING":
 		var remaining: float = ready_at - Time.get_unix_time_from_system()
 		if remaining > 0.0:
@@ -49,46 +57,70 @@ func restore_save_data(data: Dictionary) -> void:
 	_update_display()
 
 
-func can_produce() -> bool:
-	if station_id == "feed_mill":
-		return state == "IDLE" and Inventory.wheat >= 1 and Inventory.corn >= 1
-	return state == "HUNGRY" and Inventory.chicken_feed >= 1
-
-
-func produce() -> bool:
-	if not can_produce():
+func can_produce(recipe: String = "chicken_feed") -> bool:
+	if not Inventory.owns_building(station_id):
 		return false
+	if station_id == "feed_mill":
+		if state != "IDLE" or not Progression.RECIPES.has(recipe):
+			return false
+		var info: Dictionary = Progression.RECIPES[recipe]
+		if Inventory.player_level < info["level"]:
+			return false
+		for item in info["requirements"]:
+			if Inventory.get(item) < info["requirements"][item]:
+				return false
+		return true
+	var product: Dictionary = Progression.PRODUCTS[station_id]
+	return state == "HUNGRY" and Inventory.player_level >= product["level"] and Inventory.get(product["animal"] + "_count") > 0 and Inventory.get(product["feed"]) > 0
+
+
+func produce(recipe: String = "chicken_feed") -> bool:
+	if not can_produce(recipe):
+		return Inventory.fail("Locked, no animals, missing feed or ingredients, or station busy.")
+	var duration: float
+	if station_id == "feed_mill":
+		var info: Dictionary = Progression.RECIPES[recipe]
+		duration = info["time"]
+		production_type = recipe.to_upper()
+		for item in info["requirements"]:
+			Inventory.set(item, Inventory.get(item) - info["requirements"][item])
+	else:
+		var product: Dictionary = Progression.PRODUCTS[station_id]
+		duration = product["time"]
+		production_type = product["item"].to_upper()
+		Inventory.set(product["feed"], Inventory.get(product["feed"]) - 1)
 	started_at = Time.get_unix_time_from_system()
-	var duration: float = 10.0 if station_id == "feed_mill" else 20.0
 	ready_at = started_at + duration
-	production_type = "CHICKEN_FEED" if station_id == "feed_mill" else "EGG"
 	state = "PRODUCING"
 	production_timer.start(duration)
-	# Complete station state before the inventory signal saves everything.
-	if station_id == "feed_mill":
-		Inventory.wheat -= 1
-		Inventory.corn -= 1
-	else:
-		Inventory.chicken_feed -= 1
 	_update_display()
+	# Save only once all inputs and production state are updated.
 	Inventory.inventory_changed.emit()
 	return true
 
 
+func output_data() -> Dictionary:
+	if station_id == "feed_mill":
+		return {"item": production_type.to_lower(), "amount": 1, "exp": 0}
+	var product: Dictionary = Progression.PRODUCTS[station_id]
+	var count: int = Inventory.get(product["animal"] + "_count")
+	return {"item": product["item"], "amount": count, "exp": product["exp"] * count}
+
+
 func collect() -> bool:
-	if state != "READY":
+	if state != "READY" or not Inventory.owns_building(station_id):
 		return false
+	var output: Dictionary = output_data()
+	if not Inventory.can_add_item(output["item"], output["amount"]):
+		return Inventory.fail("Barn full! Products stay READY until there is enough space for the whole batch.")
 	production_timer.stop()
 	state = "IDLE" if station_id == "feed_mill" else "HUNGRY"
 	production_type = ""
 	started_at = 0.0
 	ready_at = 0.0
-	if station_id == "feed_mill":
-		Inventory.chicken_feed += 1
-	else:
-		Inventory.egg += chicken_count
-		Inventory.player_exp += chicken_count * 5
-		Inventory.normalize_exp()
+	Inventory.set(output["item"], Inventory.get(output["item"]) + output["amount"])
+	Inventory.player_exp += output["exp"]
+	Inventory.normalize_exp()
 	_update_display()
 	Inventory.inventory_changed.emit()
 	return true
@@ -106,27 +138,38 @@ func _finish_production() -> void:
 	SaveManager.save_game()
 
 
+func _update_ownership() -> void:
+	var owned: bool = Inventory.owns_building(station_id)
+	visible = owned
+	set_deferred("monitoring", owned)
+	if not owned:
+		player_near = false
+	_update_display()
+
+
 func _update_display() -> void:
 	if station_id == "feed_mill":
-		status_label.text = "Feed Mill\nFEED: " + state
+		status_label.text = "Feed Mill\n%s\n%s" % [production_type.capitalize(), state]
+	elif station_id == "chicken_coop":
+		status_label.text = "CHICKENS: %d / %d\n%s" % [chicken_count, Inventory.animal_capacity("chicken"), "EGGS READY" if state == "READY" else state]
 	else:
-		status_label.text = "CHICKENS: %d\n%s" % [chicken_count, "EGGS READY" if state == "READY" else state]
+		status_label.text = "COW SHED\nCows: %d / %d\n%s" % [cow_count, Inventory.animal_capacity("cow"), "MILK READY" if state == "READY" else state]
 	state_changed.emit()
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if not player_near or not event.is_action_pressed("interact") or event.is_echo():
+func can_interact() -> bool:
+	return player_near and Inventory.owns_building(station_id)
+
+
+func interact() -> void:
+	if not can_interact():
 		return
-	get_viewport().set_input_as_handled()
-	if station_id == "feed_mill" and state == "READY":
-		collect()
 	var hud = get_tree().get_first_node_in_group("farm_hud")
 	if hud != null:
 		hud.open_station(self)
 
-
 func _on_body_entered(body: Node2D) -> void:
-	if body.name == "Player":
+	if body.name == "Player" and Inventory.owns_building(station_id):
 		player_near = true
 
 

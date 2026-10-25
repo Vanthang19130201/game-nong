@@ -1,10 +1,17 @@
 extends Node
 
 signal inventory_changed
+signal action_failed(message: String)
 
+const FarmData = preload("res://farm_data.gd")
+const ToolData = preload("res://tool_data.gd")
 const CropData = preload("res://crop_data.gd")
 const DOG_PRICE: int = 300
 const EGG_PRICE: int = 18
+const MILK_PRICE: int = 30
+const Progression = preload("res://progression_data.gd")
+const SILO_ITEMS: Array[String] = ["wheat_seed", "wheat", "corn_seed", "corn", "carrot_seed", "carrot"]
+const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "egg", "milk"]
 
 var wheat_seed: int = 10
 var wheat: int = 0
@@ -12,13 +19,37 @@ var corn_seed: int = 0
 var corn: int = 0
 var carrot_seed: int = 0
 var carrot: int = 0
-var coins: int = 1000
+var coins: int = 100
 var player_exp: int = 0
 var player_level: int = 1
 var selected_crop: String = "WHEAT"
 var chicken_feed: int = 0
 var egg: int = 0
 var has_dog: bool = false
+var cow_feed: int = 0
+var milk: int = 0
+var silo_capacity: int = 30
+var barn_capacity: int = 20
+var owns_feed_mill: bool = false
+var owns_chicken_coop: bool = false
+var owns_cow_shed: bool = false
+var chicken_count: int = 0
+var cow_count: int = 0
+var wood: int = 0
+var stone: int = 0
+var chicken_coop_level: int = 1
+var cow_shed_level: int = 1
+var house_level: int = 1
+var silo_level: int = 1
+var barn_level: int = 1
+var has_dog_house: bool = false
+var has_axe: bool = false
+var has_hammer: bool = false
+var axe_level: int = 0
+var hammer_level: int = 0
+var tools_unlock_notified: bool = false
+var unlocked_plot_count: int = FarmData.STARTING_PLOTS
+var fishing_unlocked: bool = false
 
 
 func buy_dog() -> bool:
@@ -70,6 +101,8 @@ func buy_seed(crop: String) -> bool:
 	var price: int = CropData.CROPS[crop]["seed_buy_price"]
 	if coins < price:
 		return false
+	if not can_add_item(crop.to_lower() + "_seed", 1):
+		return fail("Silo full! Sell or use some items first.")
 	coins -= price
 	set(crop.to_lower() + "_seed", seed_count(crop) + 1)
 	inventory_changed.emit()
@@ -97,15 +130,16 @@ func use_seed(crop: String) -> bool:
 	return true
 
 
-func collect_crop(crop: String) -> void:
+func collect_crop(crop: String) -> bool:
 	if not CropData.CROPS.has(crop):
-		return
+		return false
+	if not can_add_item(crop.to_lower(), 1):
+		return fail("Silo full! Crop stays ready until there is space.")
 	set(crop.to_lower(), crop_count(crop) + 1)
 	player_exp += CropData.CROPS[crop]["harvest_exp"]
 	normalize_exp()
-	# Save crop, EXP and any level-ups together after the plot is cleared.
 	inventory_changed.emit()
-
+	return true
 
 func exp_to_next_level() -> int:
 	return player_level * 100
@@ -115,6 +149,9 @@ func normalize_exp() -> void:
 	while player_exp >= exp_to_next_level():
 		player_exp -= exp_to_next_level()
 		player_level += 1
+	ensure_tools_for_level()
+	if player_level >= FarmData.FISHING_LEVEL:
+		fishing_unlocked = true
 
 
 func add_exp(amount: int) -> void:
@@ -141,6 +178,9 @@ func use_wheat_seed() -> bool:
 func add_wheat(amount: int = 1) -> void:
 	if amount <= 0:
 		return
+	if not can_add_item("wheat", amount):
+		fail("Silo full!")
+		return
 	wheat += amount
 	inventory_changed.emit()
 
@@ -156,5 +196,225 @@ func remove_coins(amount: int) -> bool:
 	if amount < 0 or coins < amount:
 		return false
 	coins -= amount
+	inventory_changed.emit()
+	return true
+
+func fail(message: String) -> bool:
+	action_failed.emit(message)
+	return false
+
+
+func storage_used(storage: String) -> int:
+	var total: int = 0
+	var items: Array[String] = SILO_ITEMS if storage == "silo" else BARN_ITEMS
+	for item in items:
+		total += get(item)
+	return total
+
+
+func can_add_item(item: String, amount: int) -> bool:
+	if amount <= 0:
+		return false
+	if item in SILO_ITEMS:
+		return storage_used("silo") + amount <= silo_capacity
+	if item in BARN_ITEMS:
+		return storage_used("barn") + amount <= barn_capacity
+	return false
+
+
+func add_item(item: String, amount: int = 1) -> bool:
+	if not can_add_item(item, amount):
+		return fail("Storage full or invalid item.")
+	set(item, get(item) + amount)
+	inventory_changed.emit()
+	return true
+
+
+func sell_milk() -> bool:
+	if milk <= 0:
+		return fail("No Milk to sell!")
+	milk -= 1
+	coins += MILK_PRICE
+	inventory_changed.emit()
+	return true
+
+
+func discard_feed(item: String) -> bool:
+	if item not in ["chicken_feed", "cow_feed"] or get(item) <= 0:
+		return fail("No Feed to discard.")
+	set(item, get(item) - 1)
+	inventory_changed.emit()
+	return true
+
+
+func owns_building(id: String) -> bool:
+	return Progression.BUILDINGS.has(id) and get("owns_" + id)
+
+
+func buy_building(id: String) -> bool:
+	if not Progression.BUILDINGS.has(id):
+		return false
+	var info: Dictionary = Progression.BUILDINGS[id]
+	if owns_building(id):
+		return fail("Building already owned.")
+	if player_level < info["level"]:
+		return fail("Locked: requires Level %d." % info["level"])
+	if coins < info["price"]:
+		return fail("Not enough Coins!")
+	coins -= info["price"]
+	set("owns_" + id, true)
+	inventory_changed.emit()
+	return true
+
+
+func animal_trade_busy(animal: String) -> bool:
+	var id: String = Progression.ANIMALS[animal]["building"]
+	var state: String = SaveManager.saved_stations.get(id, {}).get("state", "HUNGRY")
+	if SaveManager.stations.has(id) and is_instance_valid(SaveManager.stations[id]):
+		state = SaveManager.stations[id].state
+	return state in ["PRODUCING", "READY"]
+
+
+func buy_animal(animal: String) -> bool:
+	if not Progression.ANIMALS.has(animal):
+		return false
+	var info: Dictionary = Progression.ANIMALS[animal]
+	if not owns_building(info["building"]) or player_level < info["level"]:
+		return fail("Buy the building and reach Level %d first." % info["level"])
+	if animal_trade_busy(animal):
+		return fail("Collect products before changing animals.")
+	if get(animal + "_count") >= animal_capacity(animal):
+		return fail("Animal capacity reached.")
+	if coins < info["buy"]:
+		return fail("Not enough Coins!")
+	coins -= info["buy"]
+	set(animal + "_count", get(animal + "_count") + 1)
+	inventory_changed.emit()
+	return true
+
+
+func sell_animal(animal: String) -> bool:
+	if not Progression.ANIMALS.has(animal):
+		return false
+	if get(animal + "_count") <= 0:
+		return fail("No animals to sell.")
+	if animal_trade_busy(animal):
+		return fail("Collect products before changing animals.")
+	var info: Dictionary = Progression.ANIMALS[animal]
+	set(animal + "_count", get(animal + "_count") - 1)
+	coins += info["sell"]
+	inventory_changed.emit()
+	return true
+
+func animal_capacity(animal: String) -> int:
+	if not Progression.ANIMALS.has(animal):
+		return 0
+	var building: String = Progression.ANIMALS[animal]["building"]
+	var level: int = clampi(get(building + "_level"), 1, 3)
+	if level <= 1:
+		return Progression.ANIMALS[animal]["capacity"]
+	return Progression.UPGRADES[building][level]["capacity"]
+
+
+func next_upgrade(id: String) -> Dictionary:
+	if not Progression.UPGRADES.has(id):
+		return {}
+	return Progression.UPGRADES[id].get(get(id + "_level") + 1, {})
+
+
+func can_pay_material_cost(cost: Dictionary) -> bool:
+	return wood >= cost.get("wood", 0) and stone >= cost.get("stone", 0) and coins >= cost.get("coins", 0)
+
+
+func _pay_material_cost(cost: Dictionary) -> void:
+	wood -= cost.get("wood", 0)
+	stone -= cost.get("stone", 0)
+	coins -= cost.get("coins", 0)
+
+
+func upgrade_structure(id: String) -> bool:
+	if not Progression.UPGRADES.has(id):
+		return false
+	if id in Progression.BUILDINGS and not owns_building(id):
+		return fail("Buy this building with Coins first.")
+	var cost: Dictionary = next_upgrade(id)
+	if cost.is_empty():
+		return fail("Already at maximum level.")
+	if not can_pay_material_cost(cost):
+		return fail("Not enough resources." if id == "house" else "Not enough Wood, Stone or Coins.")
+	_pay_material_cost(cost)
+	set(id + "_level", get(id + "_level") + 1)
+	if id in ["silo", "barn"]:
+		# Never shrink a larger capacity carried over from an older save.
+		set(id + "_capacity", maxi(get(id + "_capacity"), cost["capacity"]))
+	inventory_changed.emit()
+	return true
+
+
+func build_dog_house() -> bool:
+	if has_dog_house:
+		return fail("Dog House already built.")
+	if not can_pay_material_cost(Progression.DOG_HOUSE_COST):
+		return fail("Dog House requires 15 Wood and 5 Stone.")
+	_pay_material_cost(Progression.DOG_HOUSE_COST)
+	has_dog_house = true
+	inventory_changed.emit()
+	return true
+
+func ensure_tools_for_level() -> void:
+	if player_level < ToolData.UNLOCK_LEVEL:
+		return
+	# No signal here: the caller saves the entire completed transaction once.
+	for id in ToolData.TOOLS:
+		set("has_" + id, true)
+		set(id + "_level", maxi(1, get(id + "_level")))
+
+
+func can_use_tool(id: String) -> bool:
+	return ToolData.TOOLS.has(id) and player_level >= ToolData.UNLOCK_LEVEL and get("has_" + id) and get(id + "_level") > 0
+
+
+func tool_duration(id: String) -> float:
+	if not can_use_tool(id):
+		return 0.0
+	var level: int = clampi(get(id + "_level"), 1, ToolData.TOOLS[id]["levels"].size())
+	return ToolData.TOOLS[id]["levels"][level]["time"]
+
+
+func upgrade_tool(id: String) -> bool:
+	if not can_use_tool(id):
+		return fail("Tools unlock at Level 6.")
+	var next: int = get(id + "_level") + 1
+	var levels: Dictionary = ToolData.TOOLS[id]["levels"]
+	if not levels.has(next):
+		return fail("MAX LEVEL")
+	var price: int = levels[next]["cost"]
+	if coins < price:
+		return fail("Not enough Coins!")
+	coins -= price
+	set(id + "_level", next)
+	inventory_changed.emit()
+	return true
+func is_zone_unlocked(id: String) -> bool:
+	match id:
+		"main", "forest":
+			return true
+		"fishing":
+			return fishing_unlocked and player_level >= FarmData.FISHING_LEVEL
+		_:
+			# Future/unknown zones stay inactive until explicitly supported.
+			return false
+
+
+func buy_plot(number: int) -> bool:
+	if unlocked_plot_count >= FarmData.MAX_PLOTS:
+		return fail("Farm is full: maximum 32 plots.")
+	if number != unlocked_plot_count + 1:
+		return fail("Unlock Plot %d first." % (unlocked_plot_count + 1))
+	var price: int = FarmData.plot_price(number)
+	if price < 0 or coins < price:
+		return fail("Not enough Coins")
+	coins -= price
+	unlocked_plot_count = number
 	inventory_changed.emit()
 	return true
