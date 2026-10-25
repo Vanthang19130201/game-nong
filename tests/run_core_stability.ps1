@@ -18,6 +18,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'fishing_test.gd') -Destination 
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'fish_market_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'level_audit_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'localization_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'storage_ui_test.gd') -Destination $testRoot -Force
 $projectPath = Join-Path $testRoot 'project.godot'
 Add-Content -LiteralPath $projectPath -Value "`n[debug]`nfile_logging/enable_file_logging=false"
 # Reuse the project's existing imports; no editor/settings writes are needed.
@@ -35,7 +36,7 @@ $stages = @('core', 'position_write', 'position_read', 'legacy_write', 'legacy_r
     'invalid_write', 'invalid_read', 'offline_write', 'offline_read',
     'backup_write', 'backup_read', 'defaults_write', 'defaults_read', 'duplicates',
     'fishing_core', 'fishing_limits', 'fishing_write', 'fishing_read', 'market_core', 'market_read',
-    'audit_core', 'audit_write', 'audit_read', 'audit_again', 'audit_close', 'localization')
+    'audit_core', 'audit_write', 'audit_read', 'audit_again', 'audit_close', 'localization', 'storage_ui')
 foreach ($stage in $stages) {
     $log = Join-Path $testRoot "$stage.log"
     $ErrorActionPreference = 'Continue'
@@ -43,6 +44,7 @@ foreach ($stage in $stages) {
     if ($stage.StartsWith('market_')) { $testScript = 'fish_market_test.gd' }
     if ($stage.StartsWith('audit_')) { $testScript = 'level_audit_test.gd' }
     if ($stage -eq 'localization') { $testScript = 'localization_test.gd' }
+    if ($stage -eq 'storage_ui') { $testScript = 'storage_ui_test.gd' }
     & $Godot --headless --path $testRoot --script $testScript --quit-after 1800 -- $stage *> $log
     $ErrorActionPreference = $previousPreference
     $output = Get-Content -LiteralPath $log -Raw

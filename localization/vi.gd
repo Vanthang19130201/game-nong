@@ -1,6 +1,19 @@
 extends RefCounted
 
 const MESSAGES: Dictionary = {
+    "HUD_COMPACT": "Xu: %d | Cấp độ: %d",
+    "HUD_COMPACT_DEFAULT": "Xu: 100 | Cấp độ: 1",
+    "UI_SHOP_SHORT": "Cửa hàng",
+    "UI_BUILD_SHORT": "Xây dựng",
+    "UI_ORDERS_SHORT": "Đơn hàng",
+    "STORAGE_TITLE": "KHO",
+    "STORAGE_PRODUCE": "NÔNG SẢN",
+    "STORAGE_GOODS": "HÀNG HÓA",
+    "STORAGE_MATERIALS": "NGUYÊN LIỆU",
+    "STORAGE_CAPACITY": "%s: %d / %d",
+    "STORAGE_ITEM": "%s: %d",
+    "STORAGE_SEEDS": "Hạt giống",
+    "STORAGE_CROPS": "Nông sản",
     "UI_LEVEL":  "Cấp độ",
     "UI_COINS":  "Xu",
     "UI_EXP":  "Kinh nghiệm",

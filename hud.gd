@@ -7,6 +7,9 @@ const Progression = preload("res://progression_data.gd")
 const FishingData = preload("res://fishing_data.gd")
 @onready var fishing_ui: Control = $FishingUI
 @onready var fish_market_panel: PanelContainer = $FishMarketPanel
+@onready var storage_panel: PanelContainer = $StoragePanel
+@onready var experience_bar: ProgressBar = $Layout/Experience/ExperienceBar
+@onready var experience_value: Label = $Layout/Experience/ExperienceValue
 var rod_info: Label
 var rod_upgrade: Button
 
@@ -64,7 +67,7 @@ func _ready() -> void:
 		debug_panel.set_script(preload("res://dev_debug_panel.gd"))
 		add_child(debug_panel)
 		debug_panel.visibility_changed.connect(_on_main_panel_visibility_changed)
-	for panel in [shop_panel, build_panel, station_panel, house_panel, order_panel, fish_market_panel]:
+	for panel in [shop_panel, build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel]:
 		panel.visibility_changed.connect(_on_main_panel_visibility_changed)
 	crop_ids = CropData.CROPS.keys()
 	var content: VBoxContainer = $ShopPanel/Margin/Scroll/ShopContent
@@ -88,6 +91,8 @@ func _ready() -> void:
 	recipe_selector.item_selected.connect(_on_recipe_selected)
 	Inventory.action_failed.connect(_show_message)
 	$Layout/Actions/BuildButton.pressed.connect(open_build)
+	$Layout/Actions/StorageButton.pressed.connect(_toggle_storage)
+	$Layout/Actions/OrdersButton.pressed.connect(open_orders)
 	$BuildPanel/Margin/Content/CloseButton.pressed.connect(build_panel.hide)
 	$ShopPanel/Margin/Scroll/ShopContent/MilkSellButton.pressed.connect(_sell_milk)
 	$ShopPanel/Margin/Scroll/ShopContent/DiscardChickenFeed.pressed.connect(_discard_feed.bind("chicken_feed"))
@@ -114,20 +119,11 @@ func _ready() -> void:
 
 func _update_inventory() -> void:
 	save_status.text = ""
-	inventory_label.text = tr("HUD_MAIN") % [
-		Inventory.coins, Inventory.player_level, Inventory.player_exp, Inventory.exp_to_next_level()
-	]
-	inventory_label.text += tr("HUD_FEED") % [Inventory.chicken_feed, Inventory.egg]
-	inventory_label.text += tr("HUD_COW") % [Inventory.cow_feed, Inventory.milk]
-	inventory_label.text += tr("HUD_FISH") % [Inventory.small_fish, Inventory.river_fish, Inventory.golden_fish]
-	var next_unlock: String = tr("HUD_UNLOCKS_DONE")
-	for feature in Progression.FEATURES:
-		if Inventory.player_level < Progression.FEATURES[feature]:
-			next_unlock = tr("HUD_NEXT_LEVEL") % [Localization.display_name(feature), Progression.FEATURES[feature]]
-			break
-	storage_label.text = tr("HUD_STORAGE") % [Inventory.storage_used("silo"), Inventory.silo_capacity, Inventory.storage_used("barn"), Inventory.barn_capacity, next_unlock]
-	storage_label.text += tr("HUD_MATERIALS") % [Inventory.wood, Inventory.stone, Inventory.house_level]
-	storage_label.text += tr("HUD_PLOTS") % [Inventory.unlocked_plot_count, FarmData.MAX_PLOTS]
+	inventory_label.text = tr("HUD_COMPACT") % [Inventory.coins, Inventory.player_level]
+	experience_bar.max_value = Inventory.exp_to_next_level()
+	experience_bar.value = Inventory.player_exp
+	experience_value.text = "%d / %d" % [Inventory.player_exp, Inventory.exp_to_next_level()]
+	storage_label.text = ""
 	_update_build_rows()
 	_update_tools()
 	_update_rod_row()
@@ -136,14 +132,10 @@ func _update_inventory() -> void:
 	dog_buy_button.disabled = Inventory.has_dog
 	dog_buy_button.text = tr("UI_OWNED") if Inventory.has_dog else tr("UI_BUY_DOG") % Inventory.DOG_PRICE
 	$ShopPanel/Margin/Scroll/ShopContent/PetsLabel.text = tr("UI_PETS") % Inventory.DOG_PRICE
-	var seed_text: Array[String] = []
-	var harvest_text: Array[String] = []
 	for i in range(crop_ids.size()):
 		var crop: String = crop_ids[i]
 		var info: Dictionary = CropData.CROPS[crop]
 		var unlocked: bool = Inventory.is_unlocked(crop)
-		seed_text.append("%s: %d" % [Localization.display_name(info["name"]), Inventory.seed_count(crop)])
-		harvest_text.append("%s: %d" % [Localization.display_name(info["name"]), Inventory.crop_count(crop)])
 		var choice: String = Localization.display_name(info["name"])
 		if not unlocked:
 			choice += tr("UI_UNLOCK_LEVEL") % info["unlock_level"]
@@ -154,8 +146,6 @@ func _update_inventory() -> void:
 		buy.text = tr("UI_BUY_SEED") % [Localization.display_name(info["name"]), info["seed_buy_price"]]
 		if not unlocked:
 			buy.text += tr("UI_LEVEL_SUFFIX") % info["unlock_level"]
-	inventory_label.text += tr("HUD_SEEDS") + " | ".join(seed_text)
-	inventory_label.text += tr("HUD_HARVEST") + " | ".join(harvest_text)
 	crop_selector.select(crop_ids.find(Inventory.selected_crop))
 	_update_station_panel()
 	_update_house_panel()
@@ -190,7 +180,7 @@ func _toggle_shop() -> void:
 	var was_open: bool = shop_panel.visible
 	_close_game_panels()
 	shop_panel.visible = not was_open
-	shop_button.text = tr("UI_CLOSE_SHOP") if shop_panel.visible else tr("UI_OPEN_SHOP")
+	shop_button.text = tr("UI_SHOP_SHORT")
 	message_label.text = ""
 
 
@@ -228,7 +218,7 @@ func open_station(station: Node) -> void:
 	active_station = station
 	active_station.state_changed.connect(_update_station_panel)
 	shop_panel.hide()
-	shop_button.text = tr("UI_OPEN_SHOP")
+	shop_button.text = tr("UI_SHOP_SHORT")
 	station_panel.show()
 	_update_station_panel()
 
@@ -288,12 +278,16 @@ func _collect() -> void:
 
 
 func blocks_world_input() -> bool:
-	return fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or shop_panel.visible or station_panel.visible or order_panel.visible or build_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
+	return storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or shop_panel.visible or station_panel.visible or order_panel.visible or build_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
 
 
 func _input(event: InputEvent) -> void:
 	# Handle UI keys before any farm node receives _unhandled_input.
-	if OS.is_debug_build() and event is InputEventKey and event.pressed and event.keycode == KEY_F3 and not event.echo:
+	if event.is_action("toggle_inventory"):
+		if event.is_action_pressed("toggle_inventory") and not event.is_echo():
+			_toggle_storage()
+		get_viewport().set_input_as_handled()
+	elif OS.is_debug_build() and event is InputEventKey and event.pressed and event.keycode == KEY_F3 and not event.echo:
 		if not _native_dialog_open():
 			var was_open: bool = debug_panel.visible
 			_close_game_panels()
@@ -309,12 +303,14 @@ func _input(event: InputEvent) -> void:
 
 func close_current_panel() -> void:
 	# Native popup windows sit above the panels. Panel priority matches z_index.
-	if tools_unlock_popup.visible:
-		tools_unlock_popup.hide()
-	elif reset_confirmation.visible:
+	if reset_confirmation.visible:
 		reset_confirmation.hide()
 	elif plot_purchase.visible:
 		plot_purchase.hide()
+	elif storage_panel.visible:
+		storage_panel.hide()
+	elif tools_unlock_popup.visible:
+		tools_unlock_popup.hide()
 	elif crop_selector.get_popup().visible:
 		crop_selector.get_popup().hide()
 	elif recipe_selector.get_popup().visible:
@@ -333,12 +329,13 @@ func close_current_panel() -> void:
 		close_station()
 	elif shop_panel.visible:
 		shop_panel.hide()
-		shop_button.text = tr("UI_OPEN_SHOP")
+		shop_button.text = tr("UI_SHOP_SHORT")
 	elif is_instance_valid(fishing_ui.active_spot):
 		fishing_ui.close_session()
 
 
 func _close_game_panels() -> void:
+	storage_panel.hide()
 	fish_market_panel.close()
 	fishing_ui.close_session()
 	if is_instance_valid(debug_panel):
@@ -350,7 +347,7 @@ func _close_game_panels() -> void:
 	close_station()
 	order_panel.hide()
 	shop_panel.hide()
-	shop_button.text = tr("UI_OPEN_SHOP")
+	shop_button.text = tr("UI_SHOP_SHORT")
 	var player = get_tree().get_first_node_in_group("farm_player")
 	if player != null and is_instance_valid(player.active_resource):
 		player.active_resource.cancel_harvest()
@@ -358,6 +355,16 @@ func _close_game_panels() -> void:
 
 func _native_dialog_open() -> bool:
 	return reset_confirmation.visible or plot_purchase.visible or tools_unlock_popup.visible
+
+
+func _toggle_storage() -> void:
+	if _native_dialog_open():
+		return
+	var was_open: bool = storage_panel.visible
+	_close_game_panels()
+	storage_panel.visible = not was_open
+	if storage_panel.visible:
+		storage_panel.refresh()
 
 
 func open_fish_market(market: Node) -> void:
@@ -375,6 +382,7 @@ func close_all_panels() -> void:
 
 
 func _on_main_panel_visibility_changed() -> void:
+	crop_selector.disabled = storage_panel.visible
 	_show_tool_unlock_if_needed.call_deferred()
 
 

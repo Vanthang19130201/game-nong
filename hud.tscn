@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://hud.gd" id="1_hud"]
 [ext_resource type="PackedScene" path="res://fishing_ui.tscn" id="2_fishing"]
 [ext_resource type="PackedScene" path="res://fish_market_panel.tscn" id="3_market"]
+[ext_resource type="PackedScene" path="res://storage_panel.tscn" id="4_storage"]
 
 [node name="HUD" type="CanvasLayer"]
 layer = 10
@@ -11,6 +12,8 @@ script = ExtResource("1_hud")
 [node name="FishingUI" parent="." instance=ExtResource("2_fishing")]
 
 [node name="FishMarketPanel" parent="." instance=ExtResource("3_market")]
+
+[node name="StoragePanel" parent="." instance=ExtResource("4_storage")]
 
 [node name="ResetControls" type="Control" parent="."]
 anchors_preset = 15
@@ -42,10 +45,11 @@ ok_button_text = "RESET_GAME"
 cancel_button_text = "UI_CANCEL"
 
 [node name="Layout" type="VBoxContainer" parent="."]
-anchors_preset = 0
+anchors_preset = 10
+anchor_right = 1.0
 offset_left = 16.0
 offset_top = 8.0
-offset_right = 1136.0
+offset_right = -96.0
 offset_bottom = 120.0
 mouse_filter = 2
 theme_override_constants/separation = 6
@@ -58,38 +62,71 @@ theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 1
 theme_override_font_sizes/font_size = 18
-text = "DEFAULT_HUD"
+text = "HUD_COMPACT_DEFAULT"
+
+[node name="Experience" type="HBoxContainer" parent="Layout"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Layout/Experience"]
+layout_mode = 2
+text = "UI_EXP"
+
+[node name="ExperienceBar" type="ProgressBar" parent="Layout/Experience"]
+custom_minimum_size = Vector2(60, 18)
+layout_mode = 2
+size_flags_horizontal = 3
+show_percentage = false
+mouse_filter = 2
+
+[node name="ExperienceValue" type="Label" parent="Layout/Experience"]
+layout_mode = 2
 
 [node name="StorageLabel" type="Label" parent="Layout"]
+visible = false
 autowrap_mode = 2
 layout_mode = 2
 mouse_filter = 2
-text = "DEFAULT_STORAGE"
 
-[node name="Actions" type="HBoxContainer" parent="Layout"]
+[node name="Actions" type="HFlowContainer" parent="Layout"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 12
 
 [node name="ShopButton" type="Button" parent="Layout/Actions"]
-custom_minimum_size = Vector2(130, 32)
+custom_minimum_size = Vector2(90, 40)
 layout_mode = 2
 focus_mode = 0
-text = "UI_OPEN_SHOP"
+text = "UI_SHOP_SHORT"
 
 [node name="BuildButton" type="Button" parent="Layout/Actions"]
+custom_minimum_size = Vector2(90, 40)
 layout_mode = 2
 focus_mode = 0
-text = "TITLE_BUILD"
+text = "UI_BUILD_SHORT"
+
+[node name="StorageButton" type="Button" parent="Layout/Actions"]
+custom_minimum_size = Vector2(70, 40)
+layout_mode = 2
+focus_mode = 0
+text = "BUILDING_BARN"
+
+[node name="OrdersButton" type="Button" parent="Layout/Actions"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+focus_mode = 0
+text = "UI_ORDERS_SHORT"
 
 [node name="SelectedCropLabel" type="Label" parent="Layout/Actions"]
 layout_mode = 2
 text = "UI_SELECTED_CROP"
 
 [node name="CropSelector" type="OptionButton" parent="Layout/Actions"]
-custom_minimum_size = Vector2(240, 32)
+custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
 focus_mode = 0
+fit_to_longest_item = false
 
 [node name="SaveStatus" type="Label" parent="Layout"]
 layout_mode = 2
