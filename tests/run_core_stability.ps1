@@ -3,6 +3,7 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $testRoot = Join-Path $projectRoot '.godot/core-stability-project'
 New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
+Copy-Item -LiteralPath (Join-Path $projectRoot 'assets') -Destination $testRoot -Recurse -Force
 Get-ChildItem -LiteralPath $projectRoot -File | Where-Object {
     $_.Extension -in @('.gd', '.uid', '.tscn', '.godot', '.svg', '.import')
 } | Copy-Item -Destination $testRoot -Force

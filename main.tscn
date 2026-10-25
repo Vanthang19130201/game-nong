@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://rhxig8gxyrdc" path="res://player.gd" id="1_0xm2m"]
 [ext_resource type="Texture2D" uid="uid://m753onc7et8y" path="res://icon.svg" id="2_h2yge"]
 [ext_resource type="Script" uid="uid://dmiin4p8yvpun" path="res://soil_plot.gd" id="3_h2yge"]
+[ext_resource type="Texture2D" uid="uid://cgje3gncaw2dy" path="res://assets/buildings/house/house1.png" id="4_getpj"]
 [ext_resource type="PackedScene" path="res://hud.tscn" id="4_hud"]
 [ext_resource type="Script" uid="uid://cv4b8aubh8cw0" path="res://farm.gd" id="5_farm"]
 [ext_resource type="PackedScene" path="res://feed_mill.tscn" id="6_mill"]
@@ -15,6 +16,11 @@
 [ext_resource type="Script" uid="uid://c8xfl767t2s83" path="res://house.gd" id="13_house"]
 [ext_resource type="PackedScene" path="res://fishing_spot.tscn" id="14_fishing"]
 [ext_resource type="PackedScene" path="res://fish_market.tscn" id="15_market"]
+[ext_resource type="Script" uid="uid://bv2sw1d224cv8" path="res://artwork_sprite.gd" id="90_art"]
+[ext_resource type="Script" uid="uid://cbdwg116yfrru" path="res://soil_visual.gd" id="91_visual"]
+[ext_resource type="Script" uid="uid://dwi3al7wwxxvc" path="res://character_visual.gd" id="92_anim"]
+[ext_resource type="SpriteFrames" path="res://assets/characters/directional_frames.tres" id="93_frames"]
+[ext_resource type="Script" uid="uid://bftdjeeaw3cnf" path="res://building_visual.gd" id="94_building"]
 
 [sub_resource type="RectangleShape2D" id="HouseInteractionShape"]
 size = Vector2(260, 220)
@@ -70,6 +76,7 @@ collision_layer = 0
 shape = SubResource("HouseInteractionShape")
 
 [node name="Visual" type="ColorRect" parent="House" unique_id=1491943828]
+visible = false
 offset_left = -100.0
 offset_top = -80.0
 offset_right = 100.0
@@ -86,6 +93,17 @@ theme_override_font_sizes/font_size = 28
 text = "HOUSE"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="Visuals" type="Node2D" parent="House" unique_id=2109176501]
+script = ExtResource("94_building")
+
+[node name="Sprite2D" type="Sprite2D" parent="House/Visuals" unique_id=1928157321]
+z_index = -1
+position = Vector2(2.0000005, -5)
+scale = Vector2(0.19, 0.19)
+texture = ExtResource("4_getpj")
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../Visual")])
 
 [node name="OrderBoard" parent="." unique_id=83311472 instance=ExtResource("8_orders")]
 position = Vector2(920, 420)
@@ -161,6 +179,13 @@ texture = ExtResource("2_h2yge")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player" unique_id=1192634142]
 shape = SubResource("RectangleShape2D_6rjdj")
 
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Player" unique_id=410885356]
+visible = false
+sprite_frames = ExtResource("93_frames")
+animation = &"idle_down"
+script = ExtResource("92_anim")
+fallback_paths = Array[NodePath]([NodePath("../Icon")])
+
 [node name="SoilPlot" type="Area2D" parent="." unique_id=610237959]
 position = Vector2(1100, 520)
 script = ExtResource("3_h2yge")
@@ -192,6 +217,18 @@ metadata/_edit_use_anchors_ = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot" unique_id=755647875]
 shape = SubResource("RectangleShape2D_0xm2m")
+
+[node name="Visuals" type="Node2D" parent="SoilPlot" unique_id=996332694]
+script = ExtResource("91_visual")
+
+[node name="SoilSprite" type="Sprite2D" parent="SoilPlot/Visuals" unique_id=195444098]
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../SoilColor")])
+
+[node name="CropSprite" type="Sprite2D" parent="SoilPlot/Visuals" unique_id=465743007]
+z_index = 1
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../PlantLabel")])
 
 [node name="SoilPlot6" type="Area2D" parent="." unique_id=948524571]
 position = Vector2(1174, 578)
@@ -225,6 +262,18 @@ metadata/_edit_use_anchors_ = true
 [node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot6" unique_id=1018242756]
 shape = SubResource("RectangleShape2D_0xm2m")
 
+[node name="Visuals" type="Node2D" parent="SoilPlot6" unique_id=988254194]
+script = ExtResource("91_visual")
+
+[node name="SoilSprite" type="Sprite2D" parent="SoilPlot6/Visuals" unique_id=1860357018]
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../SoilColor")])
+
+[node name="CropSprite" type="Sprite2D" parent="SoilPlot6/Visuals" unique_id=809446884]
+z_index = 1
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../PlantLabel")])
+
 [node name="SoilPlot5" type="Area2D" parent="." unique_id=236598396]
 position = Vector2(1100, 578)
 script = ExtResource("3_h2yge")
@@ -256,6 +305,18 @@ metadata/_edit_use_anchors_ = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot5" unique_id=1927352723]
 shape = SubResource("RectangleShape2D_0xm2m")
+
+[node name="Visuals" type="Node2D" parent="SoilPlot5" unique_id=1933769772]
+script = ExtResource("91_visual")
+
+[node name="SoilSprite" type="Sprite2D" parent="SoilPlot5/Visuals" unique_id=465411362]
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../SoilColor")])
+
+[node name="CropSprite" type="Sprite2D" parent="SoilPlot5/Visuals" unique_id=1348756047]
+z_index = 1
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../PlantLabel")])
 
 [node name="SoilPlot4" type="Area2D" parent="." unique_id=2016170595]
 position = Vector2(1322, 520)
@@ -289,6 +350,18 @@ metadata/_edit_use_anchors_ = true
 [node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot4" unique_id=135574040]
 shape = SubResource("RectangleShape2D_0xm2m")
 
+[node name="Visuals" type="Node2D" parent="SoilPlot4" unique_id=1488389372]
+script = ExtResource("91_visual")
+
+[node name="SoilSprite" type="Sprite2D" parent="SoilPlot4/Visuals" unique_id=1137810092]
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../SoilColor")])
+
+[node name="CropSprite" type="Sprite2D" parent="SoilPlot4/Visuals" unique_id=1402067875]
+z_index = 1
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../PlantLabel")])
+
 [node name="SoilPlot3" type="Area2D" parent="." unique_id=311795311]
 position = Vector2(1248, 520)
 script = ExtResource("3_h2yge")
@@ -320,6 +393,18 @@ metadata/_edit_use_anchors_ = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot3" unique_id=302752602]
 shape = SubResource("RectangleShape2D_0xm2m")
+
+[node name="Visuals" type="Node2D" parent="SoilPlot3" unique_id=701090432]
+script = ExtResource("91_visual")
+
+[node name="SoilSprite" type="Sprite2D" parent="SoilPlot3/Visuals" unique_id=206400323]
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../SoilColor")])
+
+[node name="CropSprite" type="Sprite2D" parent="SoilPlot3/Visuals" unique_id=646457734]
+z_index = 1
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../PlantLabel")])
 
 [node name="SoilPlot2" type="Area2D" parent="." unique_id=1559835726]
 position = Vector2(1174, 520)
@@ -353,6 +438,18 @@ metadata/_edit_use_anchors_ = true
 [node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot2" unique_id=241495818]
 shape = SubResource("RectangleShape2D_0xm2m")
 
+[node name="Visuals" type="Node2D" parent="SoilPlot2" unique_id=1679813670]
+script = ExtResource("91_visual")
+
+[node name="SoilSprite" type="Sprite2D" parent="SoilPlot2/Visuals" unique_id=499917050]
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../SoilColor")])
+
+[node name="CropSprite" type="Sprite2D" parent="SoilPlot2/Visuals" unique_id=535693431]
+z_index = 1
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../PlantLabel")])
+
 [node name="DogHouse" type="Node2D" parent="." unique_id=13681641]
 visible = false
 position = Vector2(550, 700)
@@ -373,6 +470,13 @@ offset_bottom = 32.0
 text = "DOG HOUSE"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="Visuals" type="Node2D" parent="DogHouse" unique_id=856610138]
+
+[node name="Sprite2D" type="Sprite2D" parent="DogHouse/Visuals" unique_id=987303426]
+z_index = -1
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../Visual")])
 
 [node name="tree1" parent="." unique_id=1109680128 instance=ExtResource("10_resource")]
 position = Vector2(450, 220)
@@ -418,13 +522,22 @@ offset_bottom = 300.0
 mouse_filter = 2
 color = Color(0.16, 0.3, 0.17, 1)
 
-[node name="River" type="ColorRect" parent="." unique_id=100739077]
+[node name="River" type="Node2D" parent="." unique_id=100739077]
 z_index = -8
-offset_left = 1800.0
-offset_right = 1940.0
+position = Vector2(1800, 0)
+
+[node name="Placeholder" type="ColorRect" parent="River" unique_id=1528152808]
+offset_right = 140.0
 offset_bottom = 1600.0
 mouse_filter = 2
 color = Color(0.12, 0.4, 0.6, 1)
+
+[node name="Visuals" type="Node2D" parent="River" unique_id=361231503]
+
+[node name="RiverSprite" type="Sprite2D" parent="River/Visuals" unique_id=143092717]
+centered = false
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../Placeholder")])
 
 [node name="GrassAreaLabel" type="Label" parent="." unique_id=163501990]
 offset_left = 250.0
@@ -480,5 +593,5 @@ position = Vector2(1870, 850)
 [node name="FishingSpot" parent="." unique_id=1923137942 instance=ExtResource("14_fishing")]
 position = Vector2(2020, 980)
 
-[node name="FishMarket" parent="." instance=ExtResource("15_market")]
+[node name="FishMarket" parent="." unique_id=1259020075 instance=ExtResource("15_market")]
 position = Vector2(2190, 980)

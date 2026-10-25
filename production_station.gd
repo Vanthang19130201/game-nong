@@ -156,12 +156,7 @@ func _update_ownership() -> void:
 
 
 func _update_display() -> void:
-	if station_id == "feed_mill":
-		status_label.text = "Feed Mill\n%s\n%s" % [production_type.capitalize(), state]
-	elif station_id == "chicken_coop":
-		status_label.text = "CHICKENS: %d / %d\n%s" % [chicken_count, Inventory.animal_capacity("chicken"), "EGGS READY" if state == "READY" else state]
-	else:
-		status_label.text = "COW SHED\nCows: %d / %d\n%s" % [cow_count, Inventory.animal_capacity("cow"), "MILK READY" if state == "READY" else state]
+	$Visuals.refresh()
 	state_changed.emit()
 
 

@@ -1,5 +1,7 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
+
 [ext_resource type="Script" path="res://fishing_bridge.gd" id="1"]
 
 [sub_resource type="RectangleShape2D" id="GateShape"]
@@ -46,3 +48,9 @@ position = Vector2(-120, 0)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea"]
 shape = SubResource("SignArea")
+[node name="Visuals" type="Node2D" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="Visuals"]
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../Visual")])
+z_index = -7

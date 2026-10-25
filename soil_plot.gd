@@ -61,17 +61,7 @@ func restore_save_data(data: Dictionary) -> void:
 
 
 func _update_label() -> void:
-	if not is_unlocked():
-		plant_label.text = "LOCKED\n%d C" % FarmData.plot_price(FarmData.plot_number(plot_id))
-		$SoilColor.color = Color(0.2, 0.2, 0.2, 1)
-		return
-	$SoilColor.color = Color(0.3, 0.15, 0.06, 1)
-	if state == PlotState.EMPTY:
-		plant_label.text = ""
-	elif state == PlotState.GROWING:
-		plant_label.text = crop_type + "..."
-	else:
-		plant_label.text = crop_type + "\nREADY"
+	$Visuals.refresh()
 
 
 func can_interact() -> bool:

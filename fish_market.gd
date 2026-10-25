@@ -24,7 +24,7 @@ func interact(_player: Node2D = null) -> void:
 
 func _update_access() -> void:
 	var unlocked: bool = Inventory.is_zone_unlocked("fishing")
-	$Label.text = "FISH MARKET\n[E] Sell Fish" if unlocked else "FISH MARKET\nUnlocks at Level 10"
+	$Visuals.refresh()
 	if not unlocked:
 		_close_panel()
 

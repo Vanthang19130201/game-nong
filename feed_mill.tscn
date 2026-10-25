@@ -1,5 +1,9 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://building_visual.gd" id="94_building"]
+
+[ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
+
 [ext_resource type="Script" path="res://production_station.gd" id="1"]
 
 [sub_resource type="RectangleShape2D" id="AreaShape"]
@@ -32,3 +36,11 @@ shape = SubResource("AreaShape")
 
 [node name="ProductionTimer" type="Timer" parent="."]
 one_shot = true
+[node name="Visuals" type="Node2D" parent="."]
+script = ExtResource("94_building")
+building_kind = "feed_mill"
+
+[node name="Sprite2D" type="Sprite2D" parent="Visuals"]
+z_index = -1
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../Visual")])

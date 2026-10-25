@@ -1,5 +1,9 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://soil_visual.gd" id="91_visual"]
+
+[ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
+
 [ext_resource type="Script" path="res://soil_plot.gd" id="1"]
 
 [sub_resource type="RectangleShape2D" id="PlotShape"]
@@ -33,3 +37,13 @@ color = Color(0.3, 0.15, 0.06, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("PlotShape")
+[node name="Visuals" type="Node2D" parent="."]
+script = ExtResource("91_visual")
+
+[node name="SoilSprite" type="Sprite2D" parent="Visuals"]
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../SoilColor")])
+
+[node name="CropSprite" type="Sprite2D" parent="Visuals"]
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../PlantLabel")])

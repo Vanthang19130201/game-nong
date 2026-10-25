@@ -1,5 +1,12 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://building_visual.gd" id="94_building"]
+
+[ext_resource type="Script" path="res://character_visual.gd" id="92_anim"]
+[ext_resource type="SpriteFrames" path="res://assets/characters/directional_frames.tres" id="93_frames"]
+
+[ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
+
 [ext_resource type="Script" path="res://production_station.gd" id="1"]
 
 [sub_resource type="RectangleShape2D" id="AreaShape"]
@@ -38,3 +45,19 @@ shape = SubResource("AreaShape")
 
 [node name="ProductionTimer" type="Timer" parent="."]
 one_shot = true
+
+[node name="Visuals" type="Node2D" parent="."]
+script = ExtResource("94_building")
+building_kind = "cow_shed"
+
+[node name="Sprite2D" type="Sprite2D" parent="Visuals"]
+z_index = -1
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../Visual"), NodePath("../../Roof")])
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Visuals"]
+sprite_frames = ExtResource("93_frames")
+animation = &"idle_down"
+script = ExtResource("92_anim")
+position = Vector2(0, 65)
+animal_kind = "cow"

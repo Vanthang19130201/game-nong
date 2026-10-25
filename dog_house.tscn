@@ -1,5 +1,7 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
+
 [node name="DogHouse" type="Node2D"]
 
 [node name="Visual" type="ColorRect" parent="."]
@@ -19,3 +21,10 @@ mouse_filter = 2
 horizontal_alignment = 1
 vertical_alignment = 1
 text = "DOG HOUSE"
+
+[node name="Visuals" type="Node2D" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="Visuals"]
+z_index = -1
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../Visual")])

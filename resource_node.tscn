@@ -1,5 +1,9 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://resource_visual.gd" id="91_visual"]
+
+[ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
+
 [ext_resource type="Script" path="res://resource_node.gd" id="1"]
 
 [sub_resource type="RectangleShape2D" id="ResourceArea"]
@@ -40,3 +44,10 @@ offset_right = 48.0
 offset_bottom = 58.0
 mouse_filter = 2
 show_percentage = false
+[node name="Visuals" type="Node2D" parent="."]
+script = ExtResource("91_visual")
+
+[node name="ResourceSprite" type="Sprite2D" parent="Visuals"]
+z_index = -1
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../Visual")])

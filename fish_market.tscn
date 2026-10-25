@@ -1,5 +1,9 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://building_visual.gd" id="94_building"]
+
+[ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
+
 [ext_resource type="Script" path="res://fish_market.gd" id="1"]
 [sub_resource type="RectangleShape2D" id="MarketArea"]
 size = Vector2(180, 160)
@@ -36,3 +40,12 @@ text = "FISH MARKET\n[E] Sell Fish"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("MarketArea")
+
+[node name="Visuals" type="Node2D" parent="."]
+script = ExtResource("94_building")
+building_kind = "fish_market"
+
+[node name="Sprite2D" type="Sprite2D" parent="Visuals"]
+z_index = -1
+script = ExtResource("90_art")
+fallback_paths = Array[NodePath]([NodePath("../../Visual"), NodePath("../../Awning")])

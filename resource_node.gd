@@ -95,7 +95,7 @@ func harvest() -> bool:
 	if hud != null and hud.blocks_world_input():
 		return false
 	if not Inventory.can_use_tool(tool_id()):
-		return Inventory.fail("Bạn cần công cụ để khai thác. Tools unlock at Level 6.")
+		return Inventory.fail("Báº¡n cáº§n cÃ´ng cá»¥ Ä‘á»ƒ khai thÃ¡c. Tools unlock at Level 6.")
 	if state != "AVAILABLE" or is_instance_valid(player.active_resource):
 		return false
 	state = "GATHERING"
@@ -160,15 +160,7 @@ func _respawn() -> void:
 
 
 func _update_display() -> void:
-	progress.visible = state == "GATHERING"
-	visual.color = Color(0.15, 0.5, 0.2) if resource_type == "wood" else Color(0.5, 0.5, 0.55)
-	visual.modulate.a = 0.3 if state == "DEPLETED" else 1.0
-	if state == "GATHERING":
-		label.text = "Chopping..." if resource_type == "wood" else "Mining..."
-	elif state == "DEPLETED":
-		label.text = "STUMP\nRespawning..." if resource_type == "wood" else "DEPLETED\nRespawning..."
-	else:
-		label.text = ("TREE" if resource_type == "wood" else "ROCK") + "\n[E] Gather"
+	$Visuals.refresh()
 
 
 func _on_body_entered(body: Node2D) -> void:

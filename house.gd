@@ -29,7 +29,7 @@ func interact(_player: Node2D = null) -> void:
 
 
 func _update_visual() -> void:
-	house_label.text = "HOUSE\nLevel %d\n[E] Upgrade" % Inventory.house_level
+	$Visuals.refresh()
 
 
 func _on_body_exited(body: Node2D) -> void:

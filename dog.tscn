@@ -1,5 +1,10 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://character_visual.gd" id="92_anim"]
+[ext_resource type="SpriteFrames" path="res://assets/characters/directional_frames.tres" id="93_frames"]
+
+[ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
+
 [ext_resource type="Script" path="res://dog.gd" id="1"]
 
 [sub_resource type="RectangleShape2D" id="DogShape"]
@@ -34,3 +39,10 @@ shape = SubResource("DogShape")
 
 [node name="IdleTimer" type="Timer" parent="."]
 one_shot = true
+[node name="Visuals" type="Node2D" parent="."]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = ExtResource("93_frames")
+animation = &"idle_down"
+script = ExtResource("92_anim")
+fallback_paths = Array[NodePath]([NodePath("../BodyColor"), NodePath("../Visual")])
