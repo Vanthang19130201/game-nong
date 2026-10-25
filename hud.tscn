@@ -1,10 +1,13 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://hud.gd" id="1_hud"]
+[ext_resource type="PackedScene" path="res://fishing_ui.tscn" id="2_fishing"]
 
 [node name="HUD" type="CanvasLayer"]
 layer = 10
 script = ExtResource("1_hud")
+
+[node name="FishingUI" parent="." instance=ExtResource("2_fishing")]
 
 [node name="ResetControls" type="Control" parent="."]
 anchors_preset = 15

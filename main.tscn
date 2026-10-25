@@ -12,7 +12,8 @@
 [ext_resource type="PackedScene" path="res://resource_node.tscn" id="10_resource"]
 [ext_resource type="PackedScene" path="res://fishing_bridge.tscn" id="11_bridge"]
 [ext_resource type="PackedScene" path="res://soil_plot.tscn" id="12_plot"]
-[ext_resource type="Script" path="res://house.gd" id="13_house"]
+[ext_resource type="PackedScene" path="res://fishing_spot.tscn" id="14_fishing"]
+[ext_resource type="Script" uid="uid://c8xfl767t2s83" path="res://house.gd" id="13_house"]
 
 [sub_resource type="RectangleShape2D" id="HouseInteractionShape"]
 size = Vector2(260, 220)
@@ -61,11 +62,10 @@ color = Color(0.45, 0.42, 0.26, 1)
 position = Vector2(700, 400)
 script = ExtResource("13_house")
 
-[node name="InteractionArea" type="Area2D" parent="House"]
+[node name="InteractionArea" type="Area2D" parent="House" unique_id=1475791003]
 collision_layer = 0
-collision_mask = 1
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="House/InteractionArea"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="House/InteractionArea" unique_id=54735998]
 shape = SubResource("HouseInteractionShape")
 
 [node name="Visual" type="ColorRect" parent="House" unique_id=1491943828]
@@ -475,3 +475,6 @@ shape = SubResource("RiverLowerShape")
 
 [node name="Bridge" parent="." unique_id=1371928677 instance=ExtResource("11_bridge")]
 position = Vector2(1870, 850)
+
+[node name="FishingSpot" parent="." instance=ExtResource("14_fishing")]
+position = Vector2(2020, 980)

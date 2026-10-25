@@ -12,7 +12,8 @@ const BACKUP_TEMP_PATH: String = "user://save_backup.cfg.tmp"
 var PLOT_IDS: Array[String] = FarmData.plot_ids()
 const INVENTORY_DEFAULTS: Dictionary = {
 	"wheat_seed": 10, "wheat": 0, "corn_seed": 0, "corn": 0,
-	"carrot_seed": 0, "carrot": 0, "coins": 100, "chicken_feed": 0, "cow_feed": 0, "egg": 0, "milk": 0, "wood": 0, "stone": 0
+	"carrot_seed": 0, "carrot": 0, "coins": 100, "chicken_feed": 0, "cow_feed": 0, "egg": 0, "milk": 0, "wood": 0, "stone": 0,
+	"small_fish": 0, "river_fish": 0, "golden_fish": 0
 }
 
 var saved_plots: Dictionary = {}
@@ -94,7 +95,9 @@ func save_game() -> bool:
 	if resetting:
 		return false
 	var data := ConfigFile.new()
-	data.set_value("game", "version", 9)
+	data.set_value("game", "version", 10)
+	data.set_value("fishing", "has_fishing_rod", Inventory.has_fishing_rod)
+	data.set_value("fishing", "fishing_rod_level", Inventory.fishing_rod_level)
 	for id in FarmData.BUILDINGS:
 		var position: Vector2 = building_positions.get(id, FarmData.BUILDINGS[id]["position"])
 		if buildings.has(id) and is_instance_valid(buildings[id]):
@@ -186,6 +189,9 @@ func reset_game() -> bool:
 				return false
 
 	resetting = true
+	Inventory.has_fishing_rod = false
+	Inventory.fishing_rod_level = 0
+	Inventory.reserved_barn_slots = 0
 	building_positions.clear()
 	for id in FarmData.BUILDINGS:
 		building_positions[id] = FarmData.BUILDINGS[id]["position"]
@@ -266,13 +272,17 @@ func _load_game() -> void:
 	for id in Inventory.ToolData.TOOLS:
 		var owned_tool = data.get_value("tools", "has_" + id, false)
 		Inventory.set("has_" + id, owned_tool if owned_tool is bool else false)
-		Inventory.set(id + "_level", mini(4, _read_int(data, "tools", id + "_level", 0)))
+		Inventory.set(id + "_level", mini(Inventory.ToolData.TOOLS[id]["levels"].size(), _read_int(data, "tools", id + "_level", 0)))
 		if Inventory.get("has_" + id):
 			Inventory.set(id + "_level", maxi(1, Inventory.get(id + "_level")))
 		else:
 			Inventory.set(id + "_level", 0)
 	var notified = data.get_value("tools", "unlock_notified", false)
 	Inventory.tools_unlock_notified = notified if notified is bool else false
+	var rod_owned = data.get_value("fishing", "has_fishing_rod", false)
+	Inventory.has_fishing_rod = rod_owned if rod_owned is bool else false
+	Inventory.fishing_rod_level = mini(Inventory.FishingData.ROD_LEVELS.size(), _read_int(data, "fishing", "fishing_rod_level", 0))
+	Inventory.fishing_rod_level = maxi(1, Inventory.fishing_rod_level) if Inventory.has_fishing_rod else 0
 	Inventory.normalize_exp()
 	for id in Progression.UPGRADES:
 		var max_level: int = Progression.UPGRADES[id].size() + 1
@@ -281,8 +291,8 @@ func _load_game() -> void:
 	Inventory.has_dog_house = dog_house if dog_house is bool else false
 	for id in RESOURCE_IDS:
 		saved_resources[id] = _read_resource(data.get_value("resources", id, 0.0))
-	Inventory.silo_capacity = _read_int(data, "storage", "silo_capacity", 30, 1)
-	Inventory.barn_capacity = _read_int(data, "storage", "barn_capacity", 20, 1)
+	Inventory.silo_capacity = maxi(30, _read_int(data, "storage", "silo_capacity", 30, 1))
+	Inventory.barn_capacity = maxi(20, _read_int(data, "storage", "barn_capacity", 20, 1))
 	for storage in ["silo", "barn"]:
 		var level: int = Inventory.get(storage + "_level")
 		if level > 1:
@@ -416,7 +426,7 @@ func _read_resource(value: Variant) -> Dictionary:
 	var timestamp = value.get("respawn_at", 0.0) if value is Dictionary else value
 	if not (timestamp is float or timestamp is int):
 		timestamp = 0.0
-	if not is_finite(float(timestamp)) or timestamp < 0.0:
+	if not is_finite(float(timestamp)) or timestamp < 0.0 or timestamp > 1000000000000.0:
 		timestamp = 0.0
 	var zone = value.get("zone_id", "main") if value is Dictionary else "main"
 	return {"state": "DEPLETED" if timestamp > 0.0 else "AVAILABLE", "respawn_at": float(timestamp), "zone_id": zone if zone is String else "main"}

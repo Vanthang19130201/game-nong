@@ -6,12 +6,20 @@ signal action_failed(message: String)
 const FarmData = preload("res://farm_data.gd")
 const ToolData = preload("res://tool_data.gd")
 const CropData = preload("res://crop_data.gd")
+const FishingData = preload("res://fishing_data.gd")
 const DOG_PRICE: int = 300
 const EGG_PRICE: int = 18
 const MILK_PRICE: int = 30
 const Progression = preload("res://progression_data.gd")
 const SILO_ITEMS: Array[String] = ["wheat_seed", "wheat", "corn_seed", "corn", "carrot_seed", "carrot"]
-const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "egg", "milk"]
+const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "egg", "milk", "small_fish", "river_fish", "golden_fish"]
+var small_fish: int = 0
+var river_fish: int = 0
+var golden_fish: int = 0
+var has_fishing_rod: bool = false
+var fishing_rod_level: int = 0
+# Transient: an active fishing session reserves one slot, never saved.
+var reserved_barn_slots: int = 0
 
 var wheat_seed: int = 10
 var wheat: int = 0
@@ -152,6 +160,8 @@ func normalize_exp() -> void:
 	ensure_tools_for_level()
 	if player_level >= FarmData.FISHING_LEVEL:
 		fishing_unlocked = true
+		has_fishing_rod = true
+		fishing_rod_level = maxi(1, fishing_rod_level)
 
 
 func add_exp(amount: int) -> void:
@@ -218,7 +228,7 @@ func can_add_item(item: String, amount: int) -> bool:
 	if item in SILO_ITEMS:
 		return storage_used("silo") + amount <= silo_capacity
 	if item in BARN_ITEMS:
-		return storage_used("barn") + amount <= barn_capacity
+		return storage_used("barn") + reserved_barn_slots + amount <= barn_capacity
 	return false
 
 
@@ -226,6 +236,32 @@ func add_item(item: String, amount: int = 1) -> bool:
 	if not can_add_item(item, amount):
 		return fail("Storage full or invalid item.")
 	set(item, get(item) + amount)
+	inventory_changed.emit()
+	return true
+
+
+func reserve_fishing_slot() -> bool:
+	if reserved_barn_slots != 0 or not can_add_item("small_fish", 1):
+		return false
+	reserved_barn_slots = 1
+	return true
+
+
+func release_fishing_slot() -> void:
+	reserved_barn_slots = 0
+
+
+func upgrade_fishing_rod() -> bool:
+	if not has_fishing_rod or not is_zone_unlocked("fishing"):
+		return fail("Fishing unlocks at Level 10.")
+	var next_level: int = fishing_rod_level + 1
+	if not FishingData.ROD_LEVELS.has(next_level):
+		return fail("Fishing Rod: MAX LEVEL")
+	var cost: int = FishingData.ROD_LEVELS[next_level]["cost"]
+	if coins < cost:
+		return fail("Not enough Coins!")
+	coins -= cost
+	fishing_rod_level = next_level
 	inventory_changed.emit()
 	return true
 
@@ -310,7 +346,7 @@ func animal_capacity(animal: String) -> int:
 	if not Progression.ANIMALS.has(animal):
 		return 0
 	var building: String = Progression.ANIMALS[animal]["building"]
-	var level: int = clampi(get(building + "_level"), 1, 3)
+	var level: int = clampi(get(building + "_level"), 1, Progression.UPGRADES[building].size() + 1)
 	if level <= 1:
 		return Progression.ANIMALS[animal]["capacity"]
 	return Progression.UPGRADES[building][level]["capacity"]
@@ -355,7 +391,7 @@ func build_dog_house() -> bool:
 	if has_dog_house:
 		return fail("Dog House already built.")
 	if not can_pay_material_cost(Progression.DOG_HOUSE_COST):
-		return fail("Dog House requires 15 Wood and 5 Stone.")
+		return fail("Dog House requires %d Wood and %d Stone." % [Progression.DOG_HOUSE_COST["wood"], Progression.DOG_HOUSE_COST["stone"]])
 	_pay_material_cost(Progression.DOG_HOUSE_COST)
 	has_dog_house = true
 	inventory_changed.emit()

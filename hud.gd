@@ -4,6 +4,10 @@ const FarmData = preload("res://farm_data.gd")
 const ToolData = preload("res://tool_data.gd")
 const CropData = preload("res://crop_data.gd")
 const Progression = preload("res://progression_data.gd")
+const FishingData = preload("res://fishing_data.gd")
+@onready var fishing_ui: Control = $FishingUI
+var rod_info: Label
+var rod_upgrade: Button
 
 @onready var inventory_label: Label = $Layout/InventoryLabel
 @onready var shop_button: Button = $Layout/Actions/ShopButton
@@ -75,6 +79,7 @@ func _ready() -> void:
 		sell.text = "Sell %s (+%d Coins)" % [CropData.CROPS[crop]["name"], CropData.CROPS[crop]["sell_price"]]
 	_create_build_rows()
 	_create_tool_rows()
+	_create_rod_row()
 	house_upgrade_button.pressed.connect(_upgrade_house)
 	$HousePanel/Margin/Content/CloseButton.pressed.connect(close_house)
 	recipe_ids = Progression.RECIPES.keys()
@@ -115,6 +120,7 @@ func _update_inventory() -> void:
 	]
 	inventory_label.text += " | Feed: %d | Eggs: %d" % [Inventory.chicken_feed, Inventory.egg]
 	inventory_label.text += " | Cow Feed: %d | Milk: %d" % [Inventory.cow_feed, Inventory.milk]
+	inventory_label.text += "\nFish: Small %d | River %d | Golden %d" % [Inventory.small_fish, Inventory.river_fish, Inventory.golden_fish]
 	var next_unlock: String = "All current features unlocked"
 	for feature in Progression.FEATURES:
 		if Inventory.player_level < Progression.FEATURES[feature]:
@@ -125,10 +131,12 @@ func _update_inventory() -> void:
 	storage_label.text += " | Plots: %d / %d" % [Inventory.unlocked_plot_count, FarmData.MAX_PLOTS]
 	_update_build_rows()
 	_update_tools()
+	_update_rod_row()
 	_show_tool_unlock_if_needed.call_deferred()
 	egg_sell_button.text = "Sell Egg (+%d Coins)" % Inventory.EGG_PRICE
 	dog_buy_button.disabled = Inventory.has_dog
 	dog_buy_button.text = "Owned" if Inventory.has_dog else "Buy Dog (%d Coins)" % Inventory.DOG_PRICE
+	$ShopPanel/Margin/Scroll/ShopContent/PetsLabel.text = "PETS | Dog | Price: %d Coins" % Inventory.DOG_PRICE
 	var seed_text: Array[String] = []
 	var harvest_text: Array[String] = []
 	for i in range(crop_ids.size()):
@@ -218,7 +226,7 @@ func _buy_dog() -> void:
 	if Inventory.buy_dog():
 		message_label.text = "Dog purchased!"
 	else:
-		message_label.text = "Dog already owned." if Inventory.has_dog else "Need 300 Coins!"
+		message_label.text = "Dog already owned." if Inventory.has_dog else "Need %d Coins!" % Inventory.DOG_PRICE
 
 
 func open_station(station: Node) -> void:
@@ -332,9 +340,12 @@ func close_current_panel() -> void:
 	elif shop_panel.visible:
 		shop_panel.hide()
 		shop_button.text = "Open Shop"
+	elif is_instance_valid(fishing_ui.active_spot):
+		fishing_ui.close_session()
 
 
 func _close_game_panels() -> void:
+	fishing_ui.close_session()
 	if is_instance_valid(debug_panel):
 		debug_panel.hide()
 	crop_selector.get_popup().hide()
@@ -567,7 +578,8 @@ func _update_build_rows() -> void:
 			if cost.has("capacity"):
 				row["button"].text += " | Capacity %d" % cost["capacity"]
 	dog_house_button.disabled = Inventory.has_dog_house
-	dog_house_button.text = "Dog House: Built" if Inventory.has_dog_house else "Build Dog House: 15 Wood + 5 Stone (Dog optional)"
+	var dog_house_cost: Dictionary = Progression.DOG_HOUSE_COST
+	dog_house_button.text = "Dog House: Built" if Inventory.has_dog_house else "Build Dog House: %d Wood + %d Stone (Dog optional)" % [dog_house_cost["wood"], dog_house_cost["stone"]]
 
 func _buy_building(id: String) -> void:
 	Inventory.buy_building(id)
@@ -644,6 +656,7 @@ func _show_tool_unlock_if_needed() -> void:
 	if not Inventory.has_axe or not Inventory.has_hammer:
 		return
 	tools_unlock_popup.popup_centered()
+	fishing_ui.close_session()
 	Inventory.tools_unlock_notified = true
 	# Deferred notification: never save half of a harvest/order transaction.
 	SaveManager.save_game()
@@ -671,3 +684,25 @@ func _on_plot_popup_visibility_changed() -> void:
 	if not plot_purchase.visible:
 		pending_plot_number = 0
 		_show_tool_unlock_if_needed.call_deferred()
+
+
+func _create_rod_row() -> void:
+	var content = $ShopPanel/Margin/Scroll/ShopContent
+	rod_info = Label.new()
+	rod_upgrade = Button.new()
+	rod_upgrade.focus_mode = Control.FOCUS_NONE
+	rod_upgrade.pressed.connect(Inventory.upgrade_fishing_rod)
+	content.add_child(rod_info)
+	content.add_child(rod_upgrade)
+
+
+func _update_rod_row() -> void:
+	if not Inventory.has_fishing_rod or not Inventory.is_zone_unlocked("fishing"):
+		rod_info.text = "Fishing Rod - Unlocks at Level 10 (Lv1 free)"
+		rod_upgrade.text = "Locked"
+		rod_upgrade.disabled = true
+		return
+	var level: int = Inventory.fishing_rod_level
+	rod_info.text = "Fishing Rod Lv%d | Reaction window: %.2f sec" % [level, FishingData.ROD_LEVELS[level]["bite_window"]]
+	rod_upgrade.disabled = not FishingData.ROD_LEVELS.has(level + 1)
+	rod_upgrade.text = "Upgrade Rod (%d Coins)" % FishingData.ROD_LEVELS[level + 1]["cost"] if not rod_upgrade.disabled else "MAX LEVEL"

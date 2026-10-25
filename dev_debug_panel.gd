@@ -2,6 +2,9 @@ extends PanelContainer
 
 # Instantiated only by debug builds. Every mutation also checks that guard.
 func _ready() -> void:
+	if not OS.is_debug_build():
+		queue_free()
+		return
 	name = "DevDebugPanel"
 	z_index = 40
 	position = Vector2(320, 190)

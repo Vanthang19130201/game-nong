@@ -168,6 +168,8 @@ func _update_display() -> void:
 func can_interact() -> bool:
 	# Query current overlaps too: buying while already standing here needs no re-entry.
 	player_near = false
+	if not Inventory.owns_building(station_id) or not monitoring:
+		return false
 	for body in get_overlapping_bodies():
 		if body.is_in_group("farm_player"):
 			player_near = true

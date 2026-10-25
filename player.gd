@@ -33,6 +33,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if is_instance_valid(hud) and hud.blocks_world_input():
 		return
 	get_viewport().set_input_as_handled()
+	if is_instance_valid(hud) and hud.fishing_ui.handle_interact():
+		return
 	if is_instance_valid(active_resource):
 		return
 	# A single dispatcher chooses one nearby target, regardless of scene order.
