@@ -3,6 +3,8 @@ extends Node
 signal inventory_changed
 
 const CropData = preload("res://crop_data.gd")
+const DOG_PRICE: int = 300
+const EGG_PRICE: int = 18
 
 var wheat_seed: int = 10
 var wheat: int = 0
@@ -10,10 +12,31 @@ var corn_seed: int = 0
 var corn: int = 0
 var carrot_seed: int = 0
 var carrot: int = 0
-var coins: int = 100
+var coins: int = 1000
 var player_exp: int = 0
 var player_level: int = 1
 var selected_crop: String = "WHEAT"
+var chicken_feed: int = 0
+var egg: int = 0
+var has_dog: bool = false
+
+
+func buy_dog() -> bool:
+	if has_dog or coins < DOG_PRICE:
+		return false
+	coins -= DOG_PRICE
+	has_dog = true
+	inventory_changed.emit()
+	return true
+
+
+func sell_egg() -> bool:
+	if egg <= 0:
+		return false
+	egg -= 1
+	coins += EGG_PRICE
+	inventory_changed.emit()
+	return true
 
 
 func is_unlocked(crop: String) -> bool:

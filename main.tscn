@@ -4,6 +4,9 @@
 [ext_resource type="Texture2D" uid="uid://m753onc7et8y" path="res://icon.svg" id="2_h2yge"]
 [ext_resource type="Script" uid="uid://dmiin4p8yvpun" path="res://soil_plot.gd" id="3_h2yge"]
 [ext_resource type="PackedScene" path="res://hud.tscn" id="4_hud"]
+[ext_resource type="Script" path="res://farm.gd" id="5_farm"]
+[ext_resource type="PackedScene" path="res://feed_mill.tscn" id="6_mill"]
+[ext_resource type="PackedScene" path="res://chicken_coop.tscn" id="7_coop"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_6rjdj"]
 size = Vector2(28, 28)
@@ -13,13 +16,110 @@ size = Vector2(120, 88)
 
 [node name="Main" type="Node2D" unique_id=1741138209]
 position = Vector2(0, 0)
+script = ExtResource("5_farm")
+
+[node name="Ground" type="ColorRect" parent="."]
+z_index = -10
+offset_right = 2400.0
+offset_bottom = 1600.0
+mouse_filter = 2
+color = Color(0.25, 0.42, 0.25, 1)
+
+[node name="FarmYard" type="ColorRect" parent="."]
+z_index = -9
+offset_left = 500.0
+offset_top = 300.0
+offset_right = 1740.0
+offset_bottom = 1150.0
+mouse_filter = 2
+color = Color(0.35, 0.48, 0.28, 1)
+
+[node name="FieldArea" type="ColorRect" parent="."]
+z_index = -8
+offset_left = 1050.0
+offset_top = 460.0
+offset_right = 1670.0
+offset_bottom = 840.0
+mouse_filter = 2
+color = Color(0.45, 0.42, 0.26, 1)
+
+[node name="House" type="Node2D" parent="."]
+position = Vector2(700, 400)
+
+[node name="Visual" type="ColorRect" parent="House"]
+offset_left = -100.0
+offset_top = -80.0
+offset_right = 100.0
+offset_bottom = 80.0
+mouse_filter = 2
+color = Color(0.65, 0.42, 0.3, 1)
+
+[node name="HouseLabel" type="Label" parent="House"]
+offset_left = -100.0
+offset_top = -80.0
+offset_right = 100.0
+offset_bottom = 80.0
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 28
+mouse_filter = 2
+text = "HOUSE"
+
+[node name="FieldLabel" type="Label" parent="."]
+position = Vector2(1190, 410)
+theme_override_font_sizes/font_size = 24
+mouse_filter = 2
+text = "SOIL FIELDS"
+
+[node name="NorthAreaLabel" type="Label" parent="."]
+position = Vector2(1050, 180)
+theme_override_font_sizes/font_size = 24
+mouse_filter = 2
+text = "NORTH - Future trees"
+
+[node name="EastAreaLabel" type="Label" parent="."]
+position = Vector2(1880, 640)
+theme_override_font_sizes/font_size = 22
+mouse_filter = 2
+text = "Future farm area"
+
+[node name="SouthAreaLabel" type="Label" parent="."]
+position = Vector2(1050, 1340)
+theme_override_font_sizes/font_size = 24
+mouse_filter = 2
+text = "SOUTH - Future expansion"
+
+[node name="FeedMill" parent="." instance=ExtResource("6_mill")]
+position = Vector2(1160, 1020)
+
+[node name="ChickenCoop" parent="." instance=ExtResource("7_coop")]
+position = Vector2(1500, 1020)
+
+[node name="DogHomePoint" type="Node2D" parent="."]
+position = Vector2(650, 760)
+
+[node name="HomeLabel" type="Label" parent="DogHomePoint"]
+offset_left = -30.0
+offset_top = -40.0
+offset_right = 70.0
+text = "Dog Home"
+mouse_filter = 2
 
 [node name="HUD" parent="." instance=ExtResource("4_hud")]
 
 [node name="Player" type="CharacterBody2D" parent="." unique_id=694063738]
-position = Vector2(140, 360)
+position = Vector2(800, 600)
 motion_mode = 1
 script = ExtResource("1_0xm2m")
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+enabled = true
+limit_left = 0
+limit_top = 0
+limit_right = 2400
+limit_bottom = 1600
+position_smoothing_enabled = true
+position_smoothing_speed = 5.0
 
 [node name="Icon" type="Sprite2D" parent="Player" unique_id=1308617484]
 scale = Vector2(0.546875, 0.51562494)
@@ -29,7 +129,7 @@ texture = ExtResource("2_h2yge")
 shape = SubResource("RectangleShape2D_6rjdj")
 
 [node name="SoilPlot" type="Area2D" parent="." unique_id=610237959]
-position = Vector2(240, 180)
+position = Vector2(1160, 560)
 script = ExtResource("3_h2yge")
 plot_id = "soil_1"
 
@@ -62,7 +162,7 @@ metadata/_edit_use_anchors_ = true
 shape = SubResource("RectangleShape2D_0xm2m")
 
 [node name="SoilPlot6" type="Area2D" parent="." unique_id=948524571]
-position = Vector2(240, 308)
+position = Vector2(1160, 740)
 script = ExtResource("3_h2yge")
 plot_id = "soil_6"
 
@@ -95,7 +195,7 @@ metadata/_edit_use_anchors_ = true
 shape = SubResource("RectangleShape2D_0xm2m")
 
 [node name="SoilPlot5" type="Area2D" parent="." unique_id=236598396]
-position = Vector2(560, 180)
+position = Vector2(1560, 560)
 script = ExtResource("3_h2yge")
 plot_id = "soil_5"
 
@@ -128,7 +228,7 @@ metadata/_edit_use_anchors_ = true
 shape = SubResource("RectangleShape2D_0xm2m")
 
 [node name="SoilPlot4" type="Area2D" parent="." unique_id=2016170595]
-position = Vector2(560, 308)
+position = Vector2(1560, 740)
 script = ExtResource("3_h2yge")
 plot_id = "soil_4"
 
@@ -161,7 +261,7 @@ metadata/_edit_use_anchors_ = true
 shape = SubResource("RectangleShape2D_0xm2m")
 
 [node name="SoilPlot3" type="Area2D" parent="." unique_id=311795311]
-position = Vector2(400, 180)
+position = Vector2(1360, 560)
 script = ExtResource("3_h2yge")
 plot_id = "soil_3"
 
@@ -194,7 +294,7 @@ metadata/_edit_use_anchors_ = true
 shape = SubResource("RectangleShape2D_0xm2m")
 
 [node name="SoilPlot2" type="Area2D" parent="." unique_id=1559835726]
-position = Vector2(400, 308)
+position = Vector2(1360, 740)
 script = ExtResource("3_h2yge")
 plot_id = "soil_2"
 

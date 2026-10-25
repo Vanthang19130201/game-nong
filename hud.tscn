@@ -6,6 +6,35 @@
 layer = 10
 script = ExtResource("1_hud")
 
+[node name="ResetControls" type="Control" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ResetButton" type="Button" parent="ResetControls"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -82.0
+offset_top = 8.0
+offset_right = -12.0
+offset_bottom = 36.0
+grow_horizontal = 0
+focus_mode = 0
+text = "Reset"
+
+[node name="ResetConfirmation" type="ConfirmationDialog" parent="."]
+title = "Reset Game"
+size = Vector2i(360, 140)
+exclusive = true
+unresizable = true
+dialog_text = "Reset toàn bộ tiến trình game?"
+ok_button_text = "Reset Game"
+cancel_button_text = "Cancel"
+
 [node name="Layout" type="VBoxContainer" parent="."]
 anchors_preset = 0
 offset_left = 16.0
@@ -69,7 +98,7 @@ theme_override_constants/margin_bottom = 12
 
 [node name="ShopContent" type="VBoxContainer" parent="Layout/ShopPanel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 4
 
 [node name="TitleLabel" type="Label" parent="Layout/ShopPanel/Margin/ShopContent"]
 layout_mode = 2
@@ -112,6 +141,58 @@ layout_mode = 2
 focus_mode = 0
 text = "Sell Carrot"
 
+[node name="EggSellButton" type="Button" parent="Layout/ShopPanel/Margin/ShopContent"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+focus_mode = 0
+text = "Sell Egg (+18 Coins)"
+
+[node name="PetsLabel" type="Label" parent="Layout/ShopPanel/Margin/ShopContent"]
+layout_mode = 2
+text = "PETS | Dog | Price: 300 Coins"
+
+[node name="DogBuyButton" type="Button" parent="Layout/ShopPanel/Margin/ShopContent"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+focus_mode = 0
+text = "Buy Dog (300 Coins)"
+
 [node name="MessageLabel" type="Label" parent="Layout/ShopPanel/Margin/ShopContent"]
 custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
+
+[node name="StationPanel" type="PanelContainer" parent="."]
+visible = false
+offset_left = 700.0
+offset_top = 170.0
+offset_right = 1120.0
+offset_bottom = 440.0
+
+[node name="Margin" type="MarginContainer" parent="StationPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Content" type="VBoxContainer" parent="StationPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Info" type="Label" parent="StationPanel/Margin/Content"]
+layout_mode = 2
+
+[node name="ProduceButton" type="Button" parent="StationPanel/Margin/Content"]
+layout_mode = 2
+focus_mode = 0
+text = "Produce"
+
+[node name="CollectButton" type="Button" parent="StationPanel/Margin/Content"]
+layout_mode = 2
+focus_mode = 0
+text = "Collect"
+
+[node name="CloseButton" type="Button" parent="StationPanel/Margin/Content"]
+layout_mode = 2
+focus_mode = 0
+text = "Close"
