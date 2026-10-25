@@ -21,8 +21,9 @@ func _ready():
 	grow_timer.timeout.connect(_on_grow_timer_timeout)
 
 
-func _process(_delta):
-	if player_near and Input.is_action_just_pressed("interact"):
+func _unhandled_input(event: InputEvent) -> void:
+	if player_near and event.is_action_pressed("interact") and not event.is_echo():
+		get_viewport().set_input_as_handled()
 		if state == PlotState.EMPTY:
 			try_plant()
 
@@ -30,7 +31,10 @@ func _process(_delta):
 			harvest()
 
 
-func try_plant():
+func try_plant() -> void:
+	if state != PlotState.EMPTY:
+		return
+
 	if Inventory.use_wheat_seed():
 		state = PlotState.GROWING
 		plant_label.text = "MAM"
@@ -41,14 +45,20 @@ func try_plant():
 		print("Het hat giong!")
 
 
-func _on_grow_timer_timeout():
+func _on_grow_timer_timeout() -> void:
+	if state != PlotState.GROWING:
+		return
+
 	state = PlotState.READY
 	plant_label.text = "CHIN"
 
 	print("Lua da chin!")
 
 
-func harvest():
+func harvest() -> void:
+	if state != PlotState.READY:
+		return
+
 	state = PlotState.EMPTY
 	plant_label.text = ""
 
