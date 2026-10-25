@@ -126,7 +126,7 @@ func buy_seed(crop: String) -> bool:
 	if coins < price:
 		return false
 	if not can_add_item(crop.to_lower() + "_seed", 1):
-		return fail("Silo full! Sell or use some items first.")
+		return fail(tr("ERROR_SILO_BUY"))
 	coins -= price
 	set(crop.to_lower() + "_seed", seed_count(crop) + 1)
 	inventory_changed.emit()
@@ -158,7 +158,7 @@ func collect_crop(crop: String) -> bool:
 	if not CropData.CROPS.has(crop):
 		return false
 	if not can_add_item(crop.to_lower(), 1):
-		return fail("Silo full! Crop stays ready until there is space.")
+		return fail(tr("ERROR_SILO_CROP"))
 	set(crop.to_lower(), crop_count(crop) + 1)
 	player_exp += CropData.CROPS[crop]["harvest_exp"]
 	normalize_exp()
@@ -206,7 +206,7 @@ func add_wheat(amount: int = 1) -> void:
 	if amount <= 0:
 		return
 	if not can_add_item("wheat", amount):
-		fail("Silo full!")
+		fail(tr("ERROR_SILO_FULL"))
 		return
 	wheat += amount
 	inventory_changed.emit()
@@ -251,7 +251,7 @@ func can_add_item(item: String, amount: int) -> bool:
 
 func add_item(item: String, amount: int = 1) -> bool:
 	if not can_add_item(item, amount):
-		return fail("Storage full or invalid item.")
+		return fail(tr("ERROR_STORAGE"))
 	set(item, get(item) + amount)
 	inventory_changed.emit()
 	return true
@@ -286,7 +286,7 @@ func consume_fishing_attempt() -> bool:
 	if not is_zone_unlocked("fishing") or not has_fishing_rod:
 		return false
 	if fishing_attempts_remaining() <= 0:
-		return fail("No fishing attempts left. Wait for the 12-hour cycle.")
+		return fail(tr("ERROR_FISH_ATTEMPTS"))
 	var old_used: int = fishing_attempts_used
 	var old_start: float = fishing_cycle_started_at
 	refresh_fishing_cycle()
@@ -297,7 +297,7 @@ func consume_fishing_attempt() -> bool:
 	if not SaveManager.save_game():
 		fishing_attempts_used = old_used
 		fishing_cycle_started_at = old_start
-		return fail("Could not save fishing attempt. Please try again.")
+		return fail(tr("ERROR_FISH_SAVE"))
 	return true
 
 
@@ -307,13 +307,13 @@ func release_fishing_slot() -> void:
 
 func upgrade_fishing_rod() -> bool:
 	if not has_fishing_rod or not is_zone_unlocked("fishing"):
-		return fail("Fishing unlocks at Level 10.")
+		return fail(tr("FISHING_UNLOCK_LEVEL_10"))
 	var next_level: int = fishing_rod_level + 1
 	if not FishingData.ROD_LEVELS.has(next_level):
-		return fail("Fishing Rod: MAX LEVEL")
+		return fail(tr("ROD_MAX"))
 	var cost: int = FishingData.ROD_LEVELS[next_level]["cost"]
 	if coins < cost:
-		return fail("Not enough Coins!")
+		return fail(tr("ERROR_COINS"))
 	coins -= cost
 	fishing_rod_level = next_level
 	inventory_changed.emit()
@@ -322,7 +322,7 @@ func upgrade_fishing_rod() -> bool:
 
 func sell_milk() -> bool:
 	if milk <= 0:
-		return fail("No Milk to sell!")
+		return fail(tr("MSG_NO_MILK"))
 	milk -= 1
 	coins += MILK_PRICE
 	inventory_changed.emit()
@@ -331,7 +331,7 @@ func sell_milk() -> bool:
 
 func discard_feed(item: String) -> bool:
 	if item not in ["chicken_feed", "cow_feed"] or get(item) <= 0:
-		return fail("No Feed to discard.")
+		return fail(tr("MSG_NO_FEED"))
 	set(item, get(item) - 1)
 	inventory_changed.emit()
 	return true
@@ -346,11 +346,11 @@ func buy_building(id: String) -> bool:
 		return false
 	var info: Dictionary = Progression.BUILDINGS[id]
 	if owns_building(id):
-		return fail("Building already owned.")
+		return fail(tr("ERROR_BUILDING_OWNED"))
 	if player_level < info["level"]:
-		return fail("Locked: requires Level %d." % info["level"])
+		return fail(tr("ERROR_LEVEL") % info["level"])
 	if coins < info["price"]:
-		return fail("Not enough Coins!")
+		return fail(tr("ERROR_COINS"))
 	coins -= info["price"]
 	set("owns_" + id, true)
 	inventory_changed.emit()
@@ -370,13 +370,13 @@ func buy_animal(animal: String) -> bool:
 		return false
 	var info: Dictionary = Progression.ANIMALS[animal]
 	if not owns_building(info["building"]) or player_level < info["level"]:
-		return fail("Buy the building and reach Level %d first." % info["level"])
+		return fail(tr("ERROR_BUY_BUILDING_LEVEL") % info["level"])
 	if animal_trade_busy(animal):
-		return fail("Collect products before changing animals.")
+		return fail(tr("ERROR_BUSY_ANIMALS"))
 	if get(animal + "_count") >= animal_capacity(animal):
-		return fail("Animal capacity reached.")
+		return fail(tr("ERROR_ANIMAL_CAPACITY"))
 	if coins < info["buy"]:
-		return fail("Not enough Coins!")
+		return fail(tr("ERROR_COINS"))
 	coins -= info["buy"]
 	set(animal + "_count", get(animal + "_count") + 1)
 	inventory_changed.emit()
@@ -387,9 +387,9 @@ func sell_animal(animal: String) -> bool:
 	if not Progression.ANIMALS.has(animal):
 		return false
 	if get(animal + "_count") <= 0:
-		return fail("No animals to sell.")
+		return fail(tr("ERROR_NO_ANIMALS"))
 	if animal_trade_busy(animal):
-		return fail("Collect products before changing animals.")
+		return fail(tr("ERROR_BUSY_ANIMALS"))
 	var info: Dictionary = Progression.ANIMALS[animal]
 	set(animal + "_count", get(animal + "_count") - 1)
 	coins += info["sell"]
@@ -426,12 +426,12 @@ func upgrade_structure(id: String) -> bool:
 	if not Progression.UPGRADES.has(id):
 		return false
 	if id in Progression.BUILDINGS and not owns_building(id):
-		return fail("Buy this building with Coins first.")
+		return fail(tr("ERROR_BUILDING_FIRST"))
 	var cost: Dictionary = next_upgrade(id)
 	if cost.is_empty():
-		return fail("Already at maximum level.")
+		return fail(tr("ERROR_MAX_LEVEL"))
 	if not can_pay_material_cost(cost):
-		return fail("Not enough resources." if id == "house" else "Not enough Wood, Stone or Coins.")
+		return fail(tr("ERROR_RESOURCES") if id == "house" else tr("ERROR_MATERIALS"))
 	_pay_material_cost(cost)
 	set(id + "_level", get(id + "_level") + 1)
 	if id in ["silo", "barn"]:
@@ -443,9 +443,9 @@ func upgrade_structure(id: String) -> bool:
 
 func build_dog_house() -> bool:
 	if has_dog_house:
-		return fail("Dog House already built.")
+		return fail(tr("ERROR_DOG_HOUSE_OWNED"))
 	if not can_pay_material_cost(Progression.DOG_HOUSE_COST):
-		return fail("Dog House requires %d Wood and %d Stone." % [Progression.DOG_HOUSE_COST["wood"], Progression.DOG_HOUSE_COST["stone"]])
+		return fail(tr("ERROR_DOG_HOUSE_COST") % [Progression.DOG_HOUSE_COST["wood"], Progression.DOG_HOUSE_COST["stone"]])
 	_pay_material_cost(Progression.DOG_HOUSE_COST)
 	has_dog_house = true
 	inventory_changed.emit()
@@ -473,14 +473,14 @@ func tool_duration(id: String) -> float:
 
 func upgrade_tool(id: String) -> bool:
 	if not can_use_tool(id):
-		return fail("Tools unlock at Level 6.")
+		return fail(tr("ERROR_TOOLS_LOCKED"))
 	var next: int = get(id + "_level") + 1
 	var levels: Dictionary = ToolData.TOOLS[id]["levels"]
 	if not levels.has(next):
-		return fail("MAX LEVEL")
+		return fail(tr("UI_MAX_LEVEL"))
 	var price: int = levels[next]["cost"]
 	if coins < price:
-		return fail("Not enough Coins!")
+		return fail(tr("ERROR_COINS"))
 	coins -= price
 	set(id + "_level", next)
 	inventory_changed.emit()
@@ -498,12 +498,12 @@ func is_zone_unlocked(id: String) -> bool:
 
 func buy_plot(number: int) -> bool:
 	if unlocked_plot_count >= FarmData.MAX_PLOTS:
-		return fail("Farm is full: maximum 32 plots.")
+		return fail(tr("ERROR_PLOTS_MAX"))
 	if number != unlocked_plot_count + 1:
-		return fail("Unlock Plot %d first." % (unlocked_plot_count + 1))
+		return fail(tr("PLOT_FIRST") % (unlocked_plot_count + 1))
 	var price: int = FarmData.plot_price(number)
 	if price < 0 or coins < price:
-		return fail("Not enough Coins")
+		return fail(tr("ERROR_COINS"))
 	coins -= price
 	unlocked_plot_count = number
 	inventory_changed.emit()

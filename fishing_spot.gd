@@ -44,12 +44,12 @@ func start_session(body: Node2D = null) -> bool:
 	if not can_interact() or hud == null or hud.blocks_world_input() or is_instance_valid(hud.fishing_ui.active_spot):
 		return false
 	if not Inventory.has_fishing_rod:
-		return Inventory.fail("You need a Fishing Rod.")
+		return Inventory.fail(tr("FISHING_NEED_ROD"))
 	player = body if body != null else get_tree().get_first_node_in_group("farm_player")
 	if not is_instance_valid(player) or is_instance_valid(player.active_resource):
 		return false
 	if not Inventory.reserve_fishing_slot():
-		return Inventory.fail("Barn is full.")
+		return Inventory.fail(tr("FISHING_BARN_FULL"))
 	reserved_slot = true
 	if not Inventory.consume_fishing_attempt():
 		_release_slot()
@@ -59,7 +59,7 @@ func start_session(body: Node2D = null) -> bool:
 	bite_window = Data.ROD_LEVELS[clampi(Inventory.fishing_rod_level, 1, Data.ROD_LEVELS.size())]["bite_window"]
 	state = State.WAITING_FOR_BITE
 	deadline = now() + bite_delay
-	feedback = "Fishing...\nWaiting for a bite..."
+	feedback = tr("FISHING_WAITING")
 	hud.fishing_ui.show_session(self)
 	return true
 
@@ -71,9 +71,9 @@ func _process(_delta: float) -> void:
 			return
 	_advance_state()
 	if state == State.IDLE:
-		label.text = "Fishing Spot\n[E] Fish" if can_interact() else "Fishing Spot"
+		label.text = tr("FISHING_SPOT_PROMPT") if can_interact() else tr("WORLD_FISHING_SPOT")
 	elif state == State.BITE_WINDOW:
-		label.text = "!!! FISH BITE !!!\nPRESS E / REEL!"
+		label.text = tr("FISHING_BITE")
 	else:
 		label.text = feedback
 
@@ -90,14 +90,14 @@ func _advance_state() -> void:
 			state = State.BITE_WINDOW
 			# Preserve the exact bite deadline even when a frame arrives late.
 			deadline += bite_window
-			feedback = "!!! FISH BITE !!!\nPRESS E / REEL!"
+			feedback = tr("FISHING_BITE")
 			if now() >= deadline:
-				_fail("The fish got away!")
+				_fail(tr("FISHING_MISSED"))
 		State.BITE_WINDOW:
-			_fail("The fish got away!")
+			_fail(tr("FISHING_MISSED"))
 		State.SUCCESS, State.FAILED:
 			state = State.COOLDOWN
-			feedback += "\nCooldown..."
+			feedback += tr("FISHING_COOLDOWN")
 			deadline = now() + Data.COOLDOWN_TIME
 		State.COOLDOWN:
 			state = State.IDLE
@@ -113,7 +113,7 @@ func reel() -> void:
 		return
 	_advance_state()
 	if state == State.WAITING_FOR_BITE:
-		_fail("Too early! The fish got scared.")
+		_fail(tr("FISHING_TOO_EARLY"))
 	elif state == State.BITE_WINDOW:
 		_catch_fish()
 
@@ -125,9 +125,9 @@ func _catch_fish() -> void:
 	_release_slot()
 	if not Inventory.can_add_item(fish, 1):
 		# Defensive fallback for external/debug changes to capacity during the session.
-		_fail("Barn is full.")
+		_fail(tr("FISHING_BARN_FULL"))
 		return
-	feedback = "Caught: %s" % Data.FISH[fish]["name"]
+	feedback = tr("FISHING_CAUGHT") % Localization.display_name(Data.FISH[fish]["name"])
 	deadline = now() + Data.RESULT_TIME
 	Inventory.add_item(fish, 1)
 

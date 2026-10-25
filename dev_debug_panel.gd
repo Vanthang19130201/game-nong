@@ -14,15 +14,15 @@ func _ready() -> void:
 	content.add_theme_constant_override("separation", 10)
 	add_child(content)
 	var title := Label.new()
-	title.text = "DEV DEBUG (F3 / ESC)\nActions update the CURRENT save."
+	title.text = tr("DEBUG_TITLE")
 	content.add_child(title)
 	for entry in [["coins", 1000], ["wood", 10], ["stone", 10], ["player_exp", 100]]:
-		_add_button(content, "+%d %s" % [entry[1], entry[0]], _add_value.bind(entry[0], entry[1]))
+		_add_button(content, "+%d %s" % [entry[1], Localization.display_name(entry[0])], _add_value.bind(entry[0], entry[1]))
 	var levels := HBoxContainer.new()
 	content.add_child(levels)
 	for level in [1, 6, 8, 10, 12]:
-		_add_button(levels, "Level %d" % level, _set_level.bind(level))
-	_add_button(content, "Close", hide)
+		_add_button(levels, tr("DEBUG_LEVEL") % level, _set_level.bind(level))
+	_add_button(content, tr("UI_CLOSE"), hide)
 
 
 func _add_button(parent: Node, text: String, action: Callable) -> void:

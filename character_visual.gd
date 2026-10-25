@@ -2,7 +2,7 @@
 extends AnimatedSprite2D
 
 @export var fallback_paths: Array[NodePath] = []
-@export_enum("none", "chicken", "cow") var animal_kind: String = "none"
+@export var presentation_enabled: bool = true
 var facing: String = "down"
 
 func _process(_delta: float) -> void:
@@ -24,9 +24,7 @@ func _process(_delta: float) -> void:
 		play(requested)
 	elif has_art and not is_playing():
 		play(requested)
-	visible = has_art
-	if animal_kind != "none" and not Engine.is_editor_hint():
-		visible = has_art and Inventory.get(animal_kind + "_count") > 0
+	visible = has_art and presentation_enabled
 	for path in fallback_paths:
 		var fallback = get_node_or_null(path)
 		if fallback is CanvasItem:

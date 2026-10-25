@@ -95,7 +95,7 @@ func harvest() -> bool:
 	if hud != null and hud.blocks_world_input():
 		return false
 	if not Inventory.can_use_tool(tool_id()):
-		return Inventory.fail("Báº¡n cáº§n cÃ´ng cá»¥ Ä‘á»ƒ khai thÃ¡c. Tools unlock at Level 6.")
+		return Inventory.fail(tr("ERROR_NEED_TOOLS"))
 	if state != "AVAILABLE" or is_instance_valid(player.active_resource):
 		return false
 	state = "GATHERING"

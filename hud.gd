@@ -69,14 +69,14 @@ func _ready() -> void:
 	crop_ids = CropData.CROPS.keys()
 	var content: VBoxContainer = $ShopPanel/Margin/Scroll/ShopContent
 	for crop in crop_ids:
-		crop_selector.add_item(CropData.CROPS[crop]["name"])
-		var prefix: String = "" if crop == "WHEAT" else CropData.CROPS[crop]["name"]
+		crop_selector.add_item(Localization.display_name(CropData.CROPS[crop]["name"]))
+		var prefix: String = "" if crop == "WHEAT" else crop.capitalize()
 		var buy: Button = content.get_node(prefix + "BuyButton")
 		var sell: Button = content.get_node(prefix + "SellButton")
 		buy_buttons[crop] = buy
 		buy.pressed.connect(_buy_seed.bind(crop))
 		sell.pressed.connect(_sell_crop.bind(crop))
-		sell.text = "Sell %s (+%d Coins)" % [CropData.CROPS[crop]["name"], CropData.CROPS[crop]["sell_price"]]
+		sell.text = tr("UI_SELL_CROP") % [Localization.display_name(CropData.CROPS[crop]["name"]), CropData.CROPS[crop]["sell_price"]]
 	_create_build_rows()
 	_create_tool_rows()
 	_create_rod_row()
@@ -84,7 +84,7 @@ func _ready() -> void:
 	$HousePanel/Margin/Content/CloseButton.pressed.connect(close_house)
 	recipe_ids = Progression.RECIPES.keys()
 	for recipe in recipe_ids:
-		recipe_selector.add_item(Progression.RECIPES[recipe]["name"])
+		recipe_selector.add_item(Localization.display_name(Progression.RECIPES[recipe]["name"]))
 	recipe_selector.item_selected.connect(_on_recipe_selected)
 	Inventory.action_failed.connect(_show_message)
 	$Layout/Actions/BuildButton.pressed.connect(open_build)
@@ -114,48 +114,48 @@ func _ready() -> void:
 
 func _update_inventory() -> void:
 	save_status.text = ""
-	inventory_label.text = "Coins: %d | Level: %d | EXP: %d / %d" % [
+	inventory_label.text = tr("HUD_MAIN") % [
 		Inventory.coins, Inventory.player_level, Inventory.player_exp, Inventory.exp_to_next_level()
 	]
-	inventory_label.text += " | Feed: %d | Eggs: %d" % [Inventory.chicken_feed, Inventory.egg]
-	inventory_label.text += " | Cow Feed: %d | Milk: %d" % [Inventory.cow_feed, Inventory.milk]
-	inventory_label.text += "\nFish: Small %d | River %d | Golden %d" % [Inventory.small_fish, Inventory.river_fish, Inventory.golden_fish]
-	var next_unlock: String = "All current features unlocked"
+	inventory_label.text += tr("HUD_FEED") % [Inventory.chicken_feed, Inventory.egg]
+	inventory_label.text += tr("HUD_COW") % [Inventory.cow_feed, Inventory.milk]
+	inventory_label.text += tr("HUD_FISH") % [Inventory.small_fish, Inventory.river_fish, Inventory.golden_fish]
+	var next_unlock: String = tr("HUD_UNLOCKS_DONE")
 	for feature in Progression.FEATURES:
 		if Inventory.player_level < Progression.FEATURES[feature]:
-			next_unlock = "%s (Level %d)" % [feature, Progression.FEATURES[feature]]
+			next_unlock = tr("HUD_NEXT_LEVEL") % [Localization.display_name(feature), Progression.FEATURES[feature]]
 			break
-	storage_label.text = "Silo: %d / %d | Barn: %d / %d | Next: %s" % [Inventory.storage_used("silo"), Inventory.silo_capacity, Inventory.storage_used("barn"), Inventory.barn_capacity, next_unlock]
-	storage_label.text += "\nWood: %d | Stone: %d | House Level: %d" % [Inventory.wood, Inventory.stone, Inventory.house_level]
-	storage_label.text += " | Plots: %d / %d" % [Inventory.unlocked_plot_count, FarmData.MAX_PLOTS]
+	storage_label.text = tr("HUD_STORAGE") % [Inventory.storage_used("silo"), Inventory.silo_capacity, Inventory.storage_used("barn"), Inventory.barn_capacity, next_unlock]
+	storage_label.text += tr("HUD_MATERIALS") % [Inventory.wood, Inventory.stone, Inventory.house_level]
+	storage_label.text += tr("HUD_PLOTS") % [Inventory.unlocked_plot_count, FarmData.MAX_PLOTS]
 	_update_build_rows()
 	_update_tools()
 	_update_rod_row()
 	_show_tool_unlock_if_needed.call_deferred()
-	egg_sell_button.text = "Sell Egg (+%d Coins)" % Inventory.EGG_PRICE
+	egg_sell_button.text = tr("UI_SELL_EGG") % Inventory.EGG_PRICE
 	dog_buy_button.disabled = Inventory.has_dog
-	dog_buy_button.text = "Owned" if Inventory.has_dog else "Buy Dog (%d Coins)" % Inventory.DOG_PRICE
-	$ShopPanel/Margin/Scroll/ShopContent/PetsLabel.text = "PETS | Dog | Price: %d Coins" % Inventory.DOG_PRICE
+	dog_buy_button.text = tr("UI_OWNED") if Inventory.has_dog else tr("UI_BUY_DOG") % Inventory.DOG_PRICE
+	$ShopPanel/Margin/Scroll/ShopContent/PetsLabel.text = tr("UI_PETS") % Inventory.DOG_PRICE
 	var seed_text: Array[String] = []
 	var harvest_text: Array[String] = []
 	for i in range(crop_ids.size()):
 		var crop: String = crop_ids[i]
 		var info: Dictionary = CropData.CROPS[crop]
 		var unlocked: bool = Inventory.is_unlocked(crop)
-		seed_text.append("%s: %d" % [info["name"], Inventory.seed_count(crop)])
-		harvest_text.append("%s: %d" % [info["name"], Inventory.crop_count(crop)])
-		var choice: String = info["name"]
+		seed_text.append("%s: %d" % [Localization.display_name(info["name"]), Inventory.seed_count(crop)])
+		harvest_text.append("%s: %d" % [Localization.display_name(info["name"]), Inventory.crop_count(crop)])
+		var choice: String = Localization.display_name(info["name"])
 		if not unlocked:
-			choice += " - Unlock Level %d" % info["unlock_level"]
+			choice += tr("UI_UNLOCK_LEVEL") % info["unlock_level"]
 		crop_selector.set_item_text(i, choice)
 		crop_selector.set_item_disabled(i, not unlocked)
 		var buy: Button = buy_buttons[crop]
 		buy.disabled = not unlocked
-		buy.text = "Buy %s Seed (%d Coins)" % [info["name"], info["seed_buy_price"]]
+		buy.text = tr("UI_BUY_SEED") % [Localization.display_name(info["name"]), info["seed_buy_price"]]
 		if not unlocked:
-			buy.text += " - Level %d" % info["unlock_level"]
-	inventory_label.text += "\nSeeds: " + " | ".join(seed_text)
-	inventory_label.text += "\nHarvest: " + " | ".join(harvest_text)
+			buy.text += tr("UI_LEVEL_SUFFIX") % info["unlock_level"]
+	inventory_label.text += tr("HUD_SEEDS") + " | ".join(seed_text)
+	inventory_label.text += tr("HUD_HARVEST") + " | ".join(harvest_text)
 	crop_selector.select(crop_ids.find(Inventory.selected_crop))
 	_update_station_panel()
 	_update_house_panel()
@@ -179,9 +179,9 @@ func _reset_game() -> void:
 		pending_plot_number = 0
 		_close_game_panels()
 		message_label.text = ""
-		save_status.text = "Game reset and saved!"
+		save_status.text = tr("RESET_DONE")
 	else:
-		save_status.text = "Reset failed. Please try again."
+		save_status.text = tr("RESET_FAILED")
 
 
 func _toggle_shop() -> void:
@@ -190,35 +190,35 @@ func _toggle_shop() -> void:
 	var was_open: bool = shop_panel.visible
 	_close_game_panels()
 	shop_panel.visible = not was_open
-	shop_button.text = "Close Shop" if shop_panel.visible else "Open Shop"
+	shop_button.text = tr("UI_CLOSE_SHOP") if shop_panel.visible else tr("UI_OPEN_SHOP")
 	message_label.text = ""
 
 
 func _buy_seed(crop: String = "WHEAT") -> void:
 	if Inventory.buy_seed(crop):
-		message_label.text = "Bought 1 %s Seed." % CropData.CROPS[crop]["name"]
+		message_label.text = tr("MSG_BOUGHT_SEED") % Localization.display_name(CropData.CROPS[crop]["name"])
 	elif not Inventory.is_unlocked(crop):
-		message_label.text = "Crop is locked."
+		message_label.text = tr("MSG_CROP_LOCKED")
 	else:
-		message_label.text = "Not enough Coins or Silo full!"
+		message_label.text = tr("MSG_COINS_OR_SILO")
 
 
 func _sell_crop(crop: String) -> void:
 	if Inventory.sell_crop(crop):
-		message_label.text = "Sold 1 %s." % CropData.CROPS[crop]["name"]
+		message_label.text = tr("MSG_SOLD_CROP") % Localization.display_name(CropData.CROPS[crop]["name"])
 	else:
-		message_label.text = "No %s to sell!" % CropData.CROPS[crop]["name"]
+		message_label.text = tr("MSG_NO_CROP") % Localization.display_name(CropData.CROPS[crop]["name"])
 
 
 func _sell_egg() -> void:
-	message_label.text = "Sold 1 Egg." if Inventory.sell_egg() else "No Eggs to sell!"
+	message_label.text = tr("MSG_SOLD_EGG") if Inventory.sell_egg() else tr("MSG_NO_EGG")
 
 
 func _buy_dog() -> void:
 	if Inventory.buy_dog():
-		message_label.text = "Dog purchased!"
+		message_label.text = tr("MSG_DOG_BOUGHT")
 	else:
-		message_label.text = "Dog already owned." if Inventory.has_dog else "Need %d Coins!" % Inventory.DOG_PRICE
+		message_label.text = tr("MSG_DOG_OWNED") if Inventory.has_dog else tr("MSG_NEED_COINS") % Inventory.DOG_PRICE
 
 
 func open_station(station: Node) -> void:
@@ -228,7 +228,7 @@ func open_station(station: Node) -> void:
 	active_station = station
 	active_station.state_changed.connect(_update_station_panel)
 	shop_panel.hide()
-	shop_button.text = "Open Shop"
+	shop_button.text = tr("UI_OPEN_SHOP")
 	station_panel.show()
 	_update_station_panel()
 
@@ -251,26 +251,26 @@ func _update_station_panel() -> void:
 	if is_mill:
 		var recipe: String = recipe_ids[maxi(0, recipe_selector.selected)]
 		var info: Dictionary = Progression.RECIPES[recipe]
-		station_info.text = "Feed Mill\nState: %s\n%s\nRequires:" % [active_station.state, info["name"]]
+		station_info.text = tr("STATION_MILL_INFO") % [Localization.state(active_station.state), Localization.display_name(info["name"])]
 		for item in info["requirements"]:
-			station_info.text += "\n%d %s (have %d)" % [info["requirements"][item], item.capitalize(), Inventory.get(item)]
-		station_info.text += "\nTime: %d seconds | Unlock Level %d" % [info["time"], info["level"]]
+			station_info.text += tr("STATION_INGREDIENT") % [info["requirements"][item], Localization.display_name(item), Inventory.get(item)]
+		station_info.text += tr("STATION_TIME") % [info["time"], info["level"]]
 		if active_station.state != "IDLE":
-			station_info.text += "\nBatch: " + active_station.production_type.capitalize()
+			station_info.text += tr("STATION_BATCH") + Localization.display_name(active_station.production_type)
 		for index in range(recipe_ids.size()):
 			recipe_selector.set_item_disabled(index, Inventory.player_level < Progression.RECIPES[recipe_ids[index]]["level"])
-		produce_button.text = "Produce"
-		collect_button.text = "Collect Feed"
+		produce_button.text = tr("UI_PRODUCE")
+		collect_button.text = tr("UI_COLLECT_FEED")
 		produce_button.disabled = not active_station.can_produce(recipe) or not active_station.player_near
 	else:
 		var product: Dictionary = Progression.PRODUCTS[id]
 		var animal: String = product["animal"]
 		var info: Dictionary = Progression.ANIMALS[animal]
-		station_info.text = "%s\n%s: %d / %d\nState: %s\n%s: %d\n1 Feed for the whole herd\nTime: %d seconds | Production Level %d" % [Progression.BUILDINGS[id]["name"], info["name"], Inventory.get(animal + "_count"), Inventory.animal_capacity(animal), active_station.state, product["feed"].capitalize(), Inventory.get(product["feed"]), product["time"], product["level"]]
-		produce_button.text = "Feed " + info["name"]
-		collect_button.text = "Collect " + product["item"].capitalize()
-		animal_buy.text = "Buy %s (%d Coins)" % [info["name"], info["buy"]]
-		animal_sell.text = "Sell %s (+%d Coins)" % [info["name"], info["sell"]]
+		station_info.text = tr("STATION_ANIMALS_INFO") % [Localization.display_name(Progression.BUILDINGS[id]["name"]), Localization.display_name(info["name"]), Inventory.get(animal + "_count"), Inventory.animal_capacity(animal), Localization.state(active_station.state), Localization.display_name(product["feed"]), Inventory.get(product["feed"]), product["time"], product["level"]]
+		produce_button.text = tr("UI_FEED_PREFIX") + Localization.display_name(info["name"])
+		collect_button.text = tr("UI_COLLECT_PREFIX") + Localization.display_name(product["item"])
+		animal_buy.text = tr("UI_BUY_ANIMAL") % [Localization.display_name(info["name"]), info["buy"]]
+		animal_sell.text = tr("UI_SELL_CROP") % [Localization.display_name(info["name"]), info["sell"]]
 		var busy: bool = Inventory.animal_trade_busy(animal)
 		animal_buy.disabled = busy or Inventory.player_level < info["level"] or Inventory.get(animal + "_count") >= Inventory.animal_capacity(animal)
 		animal_sell.disabled = busy or Inventory.get(animal + "_count") <= 0
@@ -333,7 +333,7 @@ func close_current_panel() -> void:
 		close_station()
 	elif shop_panel.visible:
 		shop_panel.hide()
-		shop_button.text = "Open Shop"
+		shop_button.text = tr("UI_OPEN_SHOP")
 	elif is_instance_valid(fishing_ui.active_spot):
 		fishing_ui.close_session()
 
@@ -350,7 +350,7 @@ func _close_game_panels() -> void:
 	close_station()
 	order_panel.hide()
 	shop_panel.hide()
-	shop_button.text = "Open Shop"
+	shop_button.text = tr("UI_OPEN_SHOP")
 	var player = get_tree().get_first_node_in_group("farm_player")
 	if player != null and is_instance_valid(player.active_resource):
 		player.active_resource.cancel_harvest()
@@ -400,13 +400,13 @@ func _update_house_panel() -> void:
 	if not house_panel.visible:
 		return
 	house_message.text = ""
-	house_info.text = "Current Level: %d" % Inventory.house_level
+	house_info.text = tr("HOUSE_CURRENT") % Inventory.house_level
 	var cost: Dictionary = Inventory.next_upgrade("house")
 	house_upgrade_button.disabled = cost.is_empty()
 	if cost.is_empty():
-		house_info.text += "\n\nMAX LEVEL"
+		house_info.text += tr("HOUSE_MAX")
 		return
-	house_info.text += "\n\nNext Upgrade: Level %d\nCoins: %d / %d\nWood: %d / %d\nStone: %d / %d" % [Inventory.house_level + 1, Inventory.coins, cost["coins"], Inventory.wood, cost["wood"], Inventory.stone, cost["stone"]]
+	house_info.text += tr("HOUSE_NEXT") % [Inventory.house_level + 1, Inventory.coins, cost["coins"], Inventory.wood, cost["wood"], Inventory.stone, cost["stone"]]
 
 
 func _upgrade_house() -> void:
@@ -414,9 +414,9 @@ func _upgrade_house() -> void:
 		close_house()
 		return
 	if Inventory.upgrade_structure("house"):
-		house_message.text = "House upgraded!"
+		house_message.text = tr("HOUSE_UPGRADED")
 	else:
-		house_message.text = "MAX LEVEL" if Inventory.next_upgrade("house").is_empty() else "Not enough resources."
+		house_message.text = tr("UI_MAX_LEVEL") if Inventory.next_upgrade("house").is_empty() else tr("ERROR_RESOURCES")
 
 
 func open_orders() -> void:
@@ -442,14 +442,14 @@ func _refresh_orders() -> void:
 		card.add_child(content)
 		var label := Label.new()
 		label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		label.text = order["order_id"].capitalize() + "\n\n"
+		label.text = tr("ORDER_NUMBER") % order["order_id"].trim_prefix("order_") + "\n\n"
 		for item in order["requirements"]:
-			label.text += "%s: %d (have %d)\n" % [items[item]["name"], order["requirements"][item], Inventory.get(item)]
-		label.text += "\nReward:\n%d Coins\n%d EXP" % [order["coin_reward"], order["exp_reward"]]
+			label.text += tr("ORDER_ITEM") % [Localization.display_name(items[item]["name"]), order["requirements"][item], Inventory.get(item)]
+		label.text += tr("ORDER_REWARD") % [order["coin_reward"], order["exp_reward"]]
 		content.add_child(label)
 		var complete := Button.new()
 		complete.name = "Complete"
-		complete.text = "Complete"
+		complete.text = tr("ORDER_COMPLETE")
 		complete.focus_mode = Control.FOCUS_NONE
 		complete.pressed.connect(_complete_order.bind(order["order_id"]))
 		content.add_child(complete)
@@ -458,23 +458,23 @@ func _refresh_orders() -> void:
 
 func _complete_order(order_id: String) -> void:
 	if OrderManager.complete_order(order_id):
-		order_message.text = "Order completed!"
+		order_message.text = tr("ORDER_DONE")
 	else:
-		order_message.text = "Not enough items"
+		order_message.text = tr("ERROR_ITEMS")
 
 func _show_message(message: String) -> void:
 	save_status.text = message
 
 
 func _sell_milk() -> void:
-	message_label.text = "Sold 1 Milk." if Inventory.sell_milk() else "No Milk to sell!"
+	message_label.text = tr("MSG_SOLD_MILK") if Inventory.sell_milk() else tr("MSG_NO_MILK")
 
 
 func _discard_feed(item: String) -> void:
 	if Inventory.discard_feed(item):
-		message_label.text = "Discarded 1 " + item.capitalize() + "."
+		message_label.text = tr("UI_DISCARD_ITEM") + Localization.display_name(item) + "."
 	else:
-		message_label.text = "No Feed to discard."
+		message_label.text = tr("MSG_NO_FEED")
 
 
 func _on_recipe_selected(_index: int) -> void:
@@ -494,7 +494,7 @@ func _create_build_rows() -> void:
 		var row := HBoxContainer.new()
 		var label := Label.new()
 		label.custom_minimum_size.x = 300
-		label.text = Progression.BUILDINGS[id]["name"]
+		label.text = Localization.display_name(Progression.BUILDINGS[id]["name"])
 		row.add_child(label)
 		var buy := Button.new()
 		buy.focus_mode = Control.FOCUS_NONE
@@ -521,7 +521,7 @@ func _create_build_rows() -> void:
 
 
 	var heading := Label.new()
-	heading.text = "FARM UPGRADES - Wood + Stone + Coins"
+	heading.text = tr("UI_FARM_UPGRADES")
 	build_rows.add_child(heading)
 	for id in Progression.UPGRADES:
 		var row := VBoxContainer.new()
@@ -544,44 +544,44 @@ func _update_build_rows() -> void:
 		var buy: Button = building_buttons[id]
 		buy.disabled = Inventory.owns_building(id) or Inventory.player_level < info["level"]
 		if Inventory.owns_building(id):
-			buy.text = "Owned"
+			buy.text = tr("UI_OWNED")
 		elif Inventory.player_level < info["level"]:
-			buy.text = "Locked - Level %d" % info["level"]
+			buy.text = tr("UI_LOCKED_LEVEL") % info["level"]
 		else:
-			buy.text = "Buy (%d Coins)" % info["price"]
+			buy.text = tr("UI_BUY_PRICE") % info["price"]
 	for animal in animal_buttons:
 		var info: Dictionary = Progression.ANIMALS[animal]
 		var row: Dictionary = animal_buttons[animal]
 		var count: int = Inventory.get(animal + "_count")
-		row["label"].text = "%s | %s: %d / %d" % [Progression.BUILDINGS[info["building"]]["name"], info["name"], count, Inventory.animal_capacity(animal)]
+		row["label"].text = "%s | %s: %d / %d" % [Localization.display_name(Progression.BUILDINGS[info["building"]]["name"]), Localization.display_name(info["name"]), count, Inventory.animal_capacity(animal)]
 		var locked: bool = Inventory.player_level < info["level"] or not Inventory.owns_building(info["building"])
 		var busy: bool = Inventory.animal_trade_busy(animal)
 		if busy:
-			row["label"].text += " - Collect before trading"
+			row["label"].text += tr("UI_COLLECT_BEFORE_TRADE")
 		row["buy"].disabled = locked or busy or count >= Inventory.animal_capacity(animal)
-		row["buy"].text = "Locked - Level %d + owned building" % info["level"] if locked else "Buy %s (%d)" % [info["name"], info["buy"]]
+		row["buy"].text = tr("UI_ANIMAL_LOCKED") % info["level"] if locked else tr("UI_BUY_ANIMAL_SHORT") % [Localization.display_name(info["name"]), info["buy"]]
 		row["sell"].disabled = busy or count <= 0
-		row["sell"].text = "Sell %s (+%d)" % [info["name"], info["sell"]]
+		row["sell"].text = tr("UI_SELL_ANIMAL") % [Localization.display_name(info["name"]), info["sell"]]
 
 
 	for id in upgrade_rows:
 		var row: Dictionary = upgrade_rows[id]
 		var current: int = Inventory.get(id + "_level")
-		row["label"].text = "%s Lv%d" % [id.capitalize(), current]
+		row["label"].text = tr("UI_STRUCTURE_LEVEL") % [Localization.display_name(id), current]
 		var cost: Dictionary = Inventory.next_upgrade(id)
 		var owned: bool = id not in Progression.BUILDINGS or Inventory.owns_building(id)
 		row["button"].disabled = cost.is_empty() or not owned
 		if not owned:
-			row["button"].text = "Buy building with Coins first"
+			row["button"].text = tr("UI_BUILDING_FIRST")
 		elif cost.is_empty():
-			row["button"].text = "Max Level"
+			row["button"].text = tr("UI_MAX_LEVEL")
 		else:
-			row["button"].text = "Upgrade Lv%d: %d Wood + %d Stone + %d Coins" % [current + 1, cost["wood"], cost["stone"], cost["coins"]]
+			row["button"].text = tr("UI_STRUCTURE_UPGRADE") % [current + 1, cost["wood"], cost["stone"], cost["coins"]]
 			if cost.has("capacity"):
-				row["button"].text += " | Capacity %d" % cost["capacity"]
+				row["button"].text += tr("UI_CAPACITY") % cost["capacity"]
 	dog_house_button.disabled = Inventory.has_dog_house
 	var dog_house_cost: Dictionary = Progression.DOG_HOUSE_COST
-	dog_house_button.text = "Dog House: Built" if Inventory.has_dog_house else "Build Dog House: %d Wood + %d Stone (Dog optional)" % [dog_house_cost["wood"], dog_house_cost["stone"]]
+	dog_house_button.text = tr("UI_DOG_HOUSE_BUILT") if Inventory.has_dog_house else tr("UI_BUILD_DOG_HOUSE") % [dog_house_cost["wood"], dog_house_cost["stone"]]
 
 func _buy_building(id: String) -> void:
 	Inventory.buy_building(id)
@@ -613,12 +613,12 @@ func _build_dog_house() -> void:
 func _create_tool_rows() -> void:
 	var content: VBoxContainer = $ShopPanel/Margin/Scroll/ShopContent
 	var title := Label.new()
-	title.text = "TOOLS - Unlock Level 6 | Coins upgrades"
+	title.text = tr("TOOLS_TITLE")
 	content.add_child(title)
 	for id in ToolData.TOOLS:
 		var label := Label.new()
 		var button := Button.new()
-		button.text = "Upgrade"
+		button.text = tr("UI_UPGRADE")
 		button.focus_mode = Control.FOCUS_NONE
 		button.pressed.connect(_upgrade_tool.bind(id))
 		content.add_child(label)
@@ -634,13 +634,13 @@ func _update_tools() -> void:
 		var row: Dictionary = tool_rows[id]
 		var level: int = Inventory.get(id + "_level")
 		if not Inventory.can_use_tool(id):
-			row["label"].text = info["name"] + " - Locked until Level 6"
+			row["label"].text = Localization.display_name(info["name"]) + tr("TOOLS_LOCKED")
 			row["button"].disabled = true
-			row["button"].text = "Locked"
+			row["button"].text = tr("UI_LOCKED")
 			continue
-		row["label"].text = "%s | Level %d | Harvest time: %.1f sec" % [info["name"], level, Inventory.tool_duration(id)]
+		row["label"].text = tr("TOOLS_INFO") % [Localization.display_name(info["name"]), level, Inventory.tool_duration(id)]
 		row["button"].disabled = not info["levels"].has(level + 1)
-		row["button"].text = "Upgrade (%d Coins)" % info["levels"][level + 1]["cost"] if info["levels"].has(level + 1) else "MAX LEVEL"
+		row["button"].text = tr("UI_UPGRADE_PRICE") % info["levels"][level + 1]["cost"] if info["levels"].has(level + 1) else tr("UI_MAX_LEVEL")
 
 
 func _upgrade_tool(id: String) -> void:
@@ -666,20 +666,20 @@ func open_plot_purchase(number: int) -> void:
 	if _native_dialog_open():
 		return
 	if number != Inventory.unlocked_plot_count + 1:
-		Inventory.fail("Unlock Plot %d first." % (Inventory.unlocked_plot_count + 1))
+		Inventory.fail(tr("PLOT_FIRST") % (Inventory.unlocked_plot_count + 1))
 		return
 	_close_game_panels()
 	pending_plot_number = number
-	plot_purchase.dialog_text = "Plot #%d\nPrice: %d Coins" % [number, FarmData.plot_price(number)]
+	plot_purchase.dialog_text = tr("PLOT_PRICE") % [number, FarmData.plot_price(number)]
 	plot_purchase.popup_centered()
 
 
 func _confirm_plot_purchase() -> void:
 	if Inventory.buy_plot(pending_plot_number):
 		plot_purchase.hide()
-		save_status.text = "Farm plot unlocked!"
+		save_status.text = tr("PLOT_UNLOCKED")
 	else:
-		plot_purchase.dialog_text = "Plot #%d\nPrice: %d Coins\n%s" % [pending_plot_number, FarmData.plot_price(pending_plot_number), save_status.text]
+		plot_purchase.dialog_text = tr("PLOT_PRICE_ERROR") % [pending_plot_number, FarmData.plot_price(pending_plot_number), save_status.text]
 
 
 func _on_plot_popup_visibility_changed() -> void:
@@ -691,6 +691,7 @@ func _on_plot_popup_visibility_changed() -> void:
 func _create_rod_row() -> void:
 	var content = $ShopPanel/Margin/Scroll/ShopContent
 	rod_info = Label.new()
+	rod_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	rod_upgrade = Button.new()
 	rod_upgrade.focus_mode = Control.FOCUS_NONE
 	rod_upgrade.pressed.connect(Inventory.upgrade_fishing_rod)
@@ -700,11 +701,11 @@ func _create_rod_row() -> void:
 
 func _update_rod_row() -> void:
 	if not Inventory.has_fishing_rod or not Inventory.is_zone_unlocked("fishing"):
-		rod_info.text = "Fishing Rod - Unlocks at Level 10 (Lv1 free)"
-		rod_upgrade.text = "Locked"
+		rod_info.text = tr("ROD_LOCKED")
+		rod_upgrade.text = tr("UI_LOCKED")
 		rod_upgrade.disabled = true
 		return
 	var level: int = Inventory.fishing_rod_level
-	rod_info.text = "Fishing Rod Lv%d | Reaction window: %.2f sec" % [level, FishingData.ROD_LEVELS[level]["bite_window"]]
+	rod_info.text = tr("ROD_INFO") % [level, FishingData.ROD_LEVELS[level]["bite_window"]]
 	rod_upgrade.disabled = not FishingData.ROD_LEVELS.has(level + 1)
-	rod_upgrade.text = "Upgrade Rod (%d Coins)" % FishingData.ROD_LEVELS[level + 1]["cost"] if not rod_upgrade.disabled else "MAX LEVEL"
+	rod_upgrade.text = tr("ROD_UPGRADE") % FishingData.ROD_LEVELS[level + 1]["cost"] if not rod_upgrade.disabled else tr("UI_MAX_LEVEL")

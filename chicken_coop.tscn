@@ -33,7 +33,7 @@ offset_bottom = 36.0
 horizontal_alignment = 1
 vertical_alignment = 1
 mouse_filter = 2
-text = "ChickenCoop"
+text = "BUILDING_CHICKEN_COOP"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("AreaShape")
@@ -44,14 +44,13 @@ one_shot = true
 script = ExtResource("94_building")
 building_kind = "chicken_coop"
 
-[node name="Sprite2D" type="Sprite2D" parent="Visuals"]
+[node name="BuildingSprite" type="Sprite2D" parent="Visuals"]
 z_index = -1
 script = ExtResource("90_art")
-fallback_paths = Array[NodePath]([NodePath("../../Visual")])
+fallback_paths = Array[NodePath]([NodePath("../../Visual"), NodePath("../../StatusLabel")])
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Visuals"]
 sprite_frames = ExtResource("93_frames")
 animation = &"idle_down"
 script = ExtResource("92_anim")
 position = Vector2(0, 65)
-animal_kind = "chicken"

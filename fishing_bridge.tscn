@@ -40,7 +40,7 @@ color = Color(0.65, 0.18, 0.14, 1)
 [node name="Sign" type="Label" parent="."]
 script = ExtResource("95_prompt")
 area_path = NodePath("../InteractionArea")
-base_text = "Fishing Area"
+base_text = "WORLD_FISHING_AREA"
 zone_id = "fishing"
 theme_override_font_sizes/font_size = 12
 offset_left = -250.0
@@ -48,7 +48,7 @@ offset_top = -110.0
 offset_right = -70.0
 offset_bottom = -20.0
 mouse_filter = 2
-text = "Fishing Area"
+text = "WORLD_FISHING_AREA"
 
 [node name="InteractionArea" type="Area2D" parent="."]
 position = Vector2(-120, 0)

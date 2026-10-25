@@ -92,7 +92,7 @@ vertical_alignment = 1
 [node name="Visuals" type="Node2D" parent="House" unique_id=2109176501]
 script = ExtResource("94_building")
 
-[node name="Sprite2D" type="Sprite2D" parent="House/Visuals" unique_id=1928157321]
+[node name="HouseSprite" type="Sprite2D" parent="House/Visuals" unique_id=1928157321]
 z_index = -1
 position = Vector2(2.0000005, -5)
 scale = Vector2(0.19, 0.19)
@@ -109,7 +109,7 @@ offset_top = 410.0
 offset_right = 1190.0
 offset_bottom = 410.0
 theme_override_font_sizes/font_size = 12
-text = "Fields"
+text = "WORLD_FIELDS"
 
 [node name="NorthAreaLabel" type="Label" parent="." unique_id=985320599]
 offset_left = 1050.0
@@ -117,7 +117,7 @@ offset_top = 180.0
 offset_right = 1050.0
 offset_bottom = 180.0
 theme_override_font_sizes/font_size = 12
-text = "Forest"
+text = "WORLD_FOREST"
 
 [node name="EastAreaLabel" type="Label" parent="." unique_id=1616052583]
 offset_left = 1880.0
@@ -125,7 +125,7 @@ offset_top = 640.0
 offset_right = 1880.0
 offset_bottom = 640.0
 theme_override_font_sizes/font_size = 12
-text = "Future farm area"
+text = "WORLD_FUTURE_AREA"
 
 [node name="SouthAreaLabel" type="Label" parent="." unique_id=589365046]
 offset_left = 1050.0
@@ -133,7 +133,7 @@ offset_top = 1340.0
 offset_right = 1050.0
 offset_bottom = 1340.0
 theme_override_font_sizes/font_size = 12
-text = "SOUTH - Future expansion"
+text = "WORLD_SOUTH"
 
 [node name="FeedMill" parent="." unique_id=1869300804 instance=ExtResource("6_mill")]
 position = Vector2(1165, 947)
@@ -151,7 +151,7 @@ position = Vector2(650, 760)
 offset_left = -30.0
 offset_top = -40.0
 offset_right = 70.0
-text = "Dog Home"
+text = "WORLD_DOG_HOME"
 
 [node name="HUD" parent="." unique_id=786439489 instance=ExtResource("4_hud")]
 
@@ -222,16 +222,16 @@ offset_left = -50.0
 offset_top = -32.0
 offset_right = 50.0
 offset_bottom = 32.0
-text = "DOG HOUSE"
+text = "WORLD_DOG_HOUSE"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Visuals" type="Node2D" parent="DogHouse" unique_id=856610138]
 
-[node name="Sprite2D" type="Sprite2D" parent="DogHouse/Visuals" unique_id=987303426]
+[node name="BuildingSprite" type="Sprite2D" parent="DogHouse/Visuals" unique_id=987303426]
 z_index = -1
 script = ExtResource("90_art")
-fallback_paths = Array[NodePath]([NodePath("../../Visual")])
+fallback_paths = Array[NodePath]([NodePath("../../Visual"), NodePath("../../Label")])
 
 [node name="tree1" parent="." unique_id=1109680128 instance=ExtResource("10_resource")]
 position = Vector2(450, 220)
@@ -298,8 +298,7 @@ fallback_paths = Array[NodePath]([NodePath("../../Placeholder")])
 offset_left = 250.0
 offset_top = 1180.0
 theme_override_font_sizes/font_size = 12
-text = "OPEN GRASSLAND
-Future structures"
+text = "WORLD_GRASS"
 
 [node name="SoilPlot7" parent="." unique_id=1596736475 instance=ExtResource("12_plot")]
 position = Vector2(1248, 578)
@@ -330,7 +329,7 @@ color = Color(0.5, 0.5, 0.55, 1)
 offset_left = 2020.0
 offset_top = 650.0
 theme_override_font_sizes/font_size = 12
-text = "Fishing Area"
+text = "WORLD_FISHING_AREA"
 
 [node name="RiverWalls" type="StaticBody2D" parent="." unique_id=1800122780]
 

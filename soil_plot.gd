@@ -117,7 +117,7 @@ func harvest() -> void:
 	if not is_unlocked() or state != PlotState.READY:
 		return
 	if not Inventory.can_add_item(crop_type.to_lower(), 1):
-		Inventory.fail("Silo full! Crop stays ready until there is space.")
+		Inventory.fail(tr("ERROR_SILO_CROP"))
 		return
 	var harvested_crop: String = crop_type
 	_clear_crop()

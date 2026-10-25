@@ -219,7 +219,7 @@ func check_core() -> void:
 	inv.stone = 15
 	hud.house_upgrade_button.pressed.emit()
 	check(inv.house_level == 2 and disk().get_value("upgrades","house_level") == 2, "house upgrade saved")
-	check(hud.storage_label.text.contains("House Level: 2"), "HUD refresh")
+	check(hud.storage_label.text.contains(tr("HUD_MATERIALS") % [inv.wood, inv.stone, 2]), "HUD refresh")
 	hud._show_reset_confirmation()
 	check(hud.reset_confirmation.visible and not hud.house_panel.visible, "reset replaces house modal")
 	hud.open_build()

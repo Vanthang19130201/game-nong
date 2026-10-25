@@ -8,11 +8,11 @@ func refresh() -> void:
 		"house":
 			_refresh_prompt()
 		"feed_mill":
-			building.get_node("StatusLabel").text = "Feed Mill\n%s\n%s" % [building.production_type.capitalize(), building.state]
+			building.get_node("StatusLabel").text = tr("WORLD_MILL_STATUS") % [Localization.display_name(building.production_type), Localization.state(building.state)]
 		"chicken_coop":
-			building.get_node("StatusLabel").text = "CHICKENS: %d / %d\n%s" % [Inventory.chicken_count, Inventory.animal_capacity("chicken"), "EGGS READY" if building.state == "READY" else building.state]
+			building.get_node("StatusLabel").text = tr("WORLD_CHICKEN_STATUS") % [Inventory.chicken_count, Inventory.animal_capacity("chicken"), tr("WORLD_EGGS_READY") if building.state == "READY" else Localization.state(building.state)]
 		"cow_shed":
-			building.get_node("StatusLabel").text = "COW SHED\nCows: %d / %d\n%s" % [Inventory.cow_count, Inventory.animal_capacity("cow"), "MILK READY" if building.state == "READY" else building.state]
+			building.get_node("StatusLabel").text = tr("WORLD_COW_STATUS") % [Inventory.cow_count, Inventory.animal_capacity("cow"), tr("WORLD_MILK_READY") if building.state == "READY" else Localization.state(building.state)]
 		"fish_market":
 			_refresh_prompt()
 
@@ -27,7 +27,7 @@ func _refresh_prompt() -> void:
 	var near: bool = building.can_interact()
 	if building_kind == "house":
 		var label: Label = building.get_node("HouseLabel")
-		label.text = "[E] House" if near else ""
+		label.text = tr("WORLD_HOUSE_PROMPT") if near else ""
 		label.visible = near
 	else:
-		building.get_node("Label").text = "Fish Market\n[E] Sell Fish" if near else "Fish Market"
+		building.get_node("Label").text = tr("WORLD_MARKET_PROMPT") if near else tr("TITLE_FISH_MARKET")

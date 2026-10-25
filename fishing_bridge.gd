@@ -35,7 +35,7 @@ func get_interaction_position() -> Vector2:
 
 
 func interact(_player: Node2D = null) -> void:
-	Inventory.fail("Fishing Area - Unlocked" if Inventory.is_zone_unlocked("fishing") else "Fishing unlocks at Level 10.")
+	Inventory.fail(tr("WORLD_FISHING_OPEN") if Inventory.is_zone_unlocked("fishing") else tr("FISHING_UNLOCK_LEVEL_10"))
 
 
 func _on_body_entered(body: Node2D) -> void:

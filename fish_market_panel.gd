@@ -10,8 +10,8 @@ func _ready() -> void:
 		var buttons := HBoxContainer.new()
 		var sell_one := Button.new()
 		var sell_all := Button.new()
-		sell_one.text = "Sell 1"
-		sell_all.text = "Sell All"
+		sell_one.text = tr("UI_SELL_ONE")
+		sell_all.text = tr("UI_SELL_ALL")
 		sell_one.focus_mode = Control.FOCUS_NONE
 		sell_all.focus_mode = Control.FOCUS_NONE
 		sell_one.pressed.connect(_sell.bind(fish, false))
@@ -42,7 +42,7 @@ func refresh() -> void:
 	for fish in rows:
 		var info: Dictionary = Inventory.FishingData.FISH[fish]
 		var owned: int = Inventory.get(fish)
-		rows[fish]["label"].text = "%s\nOwned: %d | Sell: %d Coins" % [info["name"], owned, info["sell_price"]]
+		rows[fish]["label"].text = tr("MARKET_ROW") % [Localization.display_name(info["name"]), owned, info["sell_price"]]
 		rows[fish]["one"].disabled = owned <= 0
 		rows[fish]["all"].disabled = owned <= 0
 

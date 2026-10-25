@@ -30,16 +30,16 @@ offset_right = -12.0
 offset_bottom = 36.0
 grow_horizontal = 0
 focus_mode = 0
-text = "Reset"
+text = "RESET_GAME"
 
 [node name="ResetConfirmation" type="ConfirmationDialog" parent="."]
-title = "Reset Game"
+title = "RESET_GAME"
 size = Vector2i(360, 140)
 exclusive = true
 unresizable = true
-dialog_text = "Reset toàn bộ tiến trình game?"
-ok_button_text = "Reset Game"
-cancel_button_text = "Cancel"
+dialog_text = "RESET_CONFIRM"
+ok_button_text = "RESET_GAME"
+cancel_button_text = "UI_CANCEL"
 
 [node name="Layout" type="VBoxContainer" parent="."]
 anchors_preset = 0
@@ -51,18 +51,20 @@ mouse_filter = 2
 theme_override_constants/separation = 6
 
 [node name="InventoryLabel" type="Label" parent="Layout"]
+autowrap_mode = 2
 layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 1
 theme_override_font_sizes/font_size = 18
-text = "Coins: 100 | Level: 1 | EXP: 0 / 100"
+text = "DEFAULT_HUD"
 
 [node name="StorageLabel" type="Label" parent="Layout"]
+autowrap_mode = 2
 layout_mode = 2
 mouse_filter = 2
-text = "Silo: 10 / 30 | Barn: 0 / 20"
+text = "DEFAULT_STORAGE"
 
 [node name="Actions" type="HBoxContainer" parent="Layout"]
 layout_mode = 2
@@ -73,16 +75,16 @@ theme_override_constants/separation = 12
 custom_minimum_size = Vector2(130, 32)
 layout_mode = 2
 focus_mode = 0
-text = "Open Shop"
+text = "UI_OPEN_SHOP"
 
 [node name="BuildButton" type="Button" parent="Layout/Actions"]
 layout_mode = 2
 focus_mode = 0
-text = "Build & Animals"
+text = "TITLE_BUILD"
 
 [node name="SelectedCropLabel" type="Label" parent="Layout/Actions"]
 layout_mode = 2
-text = "Selected Crop:"
+text = "UI_SELECTED_CROP"
 
 [node name="CropSelector" type="OptionButton" parent="Layout/Actions"]
 custom_minimum_size = Vector2(240, 32)
@@ -120,78 +122,78 @@ theme_override_constants/separation = 4
 [node name="TitleLabel" type="Label" parent="ShopPanel/Margin/Scroll/ShopContent"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "Farm Shop"
+text = "TITLE_SHOP"
 
 [node name="BuyButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
-text = "Buy Wheat Seed"
+text = "UI_BUY_WHEAT_SEED"
 
 [node name="SellButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
-text = "Sell Wheat"
+text = "UI_SELL_WHEAT"
 
 [node name="CornBuyButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
-text = "Buy Corn Seed"
+text = "UI_BUY_CORN_SEED"
 
 [node name="CornSellButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
-text = "Sell Corn"
+text = "UI_SELL_CORN"
 
 [node name="CarrotBuyButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
-text = "Buy Carrot Seed"
+text = "UI_BUY_CARROT_SEED"
 
 [node name="CarrotSellButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
-text = "Sell Carrot"
+text = "UI_SELL_CARROT"
 
 [node name="EggSellButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
-text = "Sell Egg (+18 Coins)"
+text = "DEFAULT_SELL_EGG"
 
 [node name="MilkSellButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
 layout_mode = 2
 focus_mode = 0
-text = "Sell Milk (+30 Coins)"
+text = "DEFAULT_SELL_MILK"
 
 [node name="StorageActionsLabel" type="Label" parent="ShopPanel/Margin/Scroll/ShopContent"]
 layout_mode = 2
-text = "BARN SPACE"
+text = "TITLE_BARN"
 
 [node name="DiscardChickenFeed" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
 layout_mode = 2
 focus_mode = 0
-text = "Discard 1 Chicken Feed (free Barn space)"
+text = "UI_DISCARD_CHICKEN"
 
 [node name="DiscardCowFeed" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
 layout_mode = 2
 focus_mode = 0
-text = "Discard 1 Cow Feed (free Barn space)"
+text = "UI_DISCARD_COW"
 
 [node name="PetsLabel" type="Label" parent="ShopPanel/Margin/Scroll/ShopContent"]
 layout_mode = 2
-text = "PETS | Dog | Price: 300 Coins"
+text = "DEFAULT_PETS"
 
 [node name="DogBuyButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
-text = "Buy Dog (300 Coins)"
+text = "DEFAULT_BUY_DOG"
 
 [node name="MessageLabel" type="Label" parent="ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 24)
@@ -217,6 +219,7 @@ layout_mode = 2
 theme_override_constants/separation = 10
 
 [node name="Info" type="Label" parent="StationPanel/Margin/Content"]
+autowrap_mode = 2
 layout_mode = 2
 
 [node name="RecipeSelector" type="OptionButton" parent="StationPanel/Margin/Content"]
@@ -226,27 +229,27 @@ focus_mode = 0
 [node name="AnimalBuy" type="Button" parent="StationPanel/Margin/Content"]
 layout_mode = 2
 focus_mode = 0
-text = "Buy Animal"
+text = "UI_BUY_ANIMAL_LABEL"
 
 [node name="AnimalSell" type="Button" parent="StationPanel/Margin/Content"]
 layout_mode = 2
 focus_mode = 0
-text = "Sell Animal"
+text = "UI_SELL_ANIMAL_LABEL"
 
 [node name="ProduceButton" type="Button" parent="StationPanel/Margin/Content"]
 layout_mode = 2
 focus_mode = 0
-text = "Produce"
+text = "UI_PRODUCE"
 
 [node name="CollectButton" type="Button" parent="StationPanel/Margin/Content"]
 layout_mode = 2
 focus_mode = 0
-text = "Collect"
+text = "UI_COLLECT"
 
 [node name="CloseButton" type="Button" parent="StationPanel/Margin/Content"]
 layout_mode = 2
 focus_mode = 0
-text = "Close"
+text = "UI_CLOSE"
 
 [node name="OrderPanel" type="PanelContainer" parent="."]
 z_index = 30
@@ -270,7 +273,7 @@ theme_override_constants/separation = 10
 [node name="Title" type="Label" parent="OrderPanel/Margin/Content"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "ORDER BOARD"
+text = "WORLD_ORDER_BOARD"
 
 [node name="Orders" type="HBoxContainer" parent="OrderPanel/Margin/Content"]
 layout_mode = 2
@@ -283,7 +286,7 @@ layout_mode = 2
 [node name="CloseButton" type="Button" parent="OrderPanel/Margin/Content"]
 layout_mode = 2
 focus_mode = 0
-text = "Close"
+text = "UI_CLOSE"
 [node name="BuildPanel" type="PanelContainer" parent="."]
 z_index = 25
 visible = false
@@ -305,7 +308,7 @@ theme_override_constants/separation = 12
 
 [node name="Title" type="Label" parent="BuildPanel/Margin/Content"]
 layout_mode = 2
-text = "BUILDINGS & ANIMALS"
+text = "TITLE_BUILD_UPPER"
 
 [node name="Scroll" type="ScrollContainer" parent="BuildPanel/Margin/Content"]
 layout_mode = 2
@@ -320,24 +323,24 @@ theme_override_constants/separation = 16
 [node name="CloseButton" type="Button" parent="BuildPanel/Margin/Content"]
 layout_mode = 2
 focus_mode = 0
-text = "Close"
+text = "UI_CLOSE"
 
 [node name="ToolsUnlocked" type="AcceptDialog" parent="."]
-title = "TOOLS UNLOCKED!"
+title = "TOOLS_UNLOCKED"
 size = Vector2i(430, 250)
 exclusive = true
 unresizable = true
-ok_button_text = "OK"
-dialog_text = "Bạn nhận được:\n\nAxe\nDùng để chặt cây lấy Wood.\n\nHammer\nDùng để đập đá lấy Stone."
+ok_button_text = "UI_OK"
+dialog_text = "TOOLS_UNLOCK_BODY"
 [node name="PlotPurchase" type="ConfirmationDialog" parent="."]
-title = "NEW FARM PLOT"
+title = "TITLE_NEW_PLOT"
 size = Vector2i(360, 160)
 exclusive = true
 unresizable = true
 dialog_hide_on_ok = false
-ok_button_text = "Buy"
-cancel_button_text = "Cancel"
-dialog_text = "Price: 100 Coins"
+ok_button_text = "UI_BUY"
+cancel_button_text = "UI_CANCEL"
+dialog_text = "DEFAULT_PLOT_PRICE"
 
 [node name="HousePanel" type="PanelContainer" parent="."]
 z_index = 26
@@ -365,11 +368,12 @@ theme_override_constants/separation = 12
 [node name="Title" type="Label" parent="HousePanel/Margin/Content"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "HOUSE"
+text = "TITLE_HOUSE"
 
 [node name="Info" type="Label" parent="HousePanel/Margin/Content"]
+autowrap_mode = 2
 layout_mode = 2
-text = "Current Level: 1"
+text = "DEFAULT_HOUSE_LEVEL"
 
 [node name="Message" type="Label" parent="HousePanel/Margin/Content"]
 layout_mode = 2
@@ -377,9 +381,9 @@ layout_mode = 2
 [node name="UpgradeButton" type="Button" parent="HousePanel/Margin/Content"]
 layout_mode = 2
 focus_mode = 0
-text = "Upgrade House"
+text = "UI_UPGRADE_HOUSE"
 
 [node name="CloseButton" type="Button" parent="HousePanel/Margin/Content"]
 layout_mode = 2
 focus_mode = 0
-text = "Close"
+text = "UI_CLOSE"

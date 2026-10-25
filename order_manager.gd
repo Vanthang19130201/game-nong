@@ -116,6 +116,8 @@ func complete_order(order_id: String) -> bool:
 		var order: Dictionary = orders[index]
 		if order["order_id"] != order_id:
 			continue
+		if not _is_valid_order(order):
+			return false
 		# Check every requirement first; a failed order changes nothing.
 		for item in order["requirements"]:
 			if Inventory.get(item) < order["requirements"][item]:
@@ -142,11 +144,25 @@ func _is_valid_order(value: Variant) -> bool:
 	var requirements = value.get("requirements", {})
 	if not (requirements is Dictionary) or requirements.is_empty():
 		return false
+	var silo_required: int = 0
+	var barn_required: int = 0
 	for item in requirements:
 		if not item_available(item):
 			return false
 		if not (requirements[item] is int) or requirements[item] <= 0:
 			return false
+		if Inventory.FishingData.FISH.has(item) and requirements[item] > Inventory.FishingData.FISH[item]["order_max"]:
+			return false
+		if item in Inventory.SILO_ITEMS:
+			if requirements[item] > Inventory.silo_capacity:
+				return false
+			silo_required += requirements[item]
+		elif item in Inventory.BARN_ITEMS:
+			if requirements[item] > Inventory.barn_capacity:
+				return false
+			barn_required += requirements[item]
+	if silo_required > Inventory.silo_capacity or barn_required > Inventory.barn_capacity:
+		return false
 	for key in ["coin_reward", "exp_reward"]:
 		var reward = value.get(key, 0)
 		if not (reward is int) or reward <= 0:

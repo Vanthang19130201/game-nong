@@ -4,6 +4,7 @@ $projectRoot = Split-Path $PSScriptRoot -Parent
 $testRoot = Join-Path $projectRoot '.godot/core-stability-project'
 New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $projectRoot 'assets') -Destination $testRoot -Recurse -Force
+Copy-Item -LiteralPath (Join-Path $projectRoot 'localization') -Destination $testRoot -Recurse -Force
 Get-ChildItem -LiteralPath $projectRoot -File | Where-Object {
     $_.Extension -in @('.gd', '.uid', '.tscn', '.godot', '.svg', '.import')
 } | Copy-Item -Destination $testRoot -Force
@@ -15,6 +16,8 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'core_stability_test.gd') -Desti
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'gameplay_regression_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'fishing_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'fish_market_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'level_audit_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'localization_test.gd') -Destination $testRoot -Force
 $projectPath = Join-Path $testRoot 'project.godot'
 Add-Content -LiteralPath $projectPath -Value "`n[debug]`nfile_logging/enable_file_logging=false"
 # Reuse the project's existing imports; no editor/settings writes are needed.
@@ -31,12 +34,15 @@ $previousPreference = $ErrorActionPreference
 $stages = @('core', 'position_write', 'position_read', 'legacy_write', 'legacy_read',
     'invalid_write', 'invalid_read', 'offline_write', 'offline_read',
     'backup_write', 'backup_read', 'defaults_write', 'defaults_read', 'duplicates',
-    'fishing_core', 'fishing_limits', 'fishing_write', 'fishing_read', 'market_core', 'market_read')
+    'fishing_core', 'fishing_limits', 'fishing_write', 'fishing_read', 'market_core', 'market_read',
+    'audit_core', 'audit_write', 'audit_read', 'audit_again', 'audit_close', 'localization')
 foreach ($stage in $stages) {
     $log = Join-Path $testRoot "$stage.log"
     $ErrorActionPreference = 'Continue'
     $testScript = if ($stage.StartsWith('fishing_')) { 'fishing_test.gd' } else { 'core_stability_test.gd' }
     if ($stage.StartsWith('market_')) { $testScript = 'fish_market_test.gd' }
+    if ($stage.StartsWith('audit_')) { $testScript = 'level_audit_test.gd' }
+    if ($stage -eq 'localization') { $testScript = 'localization_test.gd' }
     & $Godot --headless --path $testRoot --script $testScript --quit-after 1800 -- $stage *> $log
     $ErrorActionPreference = $previousPreference
     $output = Get-Content -LiteralPath $log -Raw

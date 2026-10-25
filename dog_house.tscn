@@ -21,11 +21,11 @@ offset_bottom = 32.0
 mouse_filter = 2
 horizontal_alignment = 1
 vertical_alignment = 1
-text = "DOG HOUSE"
+text = "WORLD_DOG_HOUSE"
 
 [node name="Visuals" type="Node2D" parent="."]
 
-[node name="Sprite2D" type="Sprite2D" parent="Visuals"]
+[node name="BuildingSprite" type="Sprite2D" parent="Visuals"]
 z_index = -1
 script = ExtResource("90_art")
-fallback_paths = Array[NodePath]([NodePath("../../Visual")])
+fallback_paths = Array[NodePath]([NodePath("../../Visual"), NodePath("../../Label")])

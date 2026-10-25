@@ -30,8 +30,8 @@ func _refresh_label() -> void:
 	var state: String = resource_node.state
 	var wood: bool = resource_node.resource_type == "wood"
 	if state == "GATHERING":
-		resource_node.label.text = "Chopping..." if wood else "Mining..."
+		resource_node.label.text = tr("WORLD_CHOPPING") if wood else tr("WORLD_MINING")
 	elif state == "DEPLETED":
-		resource_node.label.text = "Respawning..." if resource_node.player_near else ""
+		resource_node.label.text = tr("WORLD_RESPAWNING") if resource_node.player_near else ""
 	else:
-		resource_node.label.text = "[E] Gather" if resource_node.player_near else ""
+		resource_node.label.text = tr("WORLD_GATHER") if resource_node.player_near else ""

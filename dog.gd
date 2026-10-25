@@ -60,4 +60,4 @@ func set_home_point(point: Node2D) -> void:
 
 func _update_visual() -> void:
 	# Replace this Label with AnimatedSprite2D animations later.
-	visual.text = "DOG >" if walking else "DOG"
+	visual.text = tr("WORLD_DOG_WALK") if walking else tr("WORLD_DOG")

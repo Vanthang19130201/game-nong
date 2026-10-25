@@ -80,7 +80,7 @@ func can_produce(recipe: String = "chicken_feed") -> bool:
 
 func produce(recipe: String = "chicken_feed") -> bool:
 	if not can_produce(recipe):
-		return Inventory.fail("Locked, no animals, missing feed or ingredients, or station busy.")
+		return Inventory.fail(tr("ERROR_STATION_PRODUCE"))
 	var duration: float
 	if station_id == "feed_mill":
 		var info: Dictionary = Progression.RECIPES[recipe]
@@ -116,7 +116,7 @@ func collect() -> bool:
 		return false
 	var output: Dictionary = output_data()
 	if not Inventory.can_add_item(output["item"], output["amount"]):
-		return Inventory.fail("Barn full! Products stay READY until there is enough space for the whole batch.")
+		return Inventory.fail(tr("ERROR_BARN_BATCH"))
 	production_timer.stop()
 	state = "IDLE" if station_id == "feed_mill" else "HUNGRY"
 	production_type = ""
@@ -157,6 +157,9 @@ func _update_ownership() -> void:
 
 func _update_display() -> void:
 	$Visuals.refresh()
+	var animal_sprite = $Visuals.get_node_or_null("AnimatedSprite2D")
+	if animal_sprite != null:
+		animal_sprite.presentation_enabled = chicken_count > 0 if station_id == "chicken_coop" else cow_count > 0
 	state_changed.emit()
 
 

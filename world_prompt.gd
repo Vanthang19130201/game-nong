@@ -12,7 +12,7 @@ func _process(_delta: float) -> void:
 		for body in area.get_overlapping_bodies():
 			if body.is_in_group("farm_player"):
 				near = true
-	var prompt: String = prompt_text
+	var prompt: String = tr(prompt_text)
 	if zone_id != "" and not Inventory.is_zone_unlocked(zone_id):
-		prompt = "[E] Unlocks at Level 10"
-	text = base_text + ("\n" + prompt if near else "")
+		prompt = tr("WORLD_GATE_LOCKED")
+	text = tr(base_text) + ("\n" + prompt if near else "")

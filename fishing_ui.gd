@@ -71,10 +71,10 @@ func _nearby_spot() -> Node:
 func _process(_delta: float) -> void:
 	fish_button.visible = not is_instance_valid(active_spot) and not hud.blocks_world_input() and _nearby_spot() != null
 	var remaining: int = Inventory.fishing_attempts_remaining()
-	fish_button.text = "Fish [E] %d/%d" % [remaining, Inventory.FishingData.ATTEMPTS_PER_CYCLE]
+	fish_button.text = tr("FISHING_ATTEMPTS") % [remaining, Inventory.FishingData.ATTEMPTS_PER_CYCLE]
 	if remaining == 0:
 		var seconds: int = Inventory.fishing_cycle_seconds_left()
-		fish_button.text = "0/15 - %02d:%02d" % [int(seconds / 3600), int(seconds / 60) % 60]
+		fish_button.text = tr("FISHING_ATTEMPTS_WAIT") % [int(seconds / 3600), int(seconds / 60) % 60]
 	if not is_instance_valid(active_spot):
 		panel.hide()
 		return
@@ -82,7 +82,7 @@ func _process(_delta: float) -> void:
 	var reacting: bool = active_spot.state == active_spot.State.BITE_WINDOW
 	var waiting: bool = active_spot.state == active_spot.State.WAITING_FOR_BITE
 	reel_button.disabled = not (reacting or waiting)
-	reel_button.text = "REEL! [E]" if reacting else "REEL [E]"
+	reel_button.text = tr("FISHING_REEL_NOW") if reacting else tr("FISHING_REEL")
 	info.modulate = Color(1.0, 0.8, 0.1) if reacting else Color.WHITE
 	reaction_bar.visible = reacting
 	reaction_bar.max_value = active_spot.bite_window

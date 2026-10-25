@@ -109,7 +109,7 @@ func check_fishing() -> void:
 	await key(KEY_E, true)
 	check(spot.deadline == original_deadline and spot.state == spot.State.WAITING_FOR_BITE, "held key echo ignored")
 	await key(KEY_E)
-	check(spot.state == spot.State.FAILED and spot.feedback.contains("Too early"), "early input fails")
+	check(spot.state == spot.State.FAILED and spot.feedback == tr("FISHING_TOO_EARLY"), "early input fails")
 	for index in range(5):
 		await key(KEY_E)
 	check(fish_count() == 0 and not spot.start_session(player), "spam cannot restart or win")
@@ -121,7 +121,7 @@ func check_fishing() -> void:
 	await create_timer(spot.bite_delay + 0.08).timeout
 	check(spot.state == spot.State.BITE_WINDOW and fish_count() == 0, "real random bite gives no automatic fish")
 	await create_timer(1.05).timeout
-	check(spot.state == spot.State.FAILED and spot.feedback == "The fish got away!", "one-second miss")
+	check(spot.state == spot.State.FAILED and spot.feedback == tr("FISHING_MISSED"), "one-second miss")
 	end_cooldown()
 	# Real keyboard success follows exactly the same state clock.
 	await key(KEY_E)

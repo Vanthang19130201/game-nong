@@ -19,7 +19,7 @@ offset_top = -70.0
 offset_right = -20.0
 offset_bottom = -20.0
 focus_mode = 0
-text = "Fish [E]"
+text = "FISHING_FISH_BUTTON"
 
 [node name="Panel" type="PanelContainer" parent="."]
 z_index = 15
@@ -53,15 +53,15 @@ show_percentage = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 horizontal_alignment = 1
-text = "Reel too early = fail. ESC / walk away to cancel."
+text = "FISHING_HINT"
 
 [node name="Reel" type="Button" parent="Panel/Content"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 focus_mode = 0
-text = "REEL [E]"
+text = "FISHING_REEL"
 
 [node name="Close" type="Button" parent="Panel/Content"]
 layout_mode = 2
 focus_mode = 0
-text = "Cancel / Close [ESC]"
+text = "FISHING_CLOSE"
