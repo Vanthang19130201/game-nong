@@ -31,7 +31,11 @@ func can_interact() -> bool:
 	return player_near
 
 
-func interact() -> void:
+func get_interaction_position() -> Vector2:
+	return $InteractionArea.global_position
+
+
+func interact(_player: Node2D = null) -> void:
 	Inventory.fail("Fishing Area - Unlocked" if Inventory.is_zone_unlocked("fishing") else "Fishing unlocks at Level 10.")
 
 

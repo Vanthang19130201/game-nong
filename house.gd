@@ -18,7 +18,7 @@ func can_interact() -> bool:
 	return false
 
 
-func interact() -> void:
+func interact(_player: Node2D = null) -> void:
 	var hud = get_tree().get_first_node_in_group("farm_hud")
 	var player = get_tree().get_first_node_in_group("farm_player")
 	if not can_interact() or hud == null or hud.blocks_world_input():

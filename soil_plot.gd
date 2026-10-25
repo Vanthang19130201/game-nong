@@ -26,7 +26,10 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 	grow_timer.timeout.connect(_on_grow_timer_timeout)
-	SaveManager.register_plot(self)
+	if not SaveManager.register_plot(self):
+		remove_from_group("farm_interactables")
+		hide()
+		queue_free()
 
 
 func get_save_data() -> Dictionary:
@@ -72,7 +75,7 @@ func _update_label() -> void:
 
 
 func can_interact() -> bool:
-	return player_near
+	return player_near and state != PlotState.GROWING and (is_unlocked() or FarmData.plot_number(plot_id) == Inventory.unlocked_plot_count + 1)
 
 
 func is_unlocked() -> bool:
@@ -80,7 +83,7 @@ func is_unlocked() -> bool:
 	return number >= 1 and number <= Inventory.unlocked_plot_count
 
 
-func interact() -> void:
+func interact(_player: Node2D = null) -> void:
 	if not can_interact():
 		return
 	if not is_unlocked():

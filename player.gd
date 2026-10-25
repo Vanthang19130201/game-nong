@@ -40,9 +40,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	var best_distance: float = INF
 	for candidate in get_tree().get_nodes_in_group("farm_interactables"):
 		if candidate.can_interact():
-			var distance: float = global_position.distance_squared_to(candidate.global_position)
+			var target_position: Vector2 = candidate.get_interaction_position() if candidate.has_method("get_interaction_position") else candidate.global_position
+			var distance: float = global_position.distance_squared_to(target_position)
 			if distance < best_distance:
 				best_distance = distance
 				nearest = candidate
 	if nearest != null:
-		nearest.interact()
+		nearest.interact(self)

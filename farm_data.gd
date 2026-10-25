@@ -7,6 +7,20 @@ const GRID_STEP: Vector2 = Vector2(74, 58)
 const FISHING_LEVEL: int = 10
 const RIVER_LEFT: float = 1800.0
 const SAFE_MAIN_SIDE: Vector2 = Vector2(1740, 850)
+# Stable world IDs, scene references and default positions. No Edit Mode yet.
+const BUILDINGS: Dictionary = {
+	"house": {"node": "House", "position": Vector2(700, 400), "scene": ""},
+	"feed_mill": {"node": "FeedMill", "position": Vector2(1160, 1020), "scene": "res://feed_mill.tscn"},
+	"chicken_coop": {"node": "ChickenCoop", "position": Vector2(1500, 1020), "scene": "res://chicken_coop.tscn"},
+	"cow_shed": {"node": "CowShed", "position": Vector2(900, 1020), "scene": "res://cow_shed.tscn"},
+	"dog_house": {"node": "DogHouse", "position": Vector2(550, 700), "scene": "res://dog_house.tscn"}
+}
+
+static func valid_building_position(value: Variant) -> bool:
+	if not (value is Vector2) or not value.is_finite():
+		return false
+	# Keep the full placeholder inside the accessible mainland and out of fields.
+	return Rect2(120, 100, 1560, 1380).has_point(value) and not Rect2(950, 360, 820, 540).has_point(value)
 const PRICE_TIERS: Array[Dictionary] = [
 	{"last": 8, "price": 0}, {"last": 12, "price": 100},
 	{"last": 16, "price": 200}, {"last": 20, "price": 350},

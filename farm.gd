@@ -4,41 +4,50 @@ extends Node2D
 const FarmData = preload("res://farm_data.gd")
 const SOIL_SCENE = preload("res://soil_plot.tscn")
 const DOG_SCENE = preload("res://dog.tscn")
-const COW_SHED_SCENE = preload("res://cow_shed.tscn")
-const DEFAULT_COW_SHED_POSITION = Vector2(900, 1020)
 var dog: CharacterBody2D
 
 @onready var dog_home: Node2D = $DogHomePoint
-@onready var dog_house: Node2D = $DogHouse
+@onready var dog_house: Node2D = get_node_or_null("DogHouse")
 
 
 func _ready() -> void:
 	_create_farm_grid()
-	Inventory.inventory_changed.connect(ensure_cow_shed_exists)
-	ensure_cow_shed_exists()
+	Inventory.inventory_changed.connect(_update_buildings)
+	_update_buildings()
 	Inventory.inventory_changed.connect(_update_pets)
 	_update_pets()
 
 
 func ensure_cow_shed_exists() -> void:
-	# Normally main.tscn supplies this node. Recover it if a world omits it.
-	var shed = get_node_or_null("CowShed")
-	if shed == null:
-		if not Inventory.owns_cow_shed:
-			return
-		shed = COW_SHED_SCENE.instantiate()
-		shed.name = "CowShed"
-		shed.position = DEFAULT_COW_SHED_POSITION
-		add_child(shed)
-	# There is no building-position save or Edit Mode yet: use one safe location.
-	shed.position = DEFAULT_COW_SHED_POSITION
-	shed.scale = Vector2.ONE
-	shed.visible = Inventory.owns_cow_shed
+	_update_buildings()
+
+
+func _update_buildings() -> void:
+	for id in FarmData.BUILDINGS:
+		var info: Dictionary = FarmData.BUILDINGS[id]
+		var owned: bool = id == "house" or (Inventory.has_dog_house if id == "dog_house" else Inventory.owns_building(id))
+		var building = get_node_or_null(info["node"])
+		if building == null and owned:
+			var scene = load(info["scene"]) if not info["scene"].is_empty() else null
+			if not (scene is PackedScene):
+				push_warning("Missing building scene: " + id)
+				continue
+			building = scene.instantiate()
+			building.name = info["node"]
+			add_child(building)
+		if building == null:
+			continue
+		if not SaveManager.register_building(id, building):
+			continue
+		building.visible = owned
+		building.scale = Vector2.ONE
+		building.z_index = maxi(1, building.z_index)
+		if id == "dog_house":
+			dog_house = building
 
 
 func _update_pets() -> void:
-	dog_house.visible = Inventory.has_dog_house
-	var home: Node2D = dog_house if Inventory.has_dog_house else dog_home
+	var home: Node2D = dog_house if Inventory.has_dog_house and is_instance_valid(dog_house) else dog_home
 	if Inventory.has_dog:
 		if not is_instance_valid(dog):
 			dog = DOG_SCENE.instantiate()

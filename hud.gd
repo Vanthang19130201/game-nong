@@ -41,6 +41,7 @@ var upgrade_rows: Dictionary = {}
 var dog_house_button: Button
 var tool_rows: Dictionary = {}
 var pending_plot_number: int = 0
+var debug_panel: PanelContainer
 @onready var plot_purchase: ConfirmationDialog = $PlotPurchase
 @onready var tools_unlock_popup: AcceptDialog = $ToolsUnlocked
 
@@ -54,6 +55,13 @@ var pending_plot_number: int = 0
 
 func _ready() -> void:
 	add_to_group("farm_hud")
+	if OS.is_debug_build():
+		debug_panel = PanelContainer.new()
+		debug_panel.set_script(preload("res://dev_debug_panel.gd"))
+		add_child(debug_panel)
+		debug_panel.visibility_changed.connect(_on_main_panel_visibility_changed)
+	for panel in [shop_panel, build_panel, station_panel, house_panel, order_panel]:
+		panel.visibility_changed.connect(_on_main_panel_visibility_changed)
 	crop_ids = CropData.CROPS.keys()
 	var content: VBoxContainer = $ShopPanel/Margin/Scroll/ShopContent
 	for crop in crop_ids:
@@ -153,6 +161,7 @@ func _select_crop(index: int) -> void:
 
 
 func _show_reset_confirmation() -> void:
+	close_all_panels()
 	reset_confirmation.popup_centered()
 	reset_confirmation.get_cancel_button().grab_focus()
 
@@ -176,6 +185,8 @@ func _save_game() -> void:
 
 
 func _toggle_shop() -> void:
+	if _native_dialog_open():
+		return
 	var was_open: bool = shop_panel.visible
 	_close_game_panels()
 	shop_panel.visible = not was_open
@@ -211,6 +222,8 @@ func _buy_dog() -> void:
 
 
 func open_station(station: Node) -> void:
+	if _native_dialog_open() or not is_instance_valid(station) or not station.can_interact():
+		return
 	_close_game_panels()
 	active_station = station
 	active_station.state_changed.connect(_update_station_panel)
@@ -275,12 +288,18 @@ func _collect() -> void:
 
 
 func blocks_world_input() -> bool:
-	return house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or shop_panel.visible or station_panel.visible or order_panel.visible or build_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible
+	return (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or shop_panel.visible or station_panel.visible or order_panel.visible or build_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
 
 
 func _input(event: InputEvent) -> void:
 	# Handle UI keys before any farm node receives _unhandled_input.
-	if event.is_action_pressed("ui_cancel"):
+	if OS.is_debug_build() and event is InputEventKey and event.pressed and event.keycode == KEY_F3 and not event.echo:
+		if not _native_dialog_open():
+			var was_open: bool = debug_panel.visible
+			_close_game_panels()
+			debug_panel.visible = not was_open
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("ui_cancel"):
 		if not event.is_echo():
 			close_current_panel()
 		get_viewport().set_input_as_handled()
@@ -300,6 +319,8 @@ func close_current_panel() -> void:
 		crop_selector.get_popup().hide()
 	elif recipe_selector.get_popup().visible:
 		recipe_selector.get_popup().hide()
+	elif is_instance_valid(debug_panel) and debug_panel.visible:
+		debug_panel.hide()
 	elif house_panel.visible:
 		close_house()
 	elif order_panel.visible:
@@ -314,12 +335,34 @@ func close_current_panel() -> void:
 
 
 func _close_game_panels() -> void:
+	if is_instance_valid(debug_panel):
+		debug_panel.hide()
+	crop_selector.get_popup().hide()
+	recipe_selector.get_popup().hide()
 	close_house()
 	build_panel.hide()
 	close_station()
 	order_panel.hide()
 	shop_panel.hide()
 	shop_button.text = "Open Shop"
+	var player = get_tree().get_first_node_in_group("farm_player")
+	if player != null and is_instance_valid(player.active_resource):
+		player.active_resource.cancel_harvest()
+
+
+func _native_dialog_open() -> bool:
+	return reset_confirmation.visible or plot_purchase.visible or tools_unlock_popup.visible
+
+
+func close_all_panels() -> void:
+	_close_game_panels()
+	reset_confirmation.hide()
+	plot_purchase.hide()
+	tools_unlock_popup.hide()
+
+
+func _on_main_panel_visibility_changed() -> void:
+	_show_tool_unlock_if_needed.call_deferred()
 
 
 func open_house(house: Node) -> void:
@@ -364,6 +407,8 @@ func _upgrade_house() -> void:
 
 
 func open_orders() -> void:
+	if _native_dialog_open():
+		return
 	_close_game_panels()
 	order_message.text = ""
 	order_panel.show()
@@ -424,6 +469,8 @@ func _on_recipe_selected(_index: int) -> void:
 
 
 func open_build() -> void:
+	if _native_dialog_open():
+		return
 	_close_game_panels()
 	build_panel.show()
 	_update_build_rows()
@@ -592,7 +639,7 @@ func _on_reset_visibility_changed() -> void:
 
 
 func _show_tool_unlock_if_needed() -> void:
-	if Inventory.player_level < ToolData.UNLOCK_LEVEL or Inventory.tools_unlock_notified or reset_confirmation.visible or plot_purchase.visible:
+	if Inventory.player_level < ToolData.UNLOCK_LEVEL or Inventory.tools_unlock_notified or blocks_world_input():
 		return
 	if not Inventory.has_axe or not Inventory.has_hammer:
 		return
@@ -601,6 +648,8 @@ func _show_tool_unlock_if_needed() -> void:
 	# Deferred notification: never save half of a harvest/order transaction.
 	SaveManager.save_game()
 func open_plot_purchase(number: int) -> void:
+	if _native_dialog_open():
+		return
 	if number != Inventory.unlocked_plot_count + 1:
 		Inventory.fail("Unlock Plot %d first." % (Inventory.unlocked_plot_count + 1))
 		return

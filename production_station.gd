@@ -25,7 +25,11 @@ func _ready() -> void:
 	body_exited.connect(_on_body_exited)
 	production_timer.timeout.connect(_finish_production)
 	Inventory.inventory_changed.connect(_update_ownership)
-	SaveManager.register_station(self)
+	if not SaveManager.register_station(self):
+		remove_from_group("farm_interactables")
+		hide()
+		queue_free()
+		return
 	_update_ownership()
 
 
@@ -142,8 +146,12 @@ func _update_ownership() -> void:
 	var owned: bool = Inventory.owns_building(station_id)
 	visible = owned
 	set_deferred("monitoring", owned)
+	$CollisionShape2D.set_deferred("disabled", not owned)
 	if not owned:
 		player_near = false
+		var hud = get_tree().get_first_node_in_group("farm_hud")
+		if hud != null and hud.active_station == self:
+			hud.close_station()
 	_update_display()
 
 
@@ -158,10 +166,15 @@ func _update_display() -> void:
 
 
 func can_interact() -> bool:
+	# Query current overlaps too: buying while already standing here needs no re-entry.
+	player_near = false
+	for body in get_overlapping_bodies():
+		if body.is_in_group("farm_player"):
+			player_near = true
 	return player_near and Inventory.owns_building(station_id)
 
 
-func interact() -> void:
+func interact(_player: Node2D = null) -> void:
 	if not can_interact():
 		return
 	var hud = get_tree().get_first_node_in_group("farm_hud")

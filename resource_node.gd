@@ -29,7 +29,10 @@ func _ready() -> void:
 	harvest_timer.timeout.connect(_finish_harvest)
 	respawn_timer.timeout.connect(_respawn)
 	Inventory.inventory_changed.connect(_update_zone)
-	SaveManager.register_resource(self)
+	if not SaveManager.register_resource(self):
+		remove_from_group("farm_interactables")
+		hide()
+		queue_free()
 
 
 func get_save_data() -> Dictionary:
@@ -74,10 +77,10 @@ func _update_zone(force: bool = false) -> void:
 			SaveManager.save_game.call_deferred()
 
 func can_interact() -> bool:
-	return zone_active and player_near
+	return zone_active and player_near and state == "AVAILABLE"
 
 
-func interact() -> void:
+func interact(_player: Node2D = null) -> void:
 	harvest()
 
 

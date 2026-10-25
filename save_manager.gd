@@ -7,6 +7,8 @@ const RESOURCE_IDS: Array[String] = ["tree_1", "tree_2", "tree_3", "tree_4", "tr
 const STATION_IDS: Array[String] = ["feed_mill", "chicken_coop", "cow_shed"]
 const SAVE_PATH: String = "user://save.cfg"
 const TEMP_PATH: String = "user://save.cfg.tmp"
+const BACKUP_PATH: String = "user://save_backup.cfg"
+const BACKUP_TEMP_PATH: String = "user://save_backup.cfg.tmp"
 var PLOT_IDS: Array[String] = FarmData.plot_ids()
 const INVENTORY_DEFAULTS: Dictionary = {
 	"wheat_seed": 10, "wheat": 0, "corn_seed": 0, "corn": 0,
@@ -20,6 +22,22 @@ var stations: Dictionary = {}
 var saved_stations: Dictionary = {}
 var resources: Dictionary = {}
 var saved_resources: Dictionary = {}
+var buildings: Dictionary = {}
+var building_positions: Dictionary = {}
+
+
+func register_building(id: String, building: Node2D) -> bool:
+	if not FarmData.BUILDINGS.has(id):
+		push_error("Unknown building ID: " + id)
+		return false
+	if buildings.has(id) and is_instance_valid(buildings[id]):
+		if buildings[id] != building:
+			push_error("Duplicate building ID: " + id)
+			return false
+		return true
+	buildings[id] = building
+	building.position = building_positions.get(id, FarmData.BUILDINGS[id]["position"])
+	return true
 
 
 func default_station(id: String) -> Dictionary:
@@ -34,16 +52,17 @@ func default_station(id: String) -> Dictionary:
 	return data
 
 
-func register_station(station: Node) -> void:
+func register_station(station: Node) -> bool:
 	var id: String = station.station_id
 	if id not in STATION_IDS:
 		push_error("Unknown station ID: " + id)
-		return
+		return false
 	if stations.has(id) and is_instance_valid(stations[id]):
 		push_error("Duplicate station ID: " + id)
-		return
+		return false
 	stations[id] = station
 	station.restore_save_data(saved_stations[id])
+	return true
 
 
 func _ready() -> void:
@@ -52,15 +71,16 @@ func _ready() -> void:
 	get_tree().auto_accept_quit = false
 
 
-func register_plot(plot: Node) -> void:
+func register_plot(plot: Node) -> bool:
 	if plot.plot_id not in PLOT_IDS:
 		push_error("Unknown SoilPlot ID: %s" % plot.plot_id)
-		return
+		return false
 	if plots.has(plot.plot_id) and is_instance_valid(plots[plot.plot_id]):
 		push_error("Duplicate SoilPlot ID: %s" % plot.plot_id)
-		return
+		return false
 	plots[plot.plot_id] = plot
 	plot.restore_save_data(saved_plots[plot.plot_id])
+	return true
 
 
 func empty_plot(id: String) -> Dictionary:
@@ -74,7 +94,18 @@ func save_game() -> bool:
 	if resetting:
 		return false
 	var data := ConfigFile.new()
-	data.set_value("game", "version", 8)
+	data.set_value("game", "version", 9)
+	for id in FarmData.BUILDINGS:
+		var position: Vector2 = building_positions.get(id, FarmData.BUILDINGS[id]["position"])
+		if buildings.has(id) and is_instance_valid(buildings[id]):
+			position = buildings[id].position
+		if not FarmData.valid_building_position(position):
+			push_warning("Invalid building position, using default: " + id)
+			position = FarmData.BUILDINGS[id]["position"]
+			if buildings.has(id) and is_instance_valid(buildings[id]):
+				buildings[id].position = position
+		building_positions[id] = position
+		data.set_value("building_positions", id, position)
 	data.set_value("farm", "unlocked_plot_count", Inventory.unlocked_plot_count)
 	data.set_value("zones", "fishing_unlocked", Inventory.fishing_unlocked)
 	data.set_value("orders", "active", OrderManager.orders)
@@ -123,6 +154,13 @@ func save_game() -> bool:
 
 	# Replace the old file only after the complete new snapshot is written.
 	var error := data.save(TEMP_PATH)
+	# Rotate only a parseable main save. Never overwrite a good backup with corrupt text.
+	if error == OK and FileAccess.file_exists(SAVE_PATH):
+		var previous := ConfigFile.new()
+		if previous.load(SAVE_PATH) == OK:
+			error = previous.save(BACKUP_TEMP_PATH)
+			if error == OK:
+				error = DirAccess.rename_absolute(ProjectSettings.globalize_path(BACKUP_TEMP_PATH), ProjectSettings.globalize_path(BACKUP_PATH))
 	if error == OK:
 		error = DirAccess.rename_absolute(
 			ProjectSettings.globalize_path(TEMP_PATH),
@@ -140,7 +178,7 @@ func save_game() -> bool:
 
 func reset_game() -> bool:
 	# If deleting the old save fails, leave the current game untouched.
-	for path in [TEMP_PATH, SAVE_PATH]:
+	for path in [TEMP_PATH, BACKUP_TEMP_PATH, BACKUP_PATH, SAVE_PATH]:
 		if FileAccess.file_exists(path):
 			var error := DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 			if error != OK:
@@ -148,6 +186,11 @@ func reset_game() -> bool:
 				return false
 
 	resetting = true
+	building_positions.clear()
+	for id in FarmData.BUILDINGS:
+		building_positions[id] = FarmData.BUILDINGS[id]["position"]
+		if buildings.has(id) and is_instance_valid(buildings[id]):
+			buildings[id].position = building_positions[id]
 	for key in INVENTORY_DEFAULTS:
 		Inventory.set(key, INVENTORY_DEFAULTS[key])
 	Inventory.player_level = 1
@@ -186,6 +229,9 @@ func reset_game() -> bool:
 			stations[id].restore_save_data(saved_stations[id])
 	# Update HUD once; save only after all inventory and plots are reset.
 	Inventory.inventory_changed.emit()
+	var hud = get_tree().get_first_node_in_group("farm_hud")
+	if hud != null:
+		hud.close_all_panels()
 	resetting = false
 	return save_game()
 
@@ -196,8 +242,19 @@ func _load_game() -> void:
 	if FileAccess.file_exists(SAVE_PATH):
 		loaded = data.load(SAVE_PATH) == OK
 		if not loaded:
-			push_warning("Invalid save file. Using defaults.")
+			push_warning("Main save is unreadable; trying backup.")
 			data = ConfigFile.new()
+	if not loaded and FileAccess.file_exists(BACKUP_PATH):
+		loaded = data.load(BACKUP_PATH) == OK
+		if not loaded:
+			push_warning("Backup save is unreadable; using safe defaults.")
+			data = ConfigFile.new()
+	for id in FarmData.BUILDINGS:
+		var position = data.get_value("building_positions", id, FarmData.BUILDINGS[id]["position"])
+		if not FarmData.valid_building_position(position):
+			push_warning("Invalid saved building position: " + id)
+			position = FarmData.BUILDINGS[id]["position"]
+		building_positions[id] = position
 	# Missing or invalid fields use defaults; valid legacy values are kept.
 	for key in INVENTORY_DEFAULTS:
 		Inventory.set(key, _read_int(data, "inventory", key, INVENTORY_DEFAULTS[key]))
@@ -210,6 +267,10 @@ func _load_game() -> void:
 		var owned_tool = data.get_value("tools", "has_" + id, false)
 		Inventory.set("has_" + id, owned_tool if owned_tool is bool else false)
 		Inventory.set(id + "_level", mini(4, _read_int(data, "tools", id + "_level", 0)))
+		if Inventory.get("has_" + id):
+			Inventory.set(id + "_level", maxi(1, Inventory.get(id + "_level")))
+		else:
+			Inventory.set(id + "_level", 0)
 	var notified = data.get_value("tools", "unlock_notified", false)
 	Inventory.tools_unlock_notified = notified if notified is bool else false
 	Inventory.normalize_exp()
@@ -236,6 +297,10 @@ func _load_game() -> void:
 	var old_chickens: int = _read_int(data, "chicken_coop", "chicken_count", 0)
 	Inventory.chicken_count = clampi(_read_int(data, "animals", "chicken_count", old_chickens), 0, Inventory.animal_capacity("chicken"))
 	Inventory.cow_count = clampi(_read_int(data, "animals", "cow_count", 0), 0, Inventory.animal_capacity("cow"))
+	if not Inventory.owns_chicken_coop:
+		Inventory.chicken_count = 0
+	if not Inventory.owns_cow_shed:
+		Inventory.cow_count = 0
 	var selected = data.get_value("player", "selected_crop", "WHEAT")
 	Inventory.selected_crop = "WHEAT"
 	var owned = data.get_value("player", "has_dog", false)
@@ -263,12 +328,16 @@ func _load_game() -> void:
 func _read_int(data: ConfigFile, section: String, key: String, fallback: int, minimum: int = 0) -> int:
 	var value = data.get_value(section, key, fallback)
 	if value is int and value >= minimum:
-		return value
+		return mini(value, 2147483647)
+	if data.has_section_key(section, key):
+		push_warning("Invalid save field: [%s] %s. Using default." % [section, key])
 	return fallback
 
 
 func _read_station(data: ConfigFile, id: String) -> Dictionary:
 	var result: Dictionary = default_station(id)
+	if not Inventory.owns_building(id):
+		return result
 	var state = data.get_value(id, "state", result["state"])
 	if state not in ["PRODUCING", "READY"]:
 		return result
@@ -282,13 +351,16 @@ func _read_station(data: ConfigFile, id: String) -> Dictionary:
 			return default_station(id)
 	result["started_at"] = _read_time(data, id, "started_at", 0.0)
 	result["ready_at"] = _read_time(data, id, "ready_at", 0.0)
+	if state == "PRODUCING" and (result["ready_at"] <= 0.0 or result["ready_at"] < result["started_at"]):
+		push_warning("Invalid production timestamps: " + id)
+		return default_station(id)
 	result["state"] = "READY" if state == "READY" or Time.get_unix_time_from_system() >= result["ready_at"] else "PRODUCING"
 	return result
 
 func _read_time(data: ConfigFile, section: String, key: String, fallback: float) -> float:
 	var value = data.get_value(section, key, fallback)
 	if value is int or value is float:
-		if is_finite(float(value)) and value >= 0.0:
+		if is_finite(float(value)) and value >= 0.0 and value <= 1000000000000.0:
 			return float(value)
 	return fallback
 
@@ -328,16 +400,17 @@ func _notification(what: int) -> void:
 		save_game()
 		get_tree().quit()
 
-func register_resource(resource: Node) -> void:
+func register_resource(resource: Node) -> bool:
 	var id: String = resource.resource_id
 	if id not in RESOURCE_IDS:
 		push_error("Unknown resource ID: " + id)
-		return
+		return false
 	if resources.has(id) and is_instance_valid(resources[id]):
 		push_error("Duplicate resource ID: " + id)
-		return
+		return false
 	resources[id] = resource
 	resource.restore_save_data(saved_resources.get(id, {"state": "AVAILABLE", "respawn_at": 0.0}))
+	return true
 func _read_resource(value: Variant) -> Dictionary:
 	# Version 6 stored a timestamp directly. Version 7 stores state + respawn_at.
 	var timestamp = value.get("respawn_at", 0.0) if value is Dictionary else value

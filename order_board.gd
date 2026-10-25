@@ -13,7 +13,7 @@ func can_interact() -> bool:
 	return player_near
 
 
-func interact() -> void:
+func interact(_player: Node2D = null) -> void:
 	var hud = get_tree().get_first_node_in_group("farm_hud")
 	if can_interact() and hud != null:
 		hud.open_orders()
