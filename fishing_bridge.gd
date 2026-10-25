@@ -16,7 +16,6 @@ func _ready() -> void:
 func _update_unlock() -> void:
 	var unlocked: bool = Inventory.is_zone_unlocked("fishing")
 	blocker.set_deferred("disabled", unlocked)
-	sign.text = "Fishing Area - Unlocked" if unlocked else "Fishing Area\nUnlocks at Level 10\n[E]"
 	$Gate.visible = not unlocked
 	if not unlocked:
 		var player = get_tree().get_first_node_in_group("farm_player")

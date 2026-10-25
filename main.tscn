@@ -85,12 +85,13 @@ mouse_filter = 2
 color = Color(0.65, 0.42, 0.3, 1)
 
 [node name="HouseLabel" type="Label" parent="House" unique_id=1178592470]
+visible = false
 offset_left = -100.0
-offset_top = -80.0
+offset_top = 86.0
 offset_right = 100.0
-offset_bottom = 80.0
-theme_override_font_sizes/font_size = 28
-text = "HOUSE"
+offset_bottom = 110.0
+theme_override_font_sizes/font_size = 12
+text = ""
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -113,23 +114,23 @@ offset_left = 1190.0
 offset_top = 410.0
 offset_right = 1190.0
 offset_bottom = 410.0
-theme_override_font_sizes/font_size = 24
-text = "SOIL FIELDS"
+theme_override_font_sizes/font_size = 12
+text = "Fields"
 
 [node name="NorthAreaLabel" type="Label" parent="." unique_id=985320599]
 offset_left = 1050.0
 offset_top = 180.0
 offset_right = 1050.0
 offset_bottom = 180.0
-theme_override_font_sizes/font_size = 24
-text = "FOREST - Open from Level 1"
+theme_override_font_sizes/font_size = 12
+text = "Forest"
 
 [node name="EastAreaLabel" type="Label" parent="." unique_id=1616052583]
 offset_left = 1880.0
 offset_top = 640.0
 offset_right = 1880.0
 offset_bottom = 640.0
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 12
 text = "Future farm area"
 
 [node name="SouthAreaLabel" type="Label" parent="." unique_id=589365046]
@@ -137,7 +138,7 @@ offset_left = 1050.0
 offset_top = 1340.0
 offset_right = 1050.0
 offset_bottom = 1340.0
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 12
 text = "SOUTH - Future expansion"
 
 [node name="FeedMill" parent="." unique_id=1869300804 instance=ExtResource("6_mill")]
@@ -542,7 +543,7 @@ fallback_paths = Array[NodePath]([NodePath("../../Placeholder")])
 [node name="GrassAreaLabel" type="Label" parent="." unique_id=163501990]
 offset_left = 250.0
 offset_top = 1180.0
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 12
 text = "OPEN GRASSLAND
 Future structures"
 
@@ -574,8 +575,8 @@ color = Color(0.5, 0.5, 0.55, 1)
 [node name="FishingAreaLabel" type="Label" parent="." unique_id=1836452223]
 offset_left = 2020.0
 offset_top = 650.0
-theme_override_font_sizes/font_size = 24
-text = "FISHING AREA"
+theme_override_font_sizes/font_size = 12
+text = "Fishing Area"
 
 [node name="RiverWalls" type="StaticBody2D" parent="." unique_id=1800122780]
 

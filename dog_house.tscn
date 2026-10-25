@@ -13,6 +13,7 @@ mouse_filter = 2
 color = Color(0.55, 0.32, 0.18, 1)
 
 [node name="Label" type="Label" parent="."]
+theme_override_font_sizes/font_size = 12
 offset_left = -50.0
 offset_top = -32.0
 offset_right = 50.0

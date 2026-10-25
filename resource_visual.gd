@@ -28,6 +28,7 @@ func _process(_delta: float) -> void:
 
 func _refresh_label() -> void:
 	var state: String = resource_node.state
+	var wood: bool = resource_node.resource_type == "wood"
 	if state == "GATHERING":
 		resource_node.label.text = "Chopping..." if wood else "Mining..."
 	elif state == "DEPLETED":

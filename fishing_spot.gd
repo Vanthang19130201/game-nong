@@ -71,7 +71,7 @@ func _process(_delta: float) -> void:
 			return
 	_advance_state()
 	if state == State.IDLE:
-		label.text = "FISHING SPOT\n[E] / Fish" if Inventory.is_zone_unlocked("fishing") else "FISHING SPOT\nLevel 10"
+		label.text = "Fishing Spot\n[E] Fish" if can_interact() else "Fishing Spot"
 	elif state == State.BITE_WINDOW:
 		label.text = "!!! FISH BITE !!!\nPRESS E / REEL!"
 	else:
