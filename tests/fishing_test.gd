@@ -170,7 +170,11 @@ func check_fishing() -> void:
 	hud.rod_upgrade.pressed.emit()
 	check(inv.fishing_rod_level == 2 and inv.coins == 0, "shop rod Lv2 purchase")
 	check(spot.start_session(player) and is_equal_approx(spot.bite_window,1.1), "Lv2 reaction window")
-	spot.cancel_session()
+	begin_bite()
+	await create_timer(1.02).timeout
+	hud.fishing_ui.reel_button.pressed.emit()
+	check(spot.state == spot.State.SUCCESS, "Lv2 can catch after the base one-second window")
+	end_cooldown()
 	for level in [3,4]:
 		inv.coins = inv.FishingData.ROD_LEVELS[level]["cost"]
 		check(inv.upgrade_fishing_rod(), "rod upgrade")

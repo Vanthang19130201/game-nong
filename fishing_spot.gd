@@ -94,6 +94,7 @@ func _advance_state() -> void:
 			_fail("The fish got away!")
 		State.SUCCESS, State.FAILED:
 			state = State.COOLDOWN
+			feedback += "\nCooldown..."
 			deadline = now() + Data.COOLDOWN_TIME
 		State.COOLDOWN:
 			state = State.IDLE

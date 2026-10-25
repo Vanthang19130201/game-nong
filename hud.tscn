@@ -2,12 +2,15 @@
 
 [ext_resource type="Script" path="res://hud.gd" id="1_hud"]
 [ext_resource type="PackedScene" path="res://fishing_ui.tscn" id="2_fishing"]
+[ext_resource type="PackedScene" path="res://fish_market_panel.tscn" id="3_market"]
 
 [node name="HUD" type="CanvasLayer"]
 layer = 10
 script = ExtResource("1_hud")
 
 [node name="FishingUI" parent="." instance=ExtResource("2_fishing")]
+
+[node name="FishMarketPanel" parent="." instance=ExtResource("3_market")]
 
 [node name="ResetControls" type="Control" parent="."]
 anchors_preset = 15

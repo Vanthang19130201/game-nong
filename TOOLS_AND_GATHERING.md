@@ -2,7 +2,8 @@
 
 Map 2400×1600: Farm, Forest, House, rocks và grassland mở từ Level 1. Fishing
 Area bên kia river nhìn thấy sẵn nhưng chỉ qua cầu được từ Level 10. River
-có collision, cầu là lối duy nhất sang Fishing Area. Chưa có gameplay câu cá.
+có collision, cầu là lối duy nhất sang Fishing Area. Reaction fishing tại
+FishingSpot (2020,980): xem FISHING_V1.md.
 
 ## Level 6
 
@@ -58,8 +59,9 @@ Save version 7 ở user://save.cfg:
 - Reset: vật liệu 0, không tool, tool level 0, popup flag false, resource
   AVAILABLE; hủy mọi gathering đang chạy. Player về Level 1 nên chưa khai thác.
 
-Fishing Rod, Shovel, rare resources và mine chưa triển khai; có thể bổ sung
-metadata tool và node tương tác theo cùng cấu trúc sau này.
+Fishing Rod hiện dùng data riêng fishing_data.gd: mở miễn phí Lv1 ở Player
+Level 10, nâng chỉ tăng reaction window, không tự bắt cá. Shovel, rare resources
+và mine chưa triển khai.
 
 ## Test
 

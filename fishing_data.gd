@@ -13,7 +13,7 @@ const ROD_LEVELS: Dictionary = {
 }
 # Future per-fish bite_window can override the rod window; v1 uses one mechanic.
 const FISH: Dictionary = {
-	"small_fish": {"name": "Small Fish", "weight": 60, "rarity": "common", "difficulty": "easy"},
-	"river_fish": {"name": "River Fish", "weight": 30, "rarity": "uncommon", "difficulty": "medium"},
-	"golden_fish": {"name": "Golden Fish", "weight": 10, "rarity": "rare", "difficulty": "hard"}
+	"small_fish": {"name": "Small Fish", "weight": 60, "rarity": "common", "difficulty": "easy", "sell_price": 25, "order_exp": 5},
+	"river_fish": {"name": "River Fish", "weight": 30, "rarity": "uncommon", "difficulty": "medium", "sell_price": 40, "order_exp": 5},
+	"golden_fish": {"name": "Golden Fish", "weight": 10, "rarity": "rare", "difficulty": "hard", "sell_price": 100, "order_exp": 5}
 }

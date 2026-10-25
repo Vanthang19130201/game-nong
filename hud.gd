@@ -6,6 +6,7 @@ const CropData = preload("res://crop_data.gd")
 const Progression = preload("res://progression_data.gd")
 const FishingData = preload("res://fishing_data.gd")
 @onready var fishing_ui: Control = $FishingUI
+@onready var fish_market_panel: PanelContainer = $FishMarketPanel
 var rod_info: Label
 var rod_upgrade: Button
 
@@ -64,7 +65,7 @@ func _ready() -> void:
 		debug_panel.set_script(preload("res://dev_debug_panel.gd"))
 		add_child(debug_panel)
 		debug_panel.visibility_changed.connect(_on_main_panel_visibility_changed)
-	for panel in [shop_panel, build_panel, station_panel, house_panel, order_panel]:
+	for panel in [shop_panel, build_panel, station_panel, house_panel, order_panel, fish_market_panel]:
 		panel.visibility_changed.connect(_on_main_panel_visibility_changed)
 	crop_ids = CropData.CROPS.keys()
 	var content: VBoxContainer = $ShopPanel/Margin/Scroll/ShopContent
@@ -296,7 +297,7 @@ func _collect() -> void:
 
 
 func blocks_world_input() -> bool:
-	return (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or shop_panel.visible or station_panel.visible or order_panel.visible or build_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
+	return fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or shop_panel.visible or station_panel.visible or order_panel.visible or build_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
 
 
 func _input(event: InputEvent) -> void:
@@ -329,6 +330,8 @@ func close_current_panel() -> void:
 		recipe_selector.get_popup().hide()
 	elif is_instance_valid(debug_panel) and debug_panel.visible:
 		debug_panel.hide()
+	elif fish_market_panel.visible:
+		fish_market_panel.close()
 	elif house_panel.visible:
 		close_house()
 	elif order_panel.visible:
@@ -345,6 +348,7 @@ func close_current_panel() -> void:
 
 
 func _close_game_panels() -> void:
+	fish_market_panel.close()
 	fishing_ui.close_session()
 	if is_instance_valid(debug_panel):
 		debug_panel.hide()
@@ -363,6 +367,13 @@ func _close_game_panels() -> void:
 
 func _native_dialog_open() -> bool:
 	return reset_confirmation.visible or plot_purchase.visible or tools_unlock_popup.visible
+
+
+func open_fish_market(market: Node) -> void:
+	if blocks_world_input() or not is_instance_valid(market) or not market.can_interact():
+		return
+	_close_game_panels()
+	fish_market_panel.open(market)
 
 
 func close_all_panels() -> void:

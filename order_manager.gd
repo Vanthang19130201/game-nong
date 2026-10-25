@@ -25,6 +25,9 @@ func item_info() -> Dictionary:
 		}
 	items["egg"] = {"name": "Egg", "level": 7, "price": Inventory.EGG_PRICE, "exp": 5}
 	items["milk"] = {"name": "Milk", "level": 10, "price": Inventory.MILK_PRICE, "exp": 10}
+	for fish in Inventory.FishingData.FISH:
+		var info: Dictionary = Inventory.FishingData.FISH[fish]
+		items[fish] = {"name": info["name"], "level": Inventory.FarmData.FISHING_LEVEL, "price": info["sell_price"], "exp": info["order_exp"]}
 	return items
 
 
@@ -32,6 +35,8 @@ func item_available(item: String) -> bool:
 	var items: Dictionary = item_info()
 	if not items.has(item) or Inventory.player_level < items[item]["level"]:
 		return false
+	if Inventory.FishingData.FISH.has(item):
+		return Inventory.is_zone_unlocked("fishing") and Inventory.has_fishing_rod
 	if item == "egg":
 		return Inventory.owns_feed_mill and Inventory.owns_chicken_coop and Inventory.chicken_count > 0
 	if item == "milk":

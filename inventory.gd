@@ -78,6 +78,20 @@ func sell_egg() -> bool:
 	return true
 
 
+func sell_fish(fish: String, sell_all: bool = false) -> bool:
+	if not is_zone_unlocked("fishing") or not FishingData.FISH.has(fish):
+		return false
+	var owned: int = get(fish)
+	if owned <= 0:
+		return false
+	var amount: int = owned if sell_all else 1
+	# Update fish and Coins together before HUD/save receive the single signal.
+	set(fish, owned - amount)
+	coins += amount * FishingData.FISH[fish]["sell_price"]
+	inventory_changed.emit()
+	return true
+
+
 func is_unlocked(crop: String) -> bool:
 	return CropData.CROPS.has(crop) and player_level >= CropData.CROPS[crop]["unlock_level"]
 

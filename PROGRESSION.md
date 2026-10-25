@@ -98,3 +98,5 @@ Wood/Stone và nâng cấp: xem RESOURCE_ECONOMY.md.
 Tools, khai thác và map tự do: xem TOOLS_AND_GATHERING.md.
 
 Farm grid 8→32 và Fishing Area Level 10: xem FARM_GRID_AND_ZONES.md.
+
+Reaction fishing, fish Barn items và Rod upgrades: xem FISHING_V1.md.
