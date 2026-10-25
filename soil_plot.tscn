@@ -5,6 +5,7 @@
 [ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
 
 [ext_resource type="Script" path="res://soil_plot.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/crops/soil/soil_plot.png" id="2_soil"]
 
 [sub_resource type="RectangleShape2D" id="PlotShape"]
 size = Vector2(68, 52)
@@ -41,9 +42,12 @@ shape = SubResource("PlotShape")
 script = ExtResource("91_visual")
 
 [node name="SoilSprite" type="Sprite2D" parent="Visuals"]
+scale = Vector2(0.05103668, 0.03827751)
+texture = ExtResource("2_soil")
 script = ExtResource("90_art")
 fallback_paths = Array[NodePath]([NodePath("../../SoilColor")])
 
 [node name="CropSprite" type="Sprite2D" parent="Visuals"]
+z_index = 1
 script = ExtResource("90_art")
 fallback_paths = Array[NodePath]([NodePath("../../PlantLabel")])

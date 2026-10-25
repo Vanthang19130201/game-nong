@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://rhxig8gxyrdc" path="res://player.gd" id="1_0xm2m"]
 [ext_resource type="Texture2D" uid="uid://m753onc7et8y" path="res://icon.svg" id="2_h2yge"]
-[ext_resource type="Script" uid="uid://dmiin4p8yvpun" path="res://soil_plot.gd" id="3_h2yge"]
 [ext_resource type="Texture2D" uid="uid://cgje3gncaw2dy" path="res://assets/buildings/house/house1.png" id="4_getpj"]
 [ext_resource type="PackedScene" path="res://hud.tscn" id="4_hud"]
 [ext_resource type="Script" uid="uid://cv4b8aubh8cw0" path="res://farm.gd" id="5_farm"]
@@ -17,7 +16,6 @@
 [ext_resource type="PackedScene" path="res://fishing_spot.tscn" id="14_fishing"]
 [ext_resource type="PackedScene" path="res://fish_market.tscn" id="15_market"]
 [ext_resource type="Script" uid="uid://bv2sw1d224cv8" path="res://artwork_sprite.gd" id="90_art"]
-[ext_resource type="Script" uid="uid://cbdwg116yfrru" path="res://soil_visual.gd" id="91_visual"]
 [ext_resource type="Script" uid="uid://dwi3al7wwxxvc" path="res://character_visual.gd" id="92_anim"]
 [ext_resource type="SpriteFrames" path="res://assets/characters/directional_frames.tres" id="93_frames"]
 [ext_resource type="Script" uid="uid://bftdjeeaw3cnf" path="res://building_visual.gd" id="94_building"]
@@ -27,9 +25,6 @@ size = Vector2(260, 220)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_6rjdj"]
 size = Vector2(28, 28)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_0xm2m"]
-size = Vector2(68, 52)
 
 [sub_resource type="RectangleShape2D" id="RiverUpperShape"]
 size = Vector2(140, 790)
@@ -91,7 +86,6 @@ offset_top = 86.0
 offset_right = 100.0
 offset_bottom = 110.0
 theme_override_font_sizes/font_size = 12
-text = ""
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -187,269 +181,29 @@ animation = &"idle_down"
 script = ExtResource("92_anim")
 fallback_paths = Array[NodePath]([NodePath("../Icon")])
 
-[node name="SoilPlot" type="Area2D" parent="." unique_id=610237959]
+[node name="SoilPlot" parent="." unique_id=610237959 instance=ExtResource("12_plot")]
 position = Vector2(1100, 520)
-script = ExtResource("3_h2yge")
 plot_id = "soil_01"
 
-[node name="PlantLabel" type="Label" parent="SoilPlot" unique_id=666867354]
-z_index = 1
-offset_left = -32.0
-offset_top = -24.0
-offset_right = 32.0
-offset_bottom = 24.0
-theme_override_font_sizes/font_size = 12
-horizontal_alignment = 1
-vertical_alignment = 1
-metadata/_edit_use_anchors_ = true
-
-[node name="GrowTimer" type="Timer" parent="SoilPlot" unique_id=1065166647]
-wait_time = 10.0
-one_shot = true
-
-[node name="SoilColor" type="ColorRect" parent="SoilPlot" unique_id=1599481107]
-offset_left = -32.0
-offset_top = -24.0
-offset_right = 32.0
-offset_bottom = 24.0
-mouse_filter = 2
-color = Color(0.18139222, 0.008802304, 0, 1)
-metadata/_edit_use_anchors_ = true
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot" unique_id=755647875]
-shape = SubResource("RectangleShape2D_0xm2m")
-
-[node name="Visuals" type="Node2D" parent="SoilPlot" unique_id=996332694]
-script = ExtResource("91_visual")
-
-[node name="SoilSprite" type="Sprite2D" parent="SoilPlot/Visuals" unique_id=195444098]
-script = ExtResource("90_art")
-fallback_paths = Array[NodePath]([NodePath("../../SoilColor")])
-
-[node name="CropSprite" type="Sprite2D" parent="SoilPlot/Visuals" unique_id=465743007]
-z_index = 1
-script = ExtResource("90_art")
-fallback_paths = Array[NodePath]([NodePath("../../PlantLabel")])
-
-[node name="SoilPlot6" type="Area2D" parent="." unique_id=948524571]
+[node name="SoilPlot6" parent="." unique_id=948524571 instance=ExtResource("12_plot")]
 position = Vector2(1174, 578)
-script = ExtResource("3_h2yge")
 plot_id = "soil_06"
 
-[node name="PlantLabel" type="Label" parent="SoilPlot6" unique_id=1063902503]
-z_index = 1
-offset_left = -32.0
-offset_top = -24.0
-offset_right = 32.0
-offset_bottom = 24.0
-theme_override_font_sizes/font_size = 12
-horizontal_alignment = 1
-vertical_alignment = 1
-metadata/_edit_use_anchors_ = true
-
-[node name="GrowTimer" type="Timer" parent="SoilPlot6" unique_id=662499450]
-wait_time = 10.0
-one_shot = true
-
-[node name="SoilColor" type="ColorRect" parent="SoilPlot6" unique_id=348611353]
-offset_left = -32.0
-offset_top = -24.0
-offset_right = 32.0
-offset_bottom = 24.0
-mouse_filter = 2
-color = Color(0.18139222, 0.008802304, 0, 1)
-metadata/_edit_use_anchors_ = true
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot6" unique_id=1018242756]
-shape = SubResource("RectangleShape2D_0xm2m")
-
-[node name="Visuals" type="Node2D" parent="SoilPlot6" unique_id=988254194]
-script = ExtResource("91_visual")
-
-[node name="SoilSprite" type="Sprite2D" parent="SoilPlot6/Visuals" unique_id=1860357018]
-script = ExtResource("90_art")
-fallback_paths = Array[NodePath]([NodePath("../../SoilColor")])
-
-[node name="CropSprite" type="Sprite2D" parent="SoilPlot6/Visuals" unique_id=809446884]
-z_index = 1
-script = ExtResource("90_art")
-fallback_paths = Array[NodePath]([NodePath("../../PlantLabel")])
-
-[node name="SoilPlot5" type="Area2D" parent="." unique_id=236598396]
+[node name="SoilPlot5" parent="." unique_id=236598396 instance=ExtResource("12_plot")]
 position = Vector2(1100, 578)
-script = ExtResource("3_h2yge")
 plot_id = "soil_05"
 
-[node name="PlantLabel" type="Label" parent="SoilPlot5" unique_id=818297835]
-z_index = 1
-offset_left = -32.0
-offset_top = -24.0
-offset_right = 32.0
-offset_bottom = 24.0
-theme_override_font_sizes/font_size = 12
-horizontal_alignment = 1
-vertical_alignment = 1
-metadata/_edit_use_anchors_ = true
-
-[node name="GrowTimer" type="Timer" parent="SoilPlot5" unique_id=724060958]
-wait_time = 10.0
-one_shot = true
-
-[node name="SoilColor" type="ColorRect" parent="SoilPlot5" unique_id=1447585923]
-offset_left = -32.0
-offset_top = -24.0
-offset_right = 32.0
-offset_bottom = 24.0
-mouse_filter = 2
-color = Color(0.18139222, 0.008802304, 0, 1)
-metadata/_edit_use_anchors_ = true
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot5" unique_id=1927352723]
-shape = SubResource("RectangleShape2D_0xm2m")
-
-[node name="Visuals" type="Node2D" parent="SoilPlot5" unique_id=1933769772]
-script = ExtResource("91_visual")
-
-[node name="SoilSprite" type="Sprite2D" parent="SoilPlot5/Visuals" unique_id=465411362]
-script = ExtResource("90_art")
-fallback_paths = Array[NodePath]([NodePath("../../SoilColor")])
-
-[node name="CropSprite" type="Sprite2D" parent="SoilPlot5/Visuals" unique_id=1348756047]
-z_index = 1
-script = ExtResource("90_art")
-fallback_paths = Array[NodePath]([NodePath("../../PlantLabel")])
-
-[node name="SoilPlot4" type="Area2D" parent="." unique_id=2016170595]
+[node name="SoilPlot4" parent="." unique_id=2016170595 instance=ExtResource("12_plot")]
 position = Vector2(1322, 520)
-script = ExtResource("3_h2yge")
 plot_id = "soil_04"
 
-[node name="PlantLabel" type="Label" parent="SoilPlot4" unique_id=130399966]
-z_index = 1
-offset_left = -32.0
-offset_top = -24.0
-offset_right = 32.0
-offset_bottom = 24.0
-theme_override_font_sizes/font_size = 12
-horizontal_alignment = 1
-vertical_alignment = 1
-metadata/_edit_use_anchors_ = true
-
-[node name="GrowTimer" type="Timer" parent="SoilPlot4" unique_id=2023861260]
-wait_time = 10.0
-one_shot = true
-
-[node name="SoilColor" type="ColorRect" parent="SoilPlot4" unique_id=143651468]
-offset_left = -32.0
-offset_top = -24.0
-offset_right = 32.0
-offset_bottom = 24.0
-mouse_filter = 2
-color = Color(0.18139222, 0.008802304, 0, 1)
-metadata/_edit_use_anchors_ = true
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot4" unique_id=135574040]
-shape = SubResource("RectangleShape2D_0xm2m")
-
-[node name="Visuals" type="Node2D" parent="SoilPlot4" unique_id=1488389372]
-script = ExtResource("91_visual")
-
-[node name="SoilSprite" type="Sprite2D" parent="SoilPlot4/Visuals" unique_id=1137810092]
-script = ExtResource("90_art")
-fallback_paths = Array[NodePath]([NodePath("../../SoilColor")])
-
-[node name="CropSprite" type="Sprite2D" parent="SoilPlot4/Visuals" unique_id=1402067875]
-z_index = 1
-script = ExtResource("90_art")
-fallback_paths = Array[NodePath]([NodePath("../../PlantLabel")])
-
-[node name="SoilPlot3" type="Area2D" parent="." unique_id=311795311]
+[node name="SoilPlot3" parent="." unique_id=311795311 instance=ExtResource("12_plot")]
 position = Vector2(1248, 520)
-script = ExtResource("3_h2yge")
 plot_id = "soil_03"
 
-[node name="PlantLabel" type="Label" parent="SoilPlot3" unique_id=1167702322]
-z_index = 1
-offset_left = -32.0
-offset_top = -24.0
-offset_right = 32.0
-offset_bottom = 24.0
-theme_override_font_sizes/font_size = 12
-horizontal_alignment = 1
-vertical_alignment = 1
-metadata/_edit_use_anchors_ = true
-
-[node name="GrowTimer" type="Timer" parent="SoilPlot3" unique_id=328151511]
-wait_time = 10.0
-one_shot = true
-
-[node name="SoilColor" type="ColorRect" parent="SoilPlot3" unique_id=230088132]
-offset_left = -32.0
-offset_top = -24.0
-offset_right = 32.0
-offset_bottom = 24.0
-mouse_filter = 2
-color = Color(0.18139222, 0.008802304, 0, 1)
-metadata/_edit_use_anchors_ = true
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot3" unique_id=302752602]
-shape = SubResource("RectangleShape2D_0xm2m")
-
-[node name="Visuals" type="Node2D" parent="SoilPlot3" unique_id=701090432]
-script = ExtResource("91_visual")
-
-[node name="SoilSprite" type="Sprite2D" parent="SoilPlot3/Visuals" unique_id=206400323]
-script = ExtResource("90_art")
-fallback_paths = Array[NodePath]([NodePath("../../SoilColor")])
-
-[node name="CropSprite" type="Sprite2D" parent="SoilPlot3/Visuals" unique_id=646457734]
-z_index = 1
-script = ExtResource("90_art")
-fallback_paths = Array[NodePath]([NodePath("../../PlantLabel")])
-
-[node name="SoilPlot2" type="Area2D" parent="." unique_id=1559835726]
+[node name="SoilPlot2" parent="." unique_id=1559835726 instance=ExtResource("12_plot")]
 position = Vector2(1174, 520)
-script = ExtResource("3_h2yge")
 plot_id = "soil_02"
-
-[node name="PlantLabel" type="Label" parent="SoilPlot2" unique_id=1368112123]
-z_index = 1
-offset_left = -32.0
-offset_top = -24.0
-offset_right = 32.0
-offset_bottom = 24.0
-theme_override_font_sizes/font_size = 12
-horizontal_alignment = 1
-vertical_alignment = 1
-metadata/_edit_use_anchors_ = true
-
-[node name="GrowTimer" type="Timer" parent="SoilPlot2" unique_id=735638829]
-wait_time = 10.0
-one_shot = true
-
-[node name="SoilColor" type="ColorRect" parent="SoilPlot2" unique_id=675645173]
-offset_left = -32.0
-offset_top = -24.0
-offset_right = 32.0
-offset_bottom = 24.0
-mouse_filter = 2
-color = Color(0.18139222, 0.008802304, 0, 1)
-metadata/_edit_use_anchors_ = true
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="SoilPlot2" unique_id=241495818]
-shape = SubResource("RectangleShape2D_0xm2m")
-
-[node name="Visuals" type="Node2D" parent="SoilPlot2" unique_id=1679813670]
-script = ExtResource("91_visual")
-
-[node name="SoilSprite" type="Sprite2D" parent="SoilPlot2/Visuals" unique_id=499917050]
-script = ExtResource("90_art")
-fallback_paths = Array[NodePath]([NodePath("../../SoilColor")])
-
-[node name="CropSprite" type="Sprite2D" parent="SoilPlot2/Visuals" unique_id=535693431]
-z_index = 1
-script = ExtResource("90_art")
-fallback_paths = Array[NodePath]([NodePath("../../PlantLabel")])
 
 [node name="DogHouse" type="Node2D" parent="." unique_id=13681641]
 visible = false
