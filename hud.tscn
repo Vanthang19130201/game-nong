@@ -1,5 +1,7 @@
 [gd_scene format=3]
 
+[ext_resource type="Theme" path="res://assets/ui/ui_theme.tres" id="99_theme"]
+
 [ext_resource type="Script" path="res://hud.gd" id="1_hud"]
 [ext_resource type="PackedScene" path="res://fishing_ui.tscn" id="2_fishing"]
 [ext_resource type="PackedScene" path="res://fish_market_panel.tscn" id="3_market"]
@@ -16,6 +18,8 @@ script = ExtResource("1_hud")
 [node name="StoragePanel" parent="." instance=ExtResource("4_storage")]
 
 [node name="ResetControls" type="Control" parent="."]
+visible = false
+theme = ExtResource("99_theme")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -36,6 +40,7 @@ focus_mode = 0
 text = "RESET_GAME"
 
 [node name="ResetConfirmation" type="ConfirmationDialog" parent="."]
+theme = ExtResource("99_theme")
 title = "RESET_GAME"
 size = Vector2i(360, 140)
 exclusive = true
@@ -45,6 +50,7 @@ ok_button_text = "RESET_GAME"
 cancel_button_text = "UI_CANCEL"
 
 [node name="Layout" type="VBoxContainer" parent="."]
+theme = ExtResource("99_theme")
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 16.0
@@ -61,7 +67,6 @@ mouse_filter = 2
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 1
-theme_override_font_sizes/font_size = 18
 text = "HUD_COMPACT_DEFAULT"
 
 [node name="Experience" type="HBoxContainer" parent="Layout"]
@@ -119,6 +124,7 @@ focus_mode = 0
 text = "UI_ORDERS_SHORT"
 
 [node name="SelectedCropLabel" type="Label" parent="Layout/Actions"]
+visible = false
 layout_mode = 2
 text = "UI_SELECTED_CROP"
 
@@ -129,10 +135,12 @@ focus_mode = 0
 fit_to_longest_item = false
 
 [node name="SaveStatus" type="Label" parent="Layout"]
+visible = false
 layout_mode = 2
 mouse_filter = 2
 
 [node name="ShopPanel" type="PanelContainer" parent="."]
+theme = ExtResource("99_theme")
 z_index = 10
 visible = false
 offset_left = 720.0
@@ -157,8 +165,8 @@ layout_mode = 2
 theme_override_constants/separation = 4
 
 [node name="TitleLabel" type="Label" parent="ShopPanel/Margin/Scroll/ShopContent"]
+theme_type_variation = &"Heading"
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
 text = "TITLE_SHOP"
 
 [node name="BuyButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
@@ -237,6 +245,7 @@ custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
 
 [node name="StationPanel" type="PanelContainer" parent="."]
+theme = ExtResource("99_theme")
 z_index = 20
 visible = false
 offset_left = 700.0
@@ -289,6 +298,7 @@ focus_mode = 0
 text = "UI_CLOSE"
 
 [node name="OrderPanel" type="PanelContainer" parent="."]
+theme = ExtResource("99_theme")
 z_index = 30
 visible = false
 offset_left = 146.0
@@ -308,8 +318,8 @@ layout_mode = 2
 theme_override_constants/separation = 10
 
 [node name="Title" type="Label" parent="OrderPanel/Margin/Content"]
+theme_type_variation = &"Heading"
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
 text = "WORLD_ORDER_BOARD"
 
 [node name="Orders" type="HBoxContainer" parent="OrderPanel/Margin/Content"]
@@ -325,6 +335,7 @@ layout_mode = 2
 focus_mode = 0
 text = "UI_CLOSE"
 [node name="BuildPanel" type="PanelContainer" parent="."]
+theme = ExtResource("99_theme")
 z_index = 25
 visible = false
 offset_left = 280.0
@@ -344,6 +355,7 @@ layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="Title" type="Label" parent="BuildPanel/Margin/Content"]
+theme_type_variation = &"Heading"
 layout_mode = 2
 text = "TITLE_BUILD_UPPER"
 
@@ -363,6 +375,7 @@ focus_mode = 0
 text = "UI_CLOSE"
 
 [node name="ToolsUnlocked" type="AcceptDialog" parent="."]
+theme = ExtResource("99_theme")
 title = "TOOLS_UNLOCKED"
 size = Vector2i(430, 250)
 exclusive = true
@@ -370,6 +383,7 @@ unresizable = true
 ok_button_text = "UI_OK"
 dialog_text = "TOOLS_UNLOCK_BODY"
 [node name="PlotPurchase" type="ConfirmationDialog" parent="."]
+theme = ExtResource("99_theme")
 title = "TITLE_NEW_PLOT"
 size = Vector2i(360, 160)
 exclusive = true
@@ -380,6 +394,7 @@ cancel_button_text = "UI_CANCEL"
 dialog_text = "DEFAULT_PLOT_PRICE"
 
 [node name="HousePanel" type="PanelContainer" parent="."]
+theme = ExtResource("99_theme")
 z_index = 26
 visible = false
 anchor_left = 0.5
@@ -403,8 +418,8 @@ layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="Title" type="Label" parent="HousePanel/Margin/Content"]
+theme_type_variation = &"Heading"
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
 text = "TITLE_HOUSE"
 
 [node name="Info" type="Label" parent="HousePanel/Margin/Content"]

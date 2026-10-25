@@ -27,6 +27,10 @@ SaveManager="*res://save_manager.gd"
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[gui]
+
+theme/custom="res://assets/ui/ui_theme.tres"
+
 [input]
 
 move_up={

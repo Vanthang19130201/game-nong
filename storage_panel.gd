@@ -7,7 +7,6 @@ func _ready() -> void:
 	$Margin/Content/CloseButton.pressed.connect(hide)
 	get_viewport().size_changed.connect(_fit_viewport)
 	tabs.get_tab_bar().custom_minimum_size.y = 48
-	tabs.get_tab_bar().add_theme_font_size_override("font_size", 14)
 	refresh()
 	_fit_viewport.call_deferred()
 

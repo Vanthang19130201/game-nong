@@ -1,7 +1,10 @@
 [gd_scene format=3]
+
+[ext_resource type="Theme" path="res://assets/ui/ui_theme.tres" id="99_theme"]
 [ext_resource type="Script" path="res://fish_market_panel.gd" id="1"]
 
 [node name="FishMarketPanel" type="PanelContainer"]
+theme = ExtResource("99_theme")
 visible = false
 z_index = 27
 anchor_left = 0.5
@@ -26,8 +29,8 @@ layout_mode = 2
 theme_override_constants/separation = 14
 
 [node name="Title" type="Label" parent="Margin/Content"]
+theme_type_variation = &"Heading"
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
 text = "TITLE_FISH_MARKET"
 
 [node name="Rows" type="VBoxContainer" parent="Margin/Content"]

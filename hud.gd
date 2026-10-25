@@ -5,6 +5,7 @@ const ToolData = preload("res://tool_data.gd")
 const CropData = preload("res://crop_data.gd")
 const Progression = preload("res://progression_data.gd")
 const FishingData = preload("res://fishing_data.gd")
+const UI_THEME: Theme = preload("res://assets/ui/ui_theme.tres")
 @onready var fishing_ui: Control = $FishingUI
 @onready var fish_market_panel: PanelContainer = $FishMarketPanel
 @onready var storage_panel: PanelContainer = $StoragePanel
@@ -114,7 +115,18 @@ func _ready() -> void:
 	$StationPanel/Margin/Content/CloseButton.pressed.connect(close_station)
 	$OrderPanel/Margin/Content/CloseButton.pressed.connect(order_panel.hide)
 	OrderManager.orders_changed.connect(_refresh_orders)
+	_apply_ui_theme(self)
 	_update_inventory()
+
+
+func _apply_ui_theme(node: Node) -> void:
+	if node is Control:
+		node.theme = UI_THEME
+		node.scale = Vector2.ONE
+	elif node is Window:
+		node.theme = UI_THEME
+	for child in node.get_children():
+		_apply_ui_theme(child)
 
 
 func _update_inventory() -> void:
