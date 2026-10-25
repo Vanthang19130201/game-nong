@@ -101,6 +101,7 @@ func run_checks() -> void:
 			for item in order["requirements"]:
 				total += items[item]["price"] * order["requirements"][item]
 				if inv.FishingData.FISH.has(item):
+					check(order["requirements"][item] <= inv.FishingData.FISH[item]["order_max"], "fish orders respect rarity quantity cap")
 					saw_fish = true
 			check(order["coin_reward"] >= ceili(total*1.25) and order["coin_reward"] <= floori(total*1.5) and order["exp_reward"] > 0, "order premium/EXP")
 		check(saw_fish, "fish appear in level 10 orders")

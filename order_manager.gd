@@ -96,6 +96,8 @@ func _generate_order() -> Dictionary:
 		var choice: int = rng.randi_range(0, available.size() - 1)
 		var item: String = available.pop_at(choice)
 		var amount: int = rng.randi_range(1, 3 if item == "egg" else 4)
+		if Inventory.FishingData.FISH.has(item):
+			amount = rng.randi_range(1, Inventory.FishingData.FISH[item]["order_max"])
 		requirements[item] = amount
 		total_price += items[item]["price"] * amount
 		total_exp += items[item]["exp"] * amount

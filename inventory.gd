@@ -18,6 +18,8 @@ var river_fish: int = 0
 var golden_fish: int = 0
 var has_fishing_rod: bool = false
 var fishing_rod_level: int = 0
+var fishing_attempts_used: int = 0
+var fishing_cycle_started_at: float = 0.0
 # Transient: an active fishing session reserves one slot, never saved.
 var reserved_barn_slots: int = 0
 
@@ -174,8 +176,9 @@ func normalize_exp() -> void:
 	ensure_tools_for_level()
 	if player_level >= FarmData.FISHING_LEVEL:
 		fishing_unlocked = true
-		has_fishing_rod = true
-		fishing_rod_level = maxi(1, fishing_rod_level)
+		if not has_fishing_rod:
+			has_fishing_rod = true
+			fishing_rod_level = 1
 
 
 func add_exp(amount: int) -> void:
@@ -258,6 +261,43 @@ func reserve_fishing_slot() -> bool:
 	if reserved_barn_slots != 0 or not can_add_item("small_fish", 1):
 		return false
 	reserved_barn_slots = 1
+	return true
+
+
+func refresh_fishing_cycle() -> void:
+	if fishing_cycle_started_at <= 0.0 or Time.get_unix_time_from_system() >= fishing_cycle_started_at + FishingData.CYCLE_SECONDS:
+		fishing_attempts_used = 0
+		fishing_cycle_started_at = 0.0
+
+
+func fishing_attempts_remaining() -> int:
+	if fishing_cycle_started_at <= 0.0 or Time.get_unix_time_from_system() >= fishing_cycle_started_at + FishingData.CYCLE_SECONDS:
+		return FishingData.ATTEMPTS_PER_CYCLE
+	return maxi(0, FishingData.ATTEMPTS_PER_CYCLE - fishing_attempts_used)
+
+
+func fishing_cycle_seconds_left() -> int:
+	if fishing_attempts_remaining() == FishingData.ATTEMPTS_PER_CYCLE:
+		return 0
+	return maxi(0, ceili(fishing_cycle_started_at + FishingData.CYCLE_SECONDS - Time.get_unix_time_from_system()))
+
+
+func consume_fishing_attempt() -> bool:
+	if not is_zone_unlocked("fishing") or not has_fishing_rod:
+		return false
+	if fishing_attempts_remaining() <= 0:
+		return fail("No fishing attempts left. Wait for the 12-hour cycle.")
+	var old_used: int = fishing_attempts_used
+	var old_start: float = fishing_cycle_started_at
+	refresh_fishing_cycle()
+	if fishing_cycle_started_at <= 0.0:
+		fishing_cycle_started_at = Time.get_unix_time_from_system()
+	fishing_attempts_used += 1
+	# Persist the charge before starting: cancel, failure and closing cannot refund it.
+	if not SaveManager.save_game():
+		fishing_attempts_used = old_used
+		fishing_cycle_started_at = old_start
+		return fail("Could not save fishing attempt. Please try again.")
 	return true
 
 

@@ -30,7 +30,7 @@ $previousPreference = $ErrorActionPreference
 $stages = @('core', 'position_write', 'position_read', 'legacy_write', 'legacy_read',
     'invalid_write', 'invalid_read', 'offline_write', 'offline_read',
     'backup_write', 'backup_read', 'defaults_write', 'defaults_read', 'duplicates',
-    'fishing_core', 'fishing_write', 'fishing_read', 'market_core', 'market_read')
+    'fishing_core', 'fishing_limits', 'fishing_write', 'fishing_read', 'market_core', 'market_read')
 foreach ($stage in $stages) {
     $log = Join-Path $testRoot "$stage.log"
     $ErrorActionPreference = 'Continue'

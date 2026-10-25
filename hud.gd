@@ -12,7 +12,6 @@ var rod_upgrade: Button
 
 @onready var inventory_label: Label = $Layout/InventoryLabel
 @onready var shop_button: Button = $Layout/Actions/ShopButton
-@onready var save_button: Button = $Layout/Actions/SaveButton
 @onready var crop_selector: OptionButton = $Layout/Actions/CropSelector
 @onready var save_status: Label = $Layout/SaveStatus
 @onready var shop_panel: PanelContainer = $ShopPanel
@@ -97,7 +96,6 @@ func _ready() -> void:
 	animal_sell.pressed.connect(_sell_station_animal)
 	Inventory.inventory_changed.connect(_update_inventory)
 	shop_button.pressed.connect(_toggle_shop)
-	save_button.pressed.connect(_save_game)
 	reset_button.pressed.connect(_show_reset_confirmation)
 	reset_confirmation.confirmed.connect(_reset_game)
 	reset_confirmation.visibility_changed.connect(_on_reset_visibility_changed)
@@ -184,13 +182,6 @@ func _reset_game() -> void:
 		save_status.text = "Game reset and saved!"
 	else:
 		save_status.text = "Reset failed. Please try again."
-
-
-func _save_game() -> void:
-	if SaveManager.save_game():
-		save_status.text = "Game saved!"
-	else:
-		save_status.text = "Save failed. Please try again."
 
 
 func _toggle_shop() -> void:

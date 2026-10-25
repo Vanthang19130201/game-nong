@@ -70,6 +70,11 @@ func _nearby_spot() -> Node:
 
 func _process(_delta: float) -> void:
 	fish_button.visible = not is_instance_valid(active_spot) and not hud.blocks_world_input() and _nearby_spot() != null
+	var remaining: int = Inventory.fishing_attempts_remaining()
+	fish_button.text = "Fish [E] %d/%d" % [remaining, Inventory.FishingData.ATTEMPTS_PER_CYCLE]
+	if remaining == 0:
+		var seconds: int = Inventory.fishing_cycle_seconds_left()
+		fish_button.text = "0/15 - %02d:%02d" % [int(seconds / 3600), int(seconds / 60) % 60]
 	if not is_instance_valid(active_spot):
 		panel.hide()
 		return

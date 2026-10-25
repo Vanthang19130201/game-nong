@@ -9,6 +9,8 @@ const SAVE_PATH: String = "user://save.cfg"
 const TEMP_PATH: String = "user://save.cfg.tmp"
 const BACKUP_PATH: String = "user://save_backup.cfg"
 const BACKUP_TEMP_PATH: String = "user://save_backup.cfg.tmp"
+const AUTOSAVE_INTERVAL: float = 30.0
+var autosave_timer: Timer
 var PLOT_IDS: Array[String] = FarmData.plot_ids()
 const INVENTORY_DEFAULTS: Dictionary = {
 	"wheat_seed": 10, "wheat": 0, "corn_seed": 0, "corn": 0,
@@ -70,6 +72,13 @@ func _ready() -> void:
 	_load_game()
 	Inventory.inventory_changed.connect(save_game)
 	get_tree().auto_accept_quit = false
+	autosave_timer = Timer.new()
+	autosave_timer.name = "AutosaveTimer"
+	autosave_timer.wait_time = AUTOSAVE_INTERVAL
+	autosave_timer.process_mode = Node.PROCESS_MODE_ALWAYS
+	autosave_timer.timeout.connect(save_game)
+	add_child(autosave_timer)
+	autosave_timer.start()
 
 
 func register_plot(plot: Node) -> bool:
@@ -95,7 +104,9 @@ func save_game() -> bool:
 	if resetting:
 		return false
 	var data := ConfigFile.new()
-	data.set_value("game", "version", 10)
+	data.set_value("game", "version", 11)
+	data.set_value("fishing", "fishing_attempts_used", Inventory.fishing_attempts_used)
+	data.set_value("fishing", "fishing_cycle_started_at", Inventory.fishing_cycle_started_at)
 	data.set_value("fishing", "has_fishing_rod", Inventory.has_fishing_rod)
 	data.set_value("fishing", "fishing_rod_level", Inventory.fishing_rod_level)
 	for id in FarmData.BUILDINGS:
@@ -155,22 +166,7 @@ func save_game() -> bool:
 		for key in plot_data:
 			data.set_value(id, key, plot_data[key])
 
-	# Replace the old file only after the complete new snapshot is written.
-	var error := data.save(TEMP_PATH)
-	# Rotate only a parseable main save. Never overwrite a good backup with corrupt text.
-	if error == OK and FileAccess.file_exists(SAVE_PATH):
-		var previous := ConfigFile.new()
-		if previous.load(SAVE_PATH) == OK:
-			error = previous.save(BACKUP_TEMP_PATH)
-			if error == OK:
-				error = DirAccess.rename_absolute(ProjectSettings.globalize_path(BACKUP_TEMP_PATH), ProjectSettings.globalize_path(BACKUP_PATH))
-	if error == OK:
-		error = DirAccess.rename_absolute(
-			ProjectSettings.globalize_path(TEMP_PATH),
-			ProjectSettings.globalize_path(SAVE_PATH)
-		)
-	if error != OK:
-		push_warning("Could not save game. Error: %s" % error)
+	if not _write_snapshot(data):
 		return false
 	saved_plots = snapshot
 	saved_resources = resource_snapshot
@@ -191,6 +187,8 @@ func reset_game() -> bool:
 	resetting = true
 	Inventory.has_fishing_rod = false
 	Inventory.fishing_rod_level = 0
+	Inventory.fishing_attempts_used = 0
+	Inventory.fishing_cycle_started_at = 0.0
 	Inventory.reserved_barn_slots = 0
 	building_positions.clear()
 	for id in FarmData.BUILDINGS:
@@ -243,18 +241,7 @@ func reset_game() -> bool:
 
 
 func _load_game() -> void:
-	var data := ConfigFile.new()
-	var loaded: bool = false
-	if FileAccess.file_exists(SAVE_PATH):
-		loaded = data.load(SAVE_PATH) == OK
-		if not loaded:
-			push_warning("Main save is unreadable; trying backup.")
-			data = ConfigFile.new()
-	if not loaded and FileAccess.file_exists(BACKUP_PATH):
-		loaded = data.load(BACKUP_PATH) == OK
-		if not loaded:
-			push_warning("Backup save is unreadable; using safe defaults.")
-			data = ConfigFile.new()
+	var data: ConfigFile = _read_snapshot()
 	for id in FarmData.BUILDINGS:
 		var position = data.get_value("building_positions", id, FarmData.BUILDINGS[id]["position"])
 		if not FarmData.valid_building_position(position):
@@ -280,6 +267,9 @@ func _load_game() -> void:
 	var notified = data.get_value("tools", "unlock_notified", false)
 	Inventory.tools_unlock_notified = notified if notified is bool else false
 	var rod_owned = data.get_value("fishing", "has_fishing_rod", false)
+	Inventory.fishing_attempts_used = mini(Inventory.FishingData.ATTEMPTS_PER_CYCLE, _read_int(data, "fishing", "fishing_attempts_used", 0))
+	Inventory.fishing_cycle_started_at = _read_time(data, "fishing", "fishing_cycle_started_at", 0.0)
+	Inventory.refresh_fishing_cycle()
 	Inventory.has_fishing_rod = rod_owned if rod_owned is bool else false
 	Inventory.fishing_rod_level = mini(Inventory.FishingData.ROD_LEVELS.size(), _read_int(data, "fishing", "fishing_rod_level", 0))
 	Inventory.fishing_rod_level = maxi(1, Inventory.fishing_rod_level) if Inventory.has_fishing_rod else 0
@@ -430,3 +420,41 @@ func _read_resource(value: Variant) -> Dictionary:
 		timestamp = 0.0
 	var zone = value.get("zone_id", "main") if value is Dictionary else "main"
 	return {"state": "DEPLETED" if timestamp > 0.0 else "AVAILABLE", "respawn_at": float(timestamp), "zone_id": zone if zone is String else "main"}
+
+
+# Storage boundary: gameplay keeps calling save_game() when a backend replaces local I/O.
+func _write_snapshot(data: ConfigFile) -> bool:
+	# Replace the old file only after the complete new snapshot is written.
+	var error := data.save(TEMP_PATH)
+	# Rotate only a parseable main save. Never overwrite a good backup with corrupt text.
+	if error == OK and FileAccess.file_exists(SAVE_PATH):
+		var previous := ConfigFile.new()
+		if previous.load(SAVE_PATH) == OK:
+			error = previous.save(BACKUP_TEMP_PATH)
+			if error == OK:
+				error = DirAccess.rename_absolute(ProjectSettings.globalize_path(BACKUP_TEMP_PATH), ProjectSettings.globalize_path(BACKUP_PATH))
+	if error == OK:
+		error = DirAccess.rename_absolute(
+			ProjectSettings.globalize_path(TEMP_PATH),
+			ProjectSettings.globalize_path(SAVE_PATH)
+		)
+	if error != OK:
+		push_warning("Could not save game. Error: %s" % error)
+		return false
+	return true
+
+
+func _read_snapshot() -> ConfigFile:
+	var data := ConfigFile.new()
+	var loaded: bool = false
+	if FileAccess.file_exists(SAVE_PATH):
+		loaded = data.load(SAVE_PATH) == OK
+		if not loaded:
+			push_warning("Main save is unreadable; trying backup.")
+			data = ConfigFile.new()
+	if not loaded and FileAccess.file_exists(BACKUP_PATH):
+		loaded = data.load(BACKUP_PATH) == OK
+		if not loaded:
+			push_warning("Backup save is unreadable; using safe defaults.")
+			data = ConfigFile.new()
+	return data

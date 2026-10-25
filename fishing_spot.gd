@@ -51,6 +51,9 @@ func start_session(body: Node2D = null) -> bool:
 	if not Inventory.reserve_fishing_slot():
 		return Inventory.fail("Barn is full.")
 	reserved_slot = true
+	if not Inventory.consume_fishing_attempt():
+		_release_slot()
+		return false
 	bite_delay = rng.randf_range(Data.MIN_BITE_DELAY, Data.MAX_BITE_DELAY)
 	# Snapshot rod level once, so upgrading mid-session cannot change the deadline.
 	bite_window = Data.ROD_LEVELS[clampi(Inventory.fishing_rod_level, 1, Data.ROD_LEVELS.size())]["bite_window"]
