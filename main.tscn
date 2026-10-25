@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://rhxig8gxyrdc" path="res://player.gd" id="1_0xm2m"]
 [ext_resource type="Texture2D" uid="uid://m753onc7et8y" path="res://icon.svg" id="2_h2yge"]
 [ext_resource type="Script" uid="uid://dmiin4p8yvpun" path="res://soil_plot.gd" id="3_h2yge"]
+[ext_resource type="PackedScene" path="res://hud.tscn" id="4_hud"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_6rjdj"]
 size = Vector2(28, 28)
@@ -12,6 +13,8 @@ size = Vector2(120, 88)
 
 [node name="Main" type="Node2D" unique_id=1741138209]
 position = Vector2(0, 0)
+
+[node name="HUD" parent="." instance=ExtResource("4_hud")]
 
 [node name="Player" type="CharacterBody2D" parent="." unique_id=694063738]
 position = Vector2(140, 360)
@@ -28,6 +31,7 @@ shape = SubResource("RectangleShape2D_6rjdj")
 [node name="SoilPlot" type="Area2D" parent="." unique_id=610237959]
 position = Vector2(240, 180)
 script = ExtResource("3_h2yge")
+plot_id = "soil_1"
 
 [node name="PlantLabel" type="Label" parent="SoilPlot" unique_id=666867354]
 offset_left = -48.0
@@ -35,14 +39,14 @@ offset_top = -32.0
 offset_right = 48.0
 offset_bottom = 32.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 16
 z_index = 1
 horizontal_alignment = 1
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
 [node name="GrowTimer" type="Timer" parent="SoilPlot" unique_id=1065166647]
-wait_time = 5.0
+wait_time = 10.0
 one_shot = true
 
 [node name="SoilColor" type="ColorRect" parent="SoilPlot" unique_id=1599481107]
@@ -60,6 +64,7 @@ shape = SubResource("RectangleShape2D_0xm2m")
 [node name="SoilPlot6" type="Area2D" parent="." unique_id=948524571]
 position = Vector2(240, 308)
 script = ExtResource("3_h2yge")
+plot_id = "soil_6"
 
 [node name="PlantLabel" type="Label" parent="SoilPlot6" unique_id=1063902503]
 offset_left = -48.0
@@ -67,14 +72,14 @@ offset_top = -32.0
 offset_right = 48.0
 offset_bottom = 32.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 16
 z_index = 1
 horizontal_alignment = 1
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
 [node name="GrowTimer" type="Timer" parent="SoilPlot6" unique_id=662499450]
-wait_time = 5.0
+wait_time = 10.0
 one_shot = true
 
 [node name="SoilColor" type="ColorRect" parent="SoilPlot6" unique_id=348611353]
@@ -92,6 +97,7 @@ shape = SubResource("RectangleShape2D_0xm2m")
 [node name="SoilPlot5" type="Area2D" parent="." unique_id=236598396]
 position = Vector2(560, 180)
 script = ExtResource("3_h2yge")
+plot_id = "soil_5"
 
 [node name="PlantLabel" type="Label" parent="SoilPlot5" unique_id=818297835]
 offset_left = -48.0
@@ -99,14 +105,14 @@ offset_top = -32.0
 offset_right = 48.0
 offset_bottom = 32.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 16
 z_index = 1
 horizontal_alignment = 1
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
 [node name="GrowTimer" type="Timer" parent="SoilPlot5" unique_id=724060958]
-wait_time = 5.0
+wait_time = 10.0
 one_shot = true
 
 [node name="SoilColor" type="ColorRect" parent="SoilPlot5" unique_id=1447585923]
@@ -124,6 +130,7 @@ shape = SubResource("RectangleShape2D_0xm2m")
 [node name="SoilPlot4" type="Area2D" parent="." unique_id=2016170595]
 position = Vector2(560, 308)
 script = ExtResource("3_h2yge")
+plot_id = "soil_4"
 
 [node name="PlantLabel" type="Label" parent="SoilPlot4" unique_id=130399966]
 offset_left = -48.0
@@ -131,14 +138,14 @@ offset_top = -32.0
 offset_right = 48.0
 offset_bottom = 32.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 16
 z_index = 1
 horizontal_alignment = 1
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
 [node name="GrowTimer" type="Timer" parent="SoilPlot4" unique_id=2023861260]
-wait_time = 5.0
+wait_time = 10.0
 one_shot = true
 
 [node name="SoilColor" type="ColorRect" parent="SoilPlot4" unique_id=143651468]
@@ -156,6 +163,7 @@ shape = SubResource("RectangleShape2D_0xm2m")
 [node name="SoilPlot3" type="Area2D" parent="." unique_id=311795311]
 position = Vector2(400, 180)
 script = ExtResource("3_h2yge")
+plot_id = "soil_3"
 
 [node name="PlantLabel" type="Label" parent="SoilPlot3" unique_id=1167702322]
 offset_left = -48.0
@@ -163,14 +171,14 @@ offset_top = -32.0
 offset_right = 48.0
 offset_bottom = 32.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 16
 z_index = 1
 horizontal_alignment = 1
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
 [node name="GrowTimer" type="Timer" parent="SoilPlot3" unique_id=328151511]
-wait_time = 5.0
+wait_time = 10.0
 one_shot = true
 
 [node name="SoilColor" type="ColorRect" parent="SoilPlot3" unique_id=230088132]
@@ -188,6 +196,7 @@ shape = SubResource("RectangleShape2D_0xm2m")
 [node name="SoilPlot2" type="Area2D" parent="." unique_id=1559835726]
 position = Vector2(400, 308)
 script = ExtResource("3_h2yge")
+plot_id = "soil_2"
 
 [node name="PlantLabel" type="Label" parent="SoilPlot2" unique_id=1368112123]
 offset_left = -48.0
@@ -195,14 +204,14 @@ offset_top = -32.0
 offset_right = 48.0
 offset_bottom = 32.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 16
 z_index = 1
 horizontal_alignment = 1
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
 [node name="GrowTimer" type="Timer" parent="SoilPlot2" unique_id=735638829]
-wait_time = 5.0
+wait_time = 10.0
 one_shot = true
 
 [node name="SoilColor" type="ColorRect" parent="SoilPlot2" unique_id=675645173]

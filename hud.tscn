@@ -1,0 +1,117 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://hud.gd" id="1_hud"]
+
+[node name="HUD" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1_hud")
+
+[node name="Layout" type="VBoxContainer" parent="."]
+anchors_preset = 0
+offset_left = 16.0
+offset_top = 8.0
+offset_right = 1136.0
+offset_bottom = 120.0
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="InventoryLabel" type="Label" parent="Layout"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 18
+text = "Coins: 100 | Level: 1 | EXP: 0 / 100"
+
+[node name="Actions" type="HBoxContainer" parent="Layout"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="ShopButton" type="Button" parent="Layout/Actions"]
+custom_minimum_size = Vector2(130, 32)
+layout_mode = 2
+focus_mode = 0
+text = "Open Shop"
+
+[node name="SaveButton" type="Button" parent="Layout/Actions"]
+custom_minimum_size = Vector2(90, 32)
+layout_mode = 2
+focus_mode = 0
+text = "Save"
+
+[node name="SelectedCropLabel" type="Label" parent="Layout/Actions"]
+layout_mode = 2
+text = "Selected Crop:"
+
+[node name="CropSelector" type="OptionButton" parent="Layout/Actions"]
+custom_minimum_size = Vector2(240, 32)
+layout_mode = 2
+focus_mode = 0
+
+[node name="SaveStatus" type="Label" parent="Layout"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="ShopPanel" type="PanelContainer" parent="Layout"]
+visible = false
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+size_flags_horizontal = 8
+
+[node name="Margin" type="MarginContainer" parent="Layout/ShopPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="ShopContent" type="VBoxContainer" parent="Layout/ShopPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="Layout/ShopPanel/Margin/ShopContent"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Farm Shop"
+
+[node name="BuyButton" type="Button" parent="Layout/ShopPanel/Margin/ShopContent"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+focus_mode = 0
+text = "Buy Wheat Seed"
+
+[node name="SellButton" type="Button" parent="Layout/ShopPanel/Margin/ShopContent"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+focus_mode = 0
+text = "Sell Wheat"
+
+[node name="CornBuyButton" type="Button" parent="Layout/ShopPanel/Margin/ShopContent"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+focus_mode = 0
+text = "Buy Corn Seed"
+
+[node name="CornSellButton" type="Button" parent="Layout/ShopPanel/Margin/ShopContent"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+focus_mode = 0
+text = "Sell Corn"
+
+[node name="CarrotBuyButton" type="Button" parent="Layout/ShopPanel/Margin/ShopContent"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+focus_mode = 0
+text = "Buy Carrot Seed"
+
+[node name="CarrotSellButton" type="Button" parent="Layout/ShopPanel/Margin/ShopContent"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+focus_mode = 0
+text = "Sell Carrot"
+
+[node name="MessageLabel" type="Label" parent="Layout/ShopPanel/Margin/ShopContent"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
