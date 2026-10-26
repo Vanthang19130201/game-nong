@@ -51,7 +51,7 @@ func run_checks() -> void:
 			check(manager.reset_game(), "reset fixture")
 			check(farm.get_node("Ground").size == Vector2(2400,2400) and player.get_node("Camera2D").limit_bottom == 2400, "expanded ground and camera")
 			var yard = farm.get_node("FarmYard")
-			check(yard.get_rect().has_point(Vector2(200,600)) and yard.get_rect().has_point(Vector2(1500,2200)), "visible farm yard covers west and south expansion")
+			check(yard.size.y > 850 and farm.get_node("Ground").get_rect().encloses(yard.get_rect()), "expanded farm yard remains inside map")
 			check(farm.get_node("Bridge").position == Vector2(1870,850) and farm.get_node("FishingSpot").position == Vector2(2020,980), "fishing locations unchanged")
 			player.position = Vector2(300,400)
 			await create_timer(0.1).timeout

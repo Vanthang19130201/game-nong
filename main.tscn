@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://dowldrfhoky1g"]
 
 [ext_resource type="Script" uid="uid://rhxig8gxyrdc" path="res://player.gd" id="1_0xm2m"]
-[ext_resource type="Texture2D" uid="uid://m753onc7et8y" path="res://icon.svg" id="2_h2yge"]
 [ext_resource type="Texture2D" uid="uid://cgje3gncaw2dy" path="res://assets/buildings/house/house1.png" id="4_getpj"]
 [ext_resource type="PackedScene" path="res://hud.tscn" id="4_hud"]
 [ext_resource type="Script" uid="uid://cv4b8aubh8cw0" path="res://farm.gd" id="5_farm"]
@@ -23,6 +22,9 @@
 
 [sub_resource type="RectangleShape2D" id="HouseInteractionShape"]
 size = Vector2(260, 220)
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_cegan"]
+load_path = "res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex"
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_6rjdj"]
 size = Vector2(28, 28)
@@ -54,7 +56,7 @@ z_index = -9
 offset_left = 120.0
 offset_top = 300.0
 offset_right = 1740.0
-offset_bottom = 1872.0
+offset_bottom = 1684.0
 mouse_filter = 2
 color = Color(0.35, 0.48, 0.28, 1)
 
@@ -155,9 +157,9 @@ position = Vector2(908, 951)
 position = Vector2(650, 760)
 
 [node name="HomeLabel" type="Label" parent="DogHomePoint" unique_id=287868724]
-offset_left = -197.0
+offset_left = -196.0
 offset_top = -97.0
-offset_right = -48.0
+offset_right = -47.0
 offset_bottom = -57.0
 text = "WORLD_DOG_HOME"
 
@@ -177,7 +179,7 @@ position_smoothing_enabled = true
 
 [node name="Icon" type="Sprite2D" parent="Player" unique_id=1308617484]
 scale = Vector2(0.546875, 0.51562494)
-texture = ExtResource("2_h2yge")
+texture = SubResource("CompressedTexture2D_cegan")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player" unique_id=1192634142]
 shape = SubResource("RectangleShape2D_6rjdj")
@@ -280,7 +282,7 @@ resource_type = "stone"
 z_index = -9
 offset_left = 120.0
 offset_top = 70.0
-offset_right = 1150.0
+offset_right = 1740.0
 offset_bottom = 300.0
 mouse_filter = 2
 color = Color(0.16, 0.3, 0.17, 1)
@@ -303,8 +305,10 @@ script = ExtResource("90_art")
 fallback_paths = Array[NodePath]([NodePath("../../Placeholder")])
 
 [node name="GrassAreaLabel" type="Label" parent="." unique_id=163501990]
-offset_left = 250.0
-offset_top = 1180.0
+offset_left = 747.0
+offset_top = 1817.0
+offset_right = 830.0
+offset_bottom = 1834.0
 theme_override_font_sizes/font_size = 12
 text = "WORLD_GRASS"
 

@@ -184,5 +184,21 @@ func run_checks() -> void:
 	panel._fit_viewport()
 	check(panel.position.x >= 0 and panel.position.x+panel.size.x <= panel.get_viewport_rect().size.x+1, "mobile width fit")
 	check(panel.tabs.get_tab_bar().custom_minimum_size.y >= 48, "touch-sized tabs")
+	# Order cards may scroll, while the panel and Close button stay on screen.
+	for viewport_size in [Vector2i(1152,648), Vector2i(800,450), Vector2i(360,640)]:
+		root.content_scale_size = viewport_size
+		root.size = viewport_size
+		await create_timer(0.1).timeout
+		hud.open_orders()
+		await process_frame
+		await process_frame
+		hud._fit_order_panel()
+		var screen_rect := Rect2(Vector2.ZERO, hud.order_panel.get_viewport_rect().size)
+		check(screen_rect.encloses(hud.order_panel.get_rect()), "Order panel fits viewport " + str(viewport_size))
+		check(screen_rect.encloses(hud.get_node("OrderPanel/Margin/Content/CloseButton").get_global_rect()), "Order Close button stays on screen")
+		if viewport_size.x == 360:
+			check(hud.order_cards.get_parent().get_h_scroll_bar().visible, "narrow Order panel scrolls cards")
+		await key(KEY_ESCAPE)
+		check(not hud.order_panel.visible, "ESC closes resized Order panel")
 	print("PASS: storage_ui")
 	quit()

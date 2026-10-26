@@ -36,7 +36,7 @@ var rod_upgrade: Button
 @onready var produce_button: Button = $StationPanel/Margin/Content/ProduceButton
 @onready var collect_button: Button = $StationPanel/Margin/Content/CollectButton
 @onready var order_panel: PanelContainer = $OrderPanel
-@onready var order_cards: HBoxContainer = $OrderPanel/Margin/Content/Orders
+@onready var order_cards: HBoxContainer = $OrderPanel/Margin/Content/Scroll/Orders
 @onready var order_message: Label = $OrderPanel/Margin/Content/Message
 
 var crop_ids: Array = []
@@ -68,6 +68,7 @@ var debug_panel: PanelContainer
 
 func _ready() -> void:
 	add_to_group("farm_hud")
+	get_viewport().size_changed.connect(_fit_order_panel)
 	bakery_panel = PanelContainer.new()
 	bakery_panel.name = "BakeryPanel"
 	bakery_panel.z_index = 29
@@ -562,6 +563,13 @@ func open_orders() -> void:
 	order_message.text = ""
 	order_panel.show()
 	_refresh_orders()
+	_fit_order_panel()
+
+
+func _fit_order_panel() -> void:
+	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	order_panel.size = Vector2(860, 560).min(viewport_size - Vector2(32, 32))
+	order_panel.position = (viewport_size - order_panel.size) / 2.0
 
 
 func _refresh_orders() -> void:
@@ -577,6 +585,8 @@ func _refresh_orders() -> void:
 		content.add_theme_constant_override("separation", 12)
 		card.add_child(content)
 		var label := Label.new()
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		label.text = tr("ORDER_NUMBER") % order["order_id"].trim_prefix("order_") + "\n\n"
 		for item in order["requirements"]:
@@ -590,6 +600,7 @@ func _refresh_orders() -> void:
 		complete.pressed.connect(_complete_order.bind(order["order_id"]))
 		content.add_child(complete)
 		order_cards.add_child(card)
+	_fit_order_panel.call_deferred()
 
 
 func _complete_order(order_id: String) -> void:

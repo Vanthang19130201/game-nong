@@ -165,6 +165,7 @@ func _update_display() -> void:
 
 func _on_body_entered(body: Node2D) -> void:
 	if body.name == "Player" and zone_active:
+		player = body
 		player_near = true
 
 

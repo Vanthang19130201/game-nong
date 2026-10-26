@@ -1,6 +1,10 @@
 extends RefCounted
 
 const MESSAGES: Dictionary = {
+    "MOUSE_INTERACT_HINT": "Nhấp: %s",
+    "MOUSE_SOIL_PLOT": "Ô đất",
+    "MOUSE_TREE": "Cây",
+    "MOUSE_ROCK": "Đá",
     "WAREHOUSE_PROMPT": "[E] Mở Kho",
     "WAREHOUSE_SILO": "KHO NÔNG SẢN",
     "WAREHOUSE_BARN": "KHO HÀNG HÓA",
