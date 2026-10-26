@@ -108,7 +108,8 @@ func audit_core() -> void:
 		check(resource.harvest(), "gather resource with unlocked tool")
 		await create_timer(resource.harvest_timer.time_left + 0.1).timeout
 		var earned: int = inv.get(resource.resource_type)-before
-		check(earned == 2 or (resource.resource_type == "wood" and earned == 3), "resource reward amount")
+		var reward: Dictionary = resource.RockData.TYPES[resource.rock_type] if resource.resource_type == "stone" else {"min_stone":2,"max_stone":3}
+		check(earned >= reward["min_stone"] and earned <= reward["max_stone"], "resource reward amount matches resource type")
 		resource._finish_harvest()
 		resource._respawn()
 		check(resource.state == "DEPLETED" and inv.get(resource.resource_type) == before+earned, "gather reward once and respawn deadline enforced")

@@ -5,6 +5,7 @@ const CropData = preload("res://crop_data.gd")
 const Progression = preload("res://progression_data.gd")
 const LandData = preload("res://land_data.gd")
 const DecorationData = preload("res://decoration_data.gd")
+const RockData = preload("res://rock_data.gd")
 var placed_decorations: Array = []
 var next_decoration_id: int = 1
 var unlocked_land_zones: Array[String] = ["farm_core"]
@@ -483,7 +484,10 @@ func _read_resource(value: Variant) -> Dictionary:
 	if not is_finite(float(timestamp)) or timestamp < 0.0 or timestamp > 1000000000000.0:
 		timestamp = 0.0
 	var zone = value.get("zone_id", "main") if value is Dictionary else "main"
-	return {"state": "DEPLETED" if timestamp > 0.0 else "AVAILABLE", "respawn_at": float(timestamp), "zone_id": zone if zone is String else "main"}
+	var result: Dictionary = {"state": "DEPLETED" if timestamp > 0.0 else "AVAILABLE", "respawn_at": float(timestamp), "zone_id": zone if zone is String else "main"}
+	if value is Dictionary and RockData.TYPES.has(value.get("rock_type","")):
+		result["rock_type"] = value["rock_type"]
+	return result
 
 
 # Storage boundary: gameplay keeps calling save_game() when a backend replaces local I/O.

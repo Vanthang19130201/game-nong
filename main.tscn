@@ -160,10 +160,10 @@ position = Vector2(908, 951)
 position = Vector2(650, 760)
 
 [node name="HomeLabel" type="Label" parent="DogHomePoint" unique_id=287868724]
-offset_left = -126.0
-offset_top = -6.0
-offset_right = 23.0
-offset_bottom = 34.0
+offset_left = -128.0
+offset_top = -30.0
+offset_right = 21.0
+offset_bottom = 10.0
 text = "WORLD_DOG_HOME"
 
 [node name="HUD" parent="." unique_id=786439489 instance=ExtResource("4_hud")]
@@ -266,7 +266,7 @@ scale = Vector2(0.7, 0.7)
 resource_id = "tree_2"
 
 [node name="Sprite2D" type="Sprite2D" parent="tree2" unique_id=575576403]
-position = Vector2(-2.8571432, 2.8571432)
+position = Vector2(-4.2857146, 2.8571432)
 scale = Vector2(0.04, 0.04)
 texture = ExtResource("18_ryguw")
 
