@@ -57,6 +57,8 @@ func prepare() -> void:
 	inv.tools_unlock_notified = true
 	inv.normalize_exp()
 	for id in inv.Progression.BUILDINGS:
+		if inv.Progression.BUILDINGS[id].get("placement_required",false):
+			continue # Placement-purchased buildings have their own integration tests.
 		check(inv.buy_building(id), "owned building fixture")
 	inv.wood = 15
 	inv.stone = 5

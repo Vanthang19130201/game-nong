@@ -19,7 +19,9 @@ const BUILDINGS: Dictionary = {
 	"chicken_coop": {"movable": true, "node": "ChickenCoop", "position": Vector2(1500, 1020), "scene": "res://chicken_coop.tscn"},
 	"cow_shed": {"movable": true, "node": "CowShed", "position": Vector2(900, 1020), "scene": "res://cow_shed.tscn"},
 	"dog_house": {"movable": true, "node": "DogHouse", "position": Vector2(550, 700), "scene": "res://dog_house.tscn"},
-	"bakery": {"movable": true, "node": "Bakery", "position": Vector2(1250, 1320), "scene": "res://bakery.tscn"}
+	"bakery": {"movable": true, "node": "Bakery", "position": Vector2(1250, 1320), "scene": "res://bakery.tscn"},
+	"dairy": {"movable": true, "node": "Dairy", "position": Vector2(1450,1320), "scene": "res://dairy.tscn"},
+	"spinning_machine": {"movable":true,"node":"SpinningMachine","position":Vector2(640,960),"scene":"res://spinning_machine.tscn"}
 }
 
 static func valid_building_position(value: Variant) -> bool:

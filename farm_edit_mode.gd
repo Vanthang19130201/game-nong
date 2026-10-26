@@ -14,6 +14,7 @@ var valid_position: bool = false
 var info: Label
 var menu: PanelContainer
 var placing_decoration: String = ""
+var placing_building: String = ""
 var delete_button: Button
 var delete_confirmation: ConfirmationDialog
 @onready var hud: Node = get_parent()
@@ -80,7 +81,7 @@ func cancel_or_exit() -> void:
 	if delete_confirmation.visible:
 		delete_confirmation.hide()
 		menu.show()
-	elif not placing_decoration.is_empty():
+	elif not placing_decoration.is_empty() or not placing_building.is_empty():
 		exit_mode()
 	elif is_instance_valid(preview):
 		cancel_selection()
@@ -181,17 +182,27 @@ func begin_move() -> void:
 	_update_info()
 
 func update_preview(point: Vector2) -> void:
-	var source: Node2D = preview if not placing_decoration.is_empty() else selected
+	var source: Node2D = preview if not placing_decoration.is_empty() or not placing_building.is_empty() else selected
 	if not is_instance_valid(preview) or not is_instance_valid(source):
 		return
 	proposed_position = Placement.snap_position(point)
 	valid_position = Placement.can_place(source, proposed_position)
 	if not placing_decoration.is_empty():
 		valid_position = valid_position and SaveManager.DecorationData.can_afford(placing_decoration)
+	if not placing_building.is_empty():
+		var data: Dictionary = Inventory.Progression.BUILDINGS[placing_building]
+		valid_position = valid_position and not Inventory.owns_building(placing_building) and Inventory.player_level >= data["level"] and Inventory.coins >= data["price"]
 	preview.global_position = proposed_position
 	preview.modulate = Color(0.45,1,0.55,0.8) if valid_position else Color(1,0.35,0.3,0.8)
 
 func place_move() -> bool:
+	if not placing_building.is_empty():
+		if not is_instance_valid(preview):
+			return false
+		if hud._trade(Inventory.buy_building.bind(placing_building,preview,proposed_position),placing_building,1):
+			exit_mode()
+			return true
+		return false
 	if not placing_decoration.is_empty():
 		if hud.get_parent().decoration_manager.place(preview,proposed_position,preview.rotation_degrees):
 			exit_mode()
@@ -227,6 +238,7 @@ func cancel_selection() -> void:
 	selected = null
 	selected_id = ""
 	placing_decoration = ""
+	placing_building = ""
 	delete_confirmation.hide()
 	if is_instance_valid(preview):
 		preview.queue_free()
@@ -244,7 +256,9 @@ func _clear_hover() -> void:
 func _update_info() -> void:
 	info.text = tr("EDIT_MODE_HINT")
 	if is_instance_valid(preview):
-		if not placing_decoration.is_empty():
+		if not placing_building.is_empty():
+			info.text = tr("BUILDING_PLACING_HINT") % Localization.display_name(placing_building)
+		elif not placing_decoration.is_empty():
 			info.text = tr("DECOR_PLACING_HINT") % tr(SaveManager.DecorationData.TYPES[placing_decoration]["name_key"])
 		elif is_instance_valid(selected) and selected.get("decoration_id") != null:
 			info.text = tr("EDIT_MOVING_HINT") % tr(SaveManager.DecorationData.TYPES[selected.decoration_id]["name_key"]) + tr("DECOR_ROTATE_HINT")
@@ -266,13 +280,36 @@ func begin_decoration(id: String) -> void:
 	_update_info()
 
 func rotate_preview() -> void:
-	if not is_instance_valid(preview):
+	if not is_instance_valid(preview) or not placing_building.is_empty():
 		return
 	var id: String = placing_decoration if not placing_decoration.is_empty() else str(selected.get("decoration_id"))
 	if not SaveManager.DecorationData.TYPES.has(id) or not SaveManager.DecorationData.TYPES[id]["rotatable"]:
 		return
 	preview.rotation_degrees = SaveManager.DecorationData.normalized_rotation(id,preview.rotation_degrees+90)
 	update_preview(proposed_position)
+
+func begin_building_placement(id: String) -> void:
+	if active or hud._native_dialog_open() or not Inventory.Progression.BUILDINGS.has(id):
+		return
+	var data: Dictionary = Inventory.Progression.BUILDINGS[id]
+	if not data.get("placement_required",false) or Inventory.owns_building(id):
+		return
+	if Inventory.player_level < data["level"]:
+		Inventory.fail(tr("ERROR_LEVEL") % data["level"])
+		return
+	if Inventory.coins < data["price"]:
+		Inventory.fail(tr("ERROR_COINS"))
+		return
+	enter_mode()
+	placing_building = id
+	preview = load(hud.FarmData.BUILDINGS[id]["scene"]).instantiate()
+	preview.name = "BuildingPreview"
+	preview.is_preview = true
+	preview.set_meta("placement_building_id",id)
+	preview.z_index = 100
+	hud.get_parent().add_child(preview)
+	update_preview(get_tree().get_first_node_in_group("farm_player").get_global_mouse_position())
+	_update_info()
 
 func _ask_delete() -> void:
 	if not active or delete_confirmation.visible or is_instance_valid(preview) or not is_instance_valid(selected) or selected.get("decoration_id") == null:

@@ -10,6 +10,8 @@ const UI_THEME: Theme = preload("res://assets/ui/ui_theme.tres")
 @onready var shop_build_tabs: TabContainer = $ShopBuildPanel/Margin/Content/Tabs
 var transaction_feedback: VBoxContainer
 var bakery_panel: PanelContainer
+var dairy_panel: PanelContainer
+var spinning_machine_panel: PanelContainer
 var edit_farm: Node
 var land_panel: PanelContainer
 var decoration_panel: ScrollContainer
@@ -85,6 +87,16 @@ func _ready() -> void:
 	bakery_panel.z_index = 29
 	bakery_panel.set_script(preload("res://bakery_panel.gd"))
 	add_child(bakery_panel)
+	dairy_panel = PanelContainer.new()
+	dairy_panel.name = "DairyPanel"
+	dairy_panel.z_index = 29
+	dairy_panel.set_script(preload("res://dairy_panel.gd"))
+	add_child(dairy_panel)
+	spinning_machine_panel = PanelContainer.new()
+	spinning_machine_panel.name = "SpinningMachinePanel"
+	spinning_machine_panel.z_index = 29
+	spinning_machine_panel.set_script(preload("res://spinning_machine_panel.gd"))
+	add_child(spinning_machine_panel)
 	$ResetControls/SettingsButton.pressed.connect(_toggle_settings)
 	$SettingsPanel/Margin/Content/CloseButton.pressed.connect(settings_panel.hide)
 	_setup_shop_build()
@@ -93,10 +105,16 @@ func _ready() -> void:
 		debug_panel.set_script(preload("res://dev_debug_panel.gd"))
 		add_child(debug_panel)
 		debug_panel.visibility_changed.connect(_on_main_panel_visibility_changed)
-	for panel in [land_panel, bakery_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel, reset_confirmation, plot_purchase, tools_unlock_popup, fishing_ui.panel]:
+	for panel in [land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel, reset_confirmation, plot_purchase, tools_unlock_popup, fishing_ui.panel]:
 		panel.visibility_changed.connect(_on_main_panel_visibility_changed)
 	crop_ids = CropData.CROPS.keys()
 	var content: VBoxContainer = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent
+	for item in Inventory.DairyData.RECIPES:
+		var button := Button.new()
+		button.text = tr("UI_SELL_CROP") % [Localization.display_name(item),Inventory.DairyData.RECIPES[item]["price"]]
+		button.focus_mode = Control.FOCUS_NONE
+		button.pressed.connect(_sell_dairy_item.bind(item))
+		content.add_child(button)
 	for item in Inventory.BakeryData.RECIPES:
 		var button := Button.new()
 		button.text = tr("UI_SELL_CROP") % [Localization.display_name(item), Inventory.BakeryData.RECIPES[item]["price"]]
@@ -216,6 +234,22 @@ func open_bakery(bakery: Node) -> void:
 		return
 	_close_game_panels()
 	bakery_panel.open(bakery)
+
+func open_dairy(dairy: Node) -> void:
+	if blocks_world_input() or not is_instance_valid(dairy) or not dairy.can_interact():
+		return
+	_close_game_panels()
+	dairy_panel.open(dairy)
+
+func _sell_dairy_item(item: String) -> void:
+	if not _trade(Inventory.sell_dairy_item.bind(item),item,-1):
+		show_transaction_feedback(tr("TRADE_NO_ITEM"))
+
+func open_spinning_machine(machine: Node) -> void:
+	if blocks_world_input() or not is_instance_valid(machine) or not machine.can_interact():
+		return
+	_close_game_panels()
+	spinning_machine_panel.open(machine)
 
 
 func _trade(action: Callable, item: String, amount: int) -> bool:
@@ -411,7 +445,7 @@ func _collect() -> void:
 
 
 func blocks_world_input() -> bool:
-	return land_panel.visible or edit_farm.active or bakery_panel.visible or settings_panel.visible or shop_build_panel.visible or storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or station_panel.visible or order_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
+	return land_panel.visible or edit_farm.active or bakery_panel.visible or dairy_panel.visible or spinning_machine_panel.visible or settings_panel.visible or shop_build_panel.visible or storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or station_panel.visible or order_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
 
 
 func _input(event: InputEvent) -> void:
@@ -472,6 +506,10 @@ func close_current_panel() -> void:
 		fish_market_panel.close()
 	elif bakery_panel.visible:
 		bakery_panel.close()
+	elif dairy_panel.visible:
+		dairy_panel.close()
+	elif spinning_machine_panel.visible:
+		spinning_machine_panel.close()
 	elif house_panel.visible:
 		close_house()
 	elif order_panel.visible:
@@ -487,6 +525,8 @@ func close_current_panel() -> void:
 func _close_game_panels() -> void:
 	land_panel.close()
 	bakery_panel.close()
+	dairy_panel.close()
+	spinning_machine_panel.close()
 	settings_panel.hide()
 	shop_build_panel.hide()
 	storage_panel.hide()
@@ -550,7 +590,7 @@ func close_all_panels() -> void:
 
 func _on_main_panel_visibility_changed() -> void:
 	# A HUD dropdown must not stack over an existing modal or fishing session.
-	crop_selector.disabled = _native_dialog_open() or fishing_ui.panel.visible or [land_panel, bakery_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel].any(func(panel): return panel.visible) or (is_instance_valid(debug_panel) and debug_panel.visible)
+	crop_selector.disabled = _native_dialog_open() or fishing_ui.panel.visible or [land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel].any(func(panel): return panel.visible) or (is_instance_valid(debug_panel) and debug_panel.visible)
 	_show_tool_unlock_if_needed.call_deferred()
 
 
@@ -778,6 +818,9 @@ func _update_build_rows() -> void:
 	dog_house_button.text = tr("UI_DOG_HOUSE_BUILT") if Inventory.has_dog_house else tr("UI_BUILD_DOG_HOUSE") % [dog_house_cost["wood"], dog_house_cost["stone"]]
 
 func _buy_building(id: String) -> void:
+	if Progression.BUILDINGS[id].get("placement_required",false):
+		edit_farm.begin_building_placement(id)
+		return
 	_trade(Inventory.buy_building.bind(id), id, 1)
 
 

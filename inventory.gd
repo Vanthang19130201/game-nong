@@ -8,12 +8,20 @@ const ToolData = preload("res://tool_data.gd")
 const CropData = preload("res://crop_data.gd")
 const FishingData = preload("res://fishing_data.gd")
 const BakeryData = preload("res://bakery_data.gd")
+const DairyData = preload("res://dairy_data.gd")
+const SpinningData = preload("res://spinning_machine_data.gd")
 const DOG_PRICE: int = 300
 const EGG_PRICE: int = 18
 const MILK_PRICE: int = 30
 const Progression = preload("res://progression_data.gd")
 var SILO_ITEMS: Array[String] = CropData.silo_items()
-const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "egg", "milk", "small_fish", "river_fish", "golden_fish", "bread", "corn_bread", "carrot_pie"]
+const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "egg", "milk", "small_fish", "river_fish", "golden_fish", "bread", "corn_bread", "carrot_pie", "cream", "butter", "cheese", "cotton_thread"]
+var owns_spinning_machine: bool = false
+var cotton_thread: int = 0
+var owns_dairy: bool = false
+var cream: int = 0
+var butter: int = 0
+var cheese: int = 0
 var owns_bakery: bool = false
 var bread: int = 0
 var corn_bread: int = 0
@@ -355,7 +363,7 @@ func owns_building(id: String) -> bool:
 	return Progression.BUILDINGS.has(id) and get("owns_" + id)
 
 
-func buy_building(id: String) -> bool:
+func buy_building(id: String, placement_source: Node2D = null, position: Vector2 = Vector2.ZERO) -> bool:
 	if not Progression.BUILDINGS.has(id):
 		return false
 	var info: Dictionary = Progression.BUILDINGS[id]
@@ -365,6 +373,13 @@ func buy_building(id: String) -> bool:
 		return fail(tr("ERROR_LEVEL") % info["level"])
 	if coins < info["price"]:
 		return fail(tr("ERROR_COINS"))
+	if info.get("placement_required",false):
+		if not is_instance_valid(placement_source) or placement_source.get_meta("placement_building_id","") != id or not preload("res://building_placement.gd").can_place(placement_source,position):
+			return fail(tr("ERROR_PLACEMENT"))
+		SaveManager.building_positions[id] = position
+		var building = SaveManager.buildings.get(id)
+		if is_instance_valid(building):
+			building.position = position
 	coins -= info["price"]
 	set("owns_" + id, true)
 	inventory_changed.emit()
@@ -529,5 +544,13 @@ func sell_bakery_item(item: String) -> bool:
 		return false
 	set(item, get(item) - 1)
 	coins += BakeryData.RECIPES[item]["price"]
+	inventory_changed.emit()
+	return true
+
+func sell_dairy_item(item: String) -> bool:
+	if not DairyData.RECIPES.has(item) or get(item) <= 0:
+		return false
+	set(item,get(item)-1)
+	coins += DairyData.RECIPES[item]["price"]
 	inventory_changed.emit()
 	return true

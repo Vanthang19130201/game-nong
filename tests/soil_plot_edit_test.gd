@@ -62,6 +62,8 @@ func prepare() -> void:
 	inv.wood = 20
 	inv.stone = 10
 	for id in inv.Progression.BUILDINGS:
+		if inv.Progression.BUILDINGS[id].get("placement_required",false):
+			continue
 		check(inv.buy_building(id), "owned obstacle " + id)
 	check(inv.build_dog_house(), "owned DogHouse obstacle")
 	inv.corn_seed = 2

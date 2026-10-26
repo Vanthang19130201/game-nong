@@ -17,6 +17,12 @@ func _ready() -> void:
 
 func item_info() -> Dictionary:
 	var items: Dictionary = {}
+	for item in Inventory.SpinningData.RECIPES:
+		var recipe: Dictionary = Inventory.SpinningData.RECIPES[item]
+		items[item] = {"name":recipe["name"],"level":recipe["level"],"price":recipe["order_price"],"exp":0}
+	for item in Inventory.DairyData.RECIPES:
+		var recipe: Dictionary = Inventory.DairyData.RECIPES[item]
+		items[item] = {"name":recipe["name"],"level":recipe["level"],"price":recipe["price"],"exp":0}
 	for item in Inventory.BakeryData.RECIPES:
 		var recipe: Dictionary = Inventory.BakeryData.RECIPES[item]
 		items[item] = {"name": recipe["name"], "level": recipe["level"], "price": recipe["price"], "exp": 0}
@@ -42,6 +48,10 @@ func item_available(item: String) -> bool:
 		return Inventory.is_zone_unlocked("fishing") and Inventory.has_fishing_rod
 	if Inventory.BakeryData.RECIPES.has(item):
 		return Inventory.owns_bakery
+	if Inventory.DairyData.RECIPES.has(item):
+		return Inventory.owns_dairy
+	if Inventory.SpinningData.RECIPES.has(item):
+		return Inventory.owns_spinning_machine
 	if item == "egg":
 		return Inventory.owns_feed_mill and Inventory.owns_chicken_coop and Inventory.chicken_count > 0
 	if item == "milk":

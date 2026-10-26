@@ -1,6 +1,18 @@
 extends RefCounted
 
 const MESSAGES: Dictionary = {
+    "BUILDING_SPINNING_MACHINE": "Máy kéo sợi",
+    "ITEM_COTTON_THREAD": "Sợi bông",
+    "SPINNING_WORLD": "MÁY KÉO SỢI\nHàng đợi: %d / 3",
+    "SPINNING_QUEUE_FULL": "Hàng đợi đã đầy hoặc máy kéo sợi chưa mở.",
+    "BUILDING_DAIRY": "Xưởng sữa",
+    "ITEM_CREAM": "Kem",
+    "ITEM_BUTTER": "Bơ",
+    "ITEM_CHEESE": "Phô mai",
+    "DAIRY_WORLD": "XƯỞNG SỮA\nHàng đợi: %d / 3",
+    "DAIRY_QUEUE_FULL": "Hàng đợi đã đầy hoặc xưởng sữa chưa mở.",
+    "ERROR_PLACEMENT": "Vị trí đặt không hợp lệ.",
+    "BUILDING_PLACING_HINT": "Đang đặt: %s\nChuột trái: Đặt\nESC: Hủy",
     "DECOR_TAB": "TRANG TRÍ",
     "DECOR_WOOD_FENCE": "Hàng rào gỗ",
     "DECOR_STONE_PATH": "Lối đi đá",

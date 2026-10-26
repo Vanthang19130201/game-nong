@@ -17,11 +17,14 @@ const BACKUP_TEMP_PATH: String = "user://save_backup.cfg.tmp"
 const AUTOSAVE_INTERVAL: float = 30.0
 var autosave_timer: Timer
 var bakery_queue: Array = []
+var dairy_queue: Array = []
+var spinning_machine_queue: Array = []
 var PLOT_IDS: Array[String] = FarmData.plot_ids()
 var INVENTORY_DEFAULTS: Dictionary = CropData.inventory_defaults().merged({
 	"coins": 100, "chicken_feed": 0, "cow_feed": 0, "egg": 0, "milk": 0, "wood": 0, "stone": 0,
 	"small_fish": 0, "river_fish": 0, "golden_fish": 0,
-	"bread": 0, "corn_bread": 0, "carrot_pie": 0
+	"bread": 0, "corn_bread": 0, "carrot_pie": 0,
+	"cream": 0, "butter": 0, "cheese": 0, "cotton_thread": 0
 })
 
 var saved_plots: Dictionary = {}
@@ -133,6 +136,10 @@ func save_game() -> bool:
 	data.set_value("land", "unlocked_land_zones", unlocked_land_zones)
 	data.set_value("buildings", "owns_bakery", Inventory.owns_bakery)
 	data.set_value("bakery", "bakery_queue", bakery_queue)
+	data.set_value("buildings", "owns_dairy", Inventory.owns_dairy)
+	data.set_value("dairy", "dairy_queue", dairy_queue)
+	data.set_value("buildings","owns_spinning_machine",Inventory.owns_spinning_machine)
+	data.set_value("spinning_machine","spinning_machine_queue",spinning_machine_queue)
 	data.set_value("game", "version", 11)
 	data.set_value("fishing", "fishing_attempts_used", Inventory.fishing_attempts_used)
 	data.set_value("fishing", "fishing_cycle_started_at", Inventory.fishing_cycle_started_at)
@@ -219,6 +226,10 @@ func reset_game() -> bool:
 	unlocked_land_zones = ["farm_core"]
 	Inventory.owns_bakery = false
 	bakery_queue.clear()
+	Inventory.owns_dairy = false
+	dairy_queue.clear()
+	Inventory.owns_spinning_machine = false
+	spinning_machine_queue.clear()
 	Inventory.has_fishing_rod = false
 	Inventory.fishing_rod_level = 0
 	Inventory.fishing_attempts_used = 0
@@ -284,6 +295,12 @@ func _load_game() -> void:
 	var bakery_owned = data.get_value("buildings", "owns_bakery", false)
 	Inventory.owns_bakery = bakery_owned if bakery_owned is bool else false
 	bakery_queue = Inventory.BakeryData.restore_queue(data.get_value("bakery", "bakery_queue", [])) if Inventory.owns_bakery else []
+	var dairy_owned = data.get_value("buildings", "owns_dairy", false)
+	Inventory.owns_dairy = dairy_owned if dairy_owned is bool else false
+	dairy_queue = Inventory.DairyData.restore_queue(data.get_value("dairy","dairy_queue",[])) if Inventory.owns_dairy else []
+	var spinning_owned = data.get_value("buildings","owns_spinning_machine",false)
+	Inventory.owns_spinning_machine = spinning_owned if spinning_owned is bool else false
+	spinning_machine_queue = Inventory.SpinningData.restore_queue(data.get_value("spinning_machine","spinning_machine_queue",[])) if Inventory.owns_spinning_machine else []
 	for id in FarmData.BUILDINGS:
 		var position = data.get_value("building_positions", id, FarmData.BUILDINGS[id]["position"])
 		if not FarmData.valid_saved_building_position(id, position):

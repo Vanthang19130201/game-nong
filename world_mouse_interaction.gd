@@ -81,6 +81,10 @@ func _contains_point(node: Node, world_position: Vector2) -> bool:
 	return false
 
 func _display_name(target: Node) -> String:
+	if target.name == "SpinningMachine":
+		return tr("BUILDING_SPINNING_MACHINE")
+	if target.name == "Dairy":
+		return tr("BUILDING_DAIRY")
 	if target.get("decoration_id") != null:
 		return tr(SaveManager.DecorationData.TYPES[target.decoration_id]["name_key"])
 	if target.is_in_group("land_zones"):

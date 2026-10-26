@@ -14,6 +14,8 @@
 [ext_resource type="Script" uid="uid://c8xfl767t2s83" path="res://house.gd" id="13_house"]
 [ext_resource type="PackedScene" path="res://fishing_spot.tscn" id="14_fishing"]
 [ext_resource type="PackedScene" path="res://fish_market.tscn" id="15_market"]
+[ext_resource type="Texture2D" uid="uid://bjrl61agbgf41" path="res://assets/environment/tree/Tree.png" id="17_getpj"]
+[ext_resource type="Texture2D" uid="uid://jvmplrfrhfuf" path="res://assets/environment/tree/Tree2.png" id="18_ryguw"]
 [ext_resource type="Script" uid="uid://bv2sw1d224cv8" path="res://artwork_sprite.gd" id="90_art"]
 [ext_resource type="Script" uid="uid://dwi3al7wwxxvc" path="res://character_visual.gd" id="92_anim"]
 [ext_resource type="SpriteFrames" path="res://assets/characters/directional_frames.tres" id="93_frames"]
@@ -252,10 +254,21 @@ position = Vector2(450, 220)
 scale = Vector2(0.6, 0.6)
 resource_id = "tree_1"
 
+[node name="Node" type="Node" parent="tree1" unique_id=636118356]
+
+[node name="Sprite2D" type="Sprite2D" parent="tree1" unique_id=1707515189]
+scale = Vector2(0.04, 0.04)
+texture = ExtResource("17_getpj")
+
 [node name="tree2" parent="." unique_id=1225731878 instance=ExtResource("10_resource")]
 position = Vector2(700, 180)
 scale = Vector2(0.7, 0.7)
 resource_id = "tree_2"
+
+[node name="Sprite2D" type="Sprite2D" parent="tree2" unique_id=575576403]
+position = Vector2(-2.8571432, 2.8571432)
+scale = Vector2(0.04, 0.04)
+texture = ExtResource("18_ryguw")
 
 [node name="tree3" parent="." unique_id=953674573 instance=ExtResource("10_resource")]
 position = Vector2(1000, 200)
