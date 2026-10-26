@@ -478,6 +478,12 @@ func _native_dialog_open() -> bool:
 	return reset_confirmation.visible or plot_purchase.visible or tools_unlock_popup.visible
 
 
+func open_warehouse(warehouse: Node) -> void:
+	if not is_instance_valid(warehouse) or blocks_world_input() or not warehouse.can_interact():
+		return
+	_toggle_storage()
+
+
 func _toggle_storage() -> void:
 	if _native_dialog_open():
 		return

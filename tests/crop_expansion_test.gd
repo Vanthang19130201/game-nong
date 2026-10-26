@@ -3,7 +3,7 @@ extends SceneTree
 var inv: Node
 var manager: Node
 var farm: Node
-const NEW_CROPS: Array = ["SOYBEAN", "SUGARCANE", "COTTON"]
+const NEW_CROPS: Array = ["SOYBEAN", "SUGARCANE", "COTTON", "FLAX"]
 
 func _initialize() -> void:
 	call_deferred("run_checks")
@@ -32,17 +32,21 @@ func run_checks() -> void:
 	match stage:
 		"crop_core":
 			check(manager.reset_game(), "reset fixture")
-			var times: Array = [60,120,240,360,600,900]
-			for i in range(6):
+			var times: Array = [60,120,240,360,600,900,2700]
+			var categories: Array = ["food_crop", "food_crop", "food_crop", "animal_feed_crop", "food_crop", "industrial_crop", "industrial_crop"]
+			for i in range(7):
 				check(inv.CropData.grow_seconds(inv.CropData.CROPS.keys()[i]) == times[i], "production crop times")
-			check(farm.get_node("HUD").crop_selector.item_count == 6 and inv.SILO_ITEMS.size() == 12, "six crop UI and storage")
+				check(inv.CropData.CROPS.values()[i]["category"] == categories[i], "crop categories")
+			check(farm.get_node("HUD").crop_selector.item_count == 7 and inv.SILO_ITEMS.size() == 14, "seven crop UI and storage")
+			check(inv.CropData.CROPS["FLAX"]["id"] == "flax" and tr("ITEM_FLAX") == "Cây lanh", "Flax ID and Vietnamese name")
+			check(inv.flax_seed == 0 and inv.flax == 0, "default Flax inventory")
 			inv.coins = 10000
 			inv.tools_unlock_notified = true
-			var levels: Array = [6,8,12]
-			var buys: Array = [20,25,35]
-			var sells: Array = [48,65,90]
+			var levels: Array = [6,8,12,18]
+			var buys: Array = [20,25,35,50]
+			var sells: Array = [48,65,90,140]
 			inv.CropData.crop_time_scale = 0.1
-			for i in range(3):
+			for i in range(4):
 				var crop: String = NEW_CROPS[i]
 				var item: String = crop.to_lower()
 				inv.player_level = levels[i]-1
@@ -67,6 +71,7 @@ func run_checks() -> void:
 				plot.harvest()
 				plot.harvest()
 				check(inv.get(item) == 1, "harvest once")
+				check(hud.storage_panel.get_node("Margin/Content/Tabs/Produce/Items").text.contains(root.get_node("Localization").display_name(crop) + ": 1"), "new crop storage label")
 				coins = inv.coins
 				check(inv.sell_crop(crop) and inv.coins == coins+sells[i] and inv.get(item) == 0, "new crop sell")
 			inv.CropData.crop_time_scale = 1.0
@@ -75,10 +80,10 @@ func run_checks() -> void:
 				check(inv.get(crop.to_lower()) == 0 and inv.get(crop.to_lower()+"_seed") == 0, "new crop defaults")
 		"crop_write":
 			check(manager.reset_game(), "offline fixture")
-			inv.player_level = 12
+			inv.player_level = 18
 			inv.tools_unlock_notified = true
 			inv.coins = 10000
-			for i in range(3):
+			for i in range(4):
 				var crop: String = NEW_CROPS[i]
 				check(inv.buy_seed(crop) and inv.select_crop(crop), "offline seeds")
 				var plot = manager.plots["soil_0"+str(i+1)]
@@ -87,9 +92,10 @@ func run_checks() -> void:
 					plot.ready_at = Time.get_unix_time_from_system()-1
 				plot.planted_at = plot.ready_at-360
 			inv.cotton_seed = 2
+			inv.flax_seed = 2
 			check(manager.save_game(), "persist new crops")
 		"crop_read", "crop_again":
-			check(inv.selected_crop == "COTTON" and inv.cotton_seed == 2, "selection and inventory restored")
+			check(inv.selected_crop == "FLAX" and inv.cotton_seed == 2 and inv.flax_seed == 2, "selection and inventory restored")
 			var first = manager.plots["soil_01"]
 			if stage == "crop_read":
 				check(first.state == 2 and first.crop_type == "SOYBEAN", "offline ready")
@@ -99,7 +105,7 @@ func run_checks() -> void:
 			first.harvest()
 			check(inv.soybean == 1, "no duplicate reload reward")
 			inv.CropData.crop_time_scale = 0.1
-			for id in ["soil_02", "soil_03"]:
+			for id in ["soil_02", "soil_03", "soil_04"]:
 				var plot = manager.plots[id]
 				var ready: float = disk().get_value(id, "ready_at")
 				plot.restore_save_data(manager.saved_plots[id])

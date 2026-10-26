@@ -3,7 +3,7 @@ extends CharacterBody2D
 var active_resource: Node = null
 
 @export var speed: float = 200.0
-@export var farm_bounds: Rect2 = Rect2(50, 50, 2300, 1500)
+@export var farm_bounds: Rect2 = Rect2(50, 50, 2300, 2300)
 @onready var hud: Node = get_tree().get_first_node_in_group("farm_hud")
 
 

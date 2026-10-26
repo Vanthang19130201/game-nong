@@ -1,6 +1,13 @@
 extends RefCounted
 
 const MESSAGES: Dictionary = {
+    "WAREHOUSE_PROMPT": "[E] Mở Kho",
+    "WAREHOUSE_SILO": "KHO NÔNG SẢN",
+    "WAREHOUSE_BARN": "KHO HÀNG HÓA",
+    "WAREHOUSE_UPGRADE_INFO": "%s · Cấp %d\nSức chứa: %d → %d",
+    "WAREHOUSE_UPGRADE_COST": "Gỗ: %d/%d | Đá: %d/%d | Xu: %d/%d",
+    "ITEM_FLAX": "Cây lanh",
+    "ITEM_FLAX_SEED": "Hạt giống cây lanh",
     "ITEM_SOYBEAN": "Đậu nành",
     "ITEM_SUGARCANE": "Mía",
     "ITEM_COTTON": "Bông",

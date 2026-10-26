@@ -21,7 +21,7 @@ static func valid_building_position(value: Variant) -> bool:
 	if not (value is Vector2) or not value.is_finite():
 		return false
 	# Keep the full placeholder inside the accessible mainland and out of fields.
-	return Rect2(120, 100, 1560, 1380).has_point(value) and not Rect2(950, 360, 820, 540).has_point(value)
+	return Rect2(120, 100, 1560, 2180).has_point(value) and not Rect2(950, 360, 820, 540).has_point(value)
 const PRICE_TIERS: Array[Dictionary] = [
 	{"last": 8, "price": 0}, {"last": 12, "price": 100},
 	{"last": 16, "price": 200}, {"last": 20, "price": 350},

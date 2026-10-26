@@ -31,7 +31,7 @@ func run_checks() -> void:
 	var player = main.get_node("Player")
 	await create_timer(0.1).timeout
 	assert(manager.reset_game())
-	assert(get_nodes_in_group("farm_interactables").size() == 48)
+	assert(get_nodes_in_group("farm_interactables").size() == 49)
 	for plot in manager.plots.values():
 		if not plot.is_unlocked():
 			continue

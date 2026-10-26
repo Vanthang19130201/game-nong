@@ -19,6 +19,7 @@
 [ext_resource type="Script" uid="uid://dwi3al7wwxxvc" path="res://character_visual.gd" id="92_anim"]
 [ext_resource type="SpriteFrames" path="res://assets/characters/directional_frames.tres" id="93_frames"]
 [ext_resource type="Script" uid="uid://bftdjeeaw3cnf" path="res://building_visual.gd" id="94_building"]
+[ext_resource type="PackedScene" path="res://warehouse.tscn" id="95_warehouse"]
 
 [sub_resource type="RectangleShape2D" id="HouseInteractionShape"]
 size = Vector2(260, 220)
@@ -30,7 +31,7 @@ size = Vector2(28, 28)
 size = Vector2(140, 790)
 
 [sub_resource type="RectangleShape2D" id="RiverLowerShape"]
-size = Vector2(140, 690)
+size = Vector2(140, 1490)
 
 [node name="Main" type="Node2D" unique_id=1741138209]
 script = ExtResource("5_farm")
@@ -38,7 +39,7 @@ script = ExtResource("5_farm")
 [node name="Ground" type="ColorRect" parent="." unique_id=2031795690]
 z_index = -10
 offset_right = 2400.0
-offset_bottom = 1600.0
+offset_bottom = 2400.0
 mouse_filter = 2
 color = Color(0.25, 0.42, 0.25, 1)
 
@@ -50,10 +51,10 @@ resource_type = "stone"
 
 [node name="FarmYard" type="ColorRect" parent="." unique_id=209976864]
 z_index = -9
-offset_left = 500.0
+offset_left = 120.0
 offset_top = 300.0
 offset_right = 1740.0
-offset_bottom = 1150.0
+offset_bottom = 1872.0
 mouse_filter = 2
 color = Color(0.35, 0.48, 0.28, 1)
 
@@ -110,10 +111,10 @@ fallback_paths = Array[NodePath]([NodePath("../../Visual")])
 position = Vector2(920, 420)
 
 [node name="FieldLabel" type="Label" parent="." unique_id=997779398]
-offset_left = 1297.0
-offset_top = 437.0
-offset_right = 1380.0
-offset_bottom = 454.0
+offset_left = 1357.0
+offset_top = 441.0
+offset_right = 1440.0
+offset_bottom = 458.0
 theme_override_font_sizes/font_size = 12
 text = "WORLD_FIELDS"
 
@@ -154,9 +155,10 @@ position = Vector2(908, 951)
 position = Vector2(650, 760)
 
 [node name="HomeLabel" type="Label" parent="DogHomePoint" unique_id=287868724]
-offset_left = -30.0
-offset_top = -40.0
-offset_right = 70.0
+offset_left = -197.0
+offset_top = -97.0
+offset_right = -48.0
+offset_bottom = -57.0
 text = "WORLD_DOG_HOME"
 
 [node name="HUD" parent="." unique_id=786439489 instance=ExtResource("4_hud")]
@@ -170,7 +172,7 @@ script = ExtResource("1_0xm2m")
 limit_left = 0
 limit_top = 0
 limit_right = 2400
-limit_bottom = 1600
+limit_bottom = 2400
 position_smoothing_enabled = true
 
 [node name="Icon" type="Sprite2D" parent="Player" unique_id=1308617484]
@@ -289,7 +291,7 @@ position = Vector2(1800, 0)
 
 [node name="Placeholder" type="ColorRect" parent="River" unique_id=1528152808]
 offset_right = 140.0
-offset_bottom = 1600.0
+offset_bottom = 2400.0
 mouse_filter = 2
 color = Color(0.12, 0.4, 0.6, 1)
 
@@ -318,7 +320,7 @@ plot_id = "soil_08"
 z_index = -9
 offset_left = 1940.0
 offset_right = 2400.0
-offset_bottom = 1600.0
+offset_bottom = 2400.0
 mouse_filter = 2
 color = Color(0.28, 0.48, 0.4, 1)
 
@@ -346,7 +348,7 @@ position = Vector2(1870, 395)
 shape = SubResource("RiverUpperShape")
 
 [node name="Lower" type="CollisionShape2D" parent="RiverWalls" unique_id=624944936]
-position = Vector2(1870, 1255)
+position = Vector2(1870, 1655)
 shape = SubResource("RiverLowerShape")
 
 [node name="Bridge" parent="." unique_id=1371928677 instance=ExtResource("11_bridge")]
@@ -357,3 +359,7 @@ position = Vector2(2020, 980)
 
 [node name="FishMarket" parent="." unique_id=1259020075 instance=ExtResource("15_market")]
 position = Vector2(2190, 980)
+
+[node name="Warehouse" parent="." unique_id=1215524133 instance=ExtResource("95_warehouse")]
+position = Vector2(1136, 375)
+scale = Vector2(0.8, 0.8)
