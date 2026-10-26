@@ -13,12 +13,11 @@ const AUTOSAVE_INTERVAL: float = 30.0
 var autosave_timer: Timer
 var bakery_queue: Array = []
 var PLOT_IDS: Array[String] = FarmData.plot_ids()
-const INVENTORY_DEFAULTS: Dictionary = {
-	"wheat_seed": 10, "wheat": 0, "corn_seed": 0, "corn": 0,
-	"carrot_seed": 0, "carrot": 0, "coins": 100, "chicken_feed": 0, "cow_feed": 0, "egg": 0, "milk": 0, "wood": 0, "stone": 0,
+var INVENTORY_DEFAULTS: Dictionary = CropData.inventory_defaults().merged({
+	"coins": 100, "chicken_feed": 0, "cow_feed": 0, "egg": 0, "milk": 0, "wood": 0, "stone": 0,
 	"small_fish": 0, "river_fish": 0, "golden_fish": 0,
 	"bread": 0, "corn_bread": 0, "carrot_pie": 0
-}
+})
 
 var saved_plots: Dictionary = {}
 var plots: Dictionary = {}
@@ -389,7 +388,7 @@ func _read_plot(data: ConfigFile, id: String) -> Dictionary:
 	if not (crop is String) or not CropData.CROPS.has(crop):
 		crop = "WHEAT"
 	var now: float = Time.get_unix_time_from_system()
-	var duration: float = CropData.CROPS[crop]["grow_time"]
+	var duration: float = CropData.grow_seconds(crop)
 	var planted: float = _read_time(data, id, "planted_at", -1.0)
 	var ready: float = _read_time(data, id, "ready_at", -1.0)
 	if planted < 0.0 or ready < planted:

@@ -93,7 +93,7 @@ func try_plant() -> void:
 	# Finish the plot state BEFORE consuming seed and saving the whole game.
 	crop_type = selected
 	planted_at = Time.get_unix_time_from_system()
-	ready_at = planted_at + CropData.CROPS[crop_type]["grow_time"]
+	ready_at = planted_at + CropData.grow_seconds(crop_type)
 	state = PlotState.GROWING
 	grow_timer.start(ready_at - planted_at)
 	_update_label()

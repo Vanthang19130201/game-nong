@@ -95,7 +95,7 @@ func run_checks() -> void:
 	plot.ready_at = Time.get_unix_time_from_system()-1
 	plot._on_grow_timer_timeout()
 	plot.harvest()
-	check(produce.text.ends_with("Cà rốt: 0") and produce.text.contains("Nông sản\nLúa mì: 1"), "harvest refresh")
+	check(produce.text.contains("Cà rốt: 0") and produce.text.contains("Nông sản\nLúa mì: 1"), "harvest refresh")
 	check(hud.transaction_feedback.visible and hud.transaction_feedback.text == "+1 Lúa mì\n+10 Kinh nghiệm", "successful harvest feedback")
 	var toast_count: int = hud.transaction_feedback.get_child_count()
 	plot.harvest()

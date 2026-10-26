@@ -1,6 +1,13 @@
 extends RefCounted
 
 const MESSAGES: Dictionary = {
+    "ITEM_SOYBEAN": "Đậu nành",
+    "ITEM_SUGARCANE": "Mía",
+    "ITEM_COTTON": "Bông",
+    "ITEM_SOYBEAN_SEED": "Hạt giống đậu nành",
+    "ITEM_SUGARCANE_SEED": "Hạt giống mía",
+    "ITEM_COTTON_SEED": "Hạt giống bông",
+    "CROP_LOCKED_LEVEL": "Khóa - Cấp %d",
     "BUILDING_BAKERY": "Lò bánh",
     "ITEM_BREAD": "Bánh mì",
     "ITEM_CORN_BREAD": "Bánh mì bắp",

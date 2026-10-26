@@ -22,7 +22,7 @@ func refresh() -> void:
 	$CropSprite.z_index = $SoilSprite.z_index + 1
 	color.color = Color(0.3, 0.15, 0.06, 1) if unlocked else Color(0.2, 0.2, 0.2, 1)
 	$SoilSprite.modulate = Color.WHITE if unlocked else Color(0.5, 0.5, 0.5)
-	var key: String = Localization.display_name(plot.crop_type) + "_" + plot.PlotState.keys()[plot.state]
+	var key: String = plot.crop_type + "_" + plot.PlotState.keys()[plot.state]
 	$CropSprite.texture = crop_textures.get(key, default_crop_texture)
 	$CropSprite.visible = unlocked and plot.state != plot.PlotState.EMPTY
 	if not unlocked:

@@ -1,10 +1,16 @@
 extends RefCounted
 
-const FEATURES: Dictionary = {
-	"Wheat": 1, "Corn": 2, "Carrot": 3, "Feed Mill": 4,
+static var FEATURES: Dictionary = _features()
+
+static func _features() -> Dictionary:
+	var result: Dictionary = {
+	"Feed Mill": 4,
 	"Chicken Coop": 5, "Chicken / Axe / Hammer": 6, "Egg Orders": 7,
 	"Cow Shed": 8, "Cow": 9, "Milk": 10, "Bakery": 12, "Dairy (future)": 15
-}
+	}
+	for crop in preload("res://crop_data.gd").CROPS.values():
+		result[crop["name"]] = crop["unlock_level"]
+	return result
 const BUILDINGS: Dictionary = {
 	"feed_mill": {"name": "Feed Mill", "level": 4, "price": 500},
 	"chicken_coop": {"name": "Chicken Coop", "level": 5, "price": 800},

@@ -94,8 +94,18 @@ func _ready() -> void:
 	for crop in crop_ids:
 		crop_selector.add_item(Localization.display_name(CropData.CROPS[crop]["name"]))
 		var prefix: String = "" if crop == "WHEAT" else crop.capitalize()
-		var buy: Button = content.get_node(prefix + "BuyButton")
-		var sell: Button = content.get_node(prefix + "SellButton")
+		var buy: Button = content.get_node_or_null(prefix + "BuyButton")
+		var sell: Button = content.get_node_or_null(prefix + "SellButton")
+		if buy == null:
+			buy = Button.new()
+			buy.name = prefix + "BuyButton"
+			buy.focus_mode = Control.FOCUS_NONE
+			content.add_child(buy)
+		if sell == null:
+			sell = Button.new()
+			sell.name = prefix + "SellButton"
+			sell.focus_mode = Control.FOCUS_NONE
+			content.add_child(sell)
 		buy_buttons[crop] = buy
 		buy.pressed.connect(_buy_seed.bind(crop))
 		sell.pressed.connect(_sell_crop.bind(crop))
@@ -229,14 +239,14 @@ func _update_inventory() -> void:
 		var unlocked: bool = Inventory.is_unlocked(crop)
 		var choice: String = Localization.display_name(info["name"])
 		if not unlocked:
-			choice += tr("UI_UNLOCK_LEVEL") % info["unlock_level"]
+			choice += " | " + tr("CROP_LOCKED_LEVEL") % info["unlock_level"]
 		crop_selector.set_item_text(i, choice)
 		crop_selector.set_item_disabled(i, not unlocked)
 		var buy: Button = buy_buttons[crop]
 		buy.disabled = not unlocked
 		buy.text = tr("UI_BUY_SEED") % [Localization.display_name(info["name"]), info["seed_buy_price"]]
 		if not unlocked:
-			buy.text += tr("UI_LEVEL_SUFFIX") % info["unlock_level"]
+			buy.text += " | " + tr("CROP_LOCKED_LEVEL") % info["unlock_level"]
 	crop_selector.select(crop_ids.find(Inventory.selected_crop))
 	_update_station_panel()
 	_update_house_panel()

@@ -334,6 +334,8 @@ color = Color(0.5, 0.5, 0.55, 1)
 [node name="FishingAreaLabel" type="Label" parent="." unique_id=1836452223]
 offset_left = 2020.0
 offset_top = 650.0
+offset_right = 2145.0
+offset_bottom = 667.0
 theme_override_font_sizes/font_size = 12
 text = "WORLD_FISHING_AREA"
 
