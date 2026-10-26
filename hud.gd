@@ -815,7 +815,7 @@ func _update_build_rows() -> void:
 				row["button"].text += tr("UI_CAPACITY") % cost["capacity"]
 	dog_house_button.disabled = Inventory.has_dog_house
 	var dog_house_cost: Dictionary = Progression.DOG_HOUSE_COST
-	dog_house_button.text = tr("UI_DOG_HOUSE_BUILT") if Inventory.has_dog_house else tr("UI_BUILD_DOG_HOUSE") % [dog_house_cost["wood"], dog_house_cost["stone"]]
+	dog_house_button.text = tr("UI_DOG_HOUSE_BUILT") if Inventory.has_dog_house else tr("UI_BUILD_DOG_HOUSE") % dog_house_cost["wood"]
 
 func _buy_building(id: String) -> void:
 	if Progression.BUILDINGS[id].get("placement_required",false):

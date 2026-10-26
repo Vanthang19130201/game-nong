@@ -295,6 +295,27 @@ scale = Vector2(0.5, 0.5)
 resource_id = "rock_2"
 resource_type = "stone"
 
+[node name="tree6" parent="." instance=ExtResource("10_resource")]
+position = Vector2(260,520)
+scale = Vector2(0.8,0.8)
+resource_id = "tree_6"
+
+[node name="tree7" parent="." instance=ExtResource("10_resource")]
+position = Vector2(280,1552)
+scale = Vector2(0.8,0.8)
+resource_id = "tree_7"
+
+[node name="tree8" parent="." instance=ExtResource("10_resource")]
+position = Vector2(1480,2100)
+scale = Vector2(0.8,0.8)
+resource_id = "tree_8"
+
+[node name="rock4" parent="." instance=ExtResource("10_resource")]
+position = Vector2(880,1740)
+scale = Vector2(0.8,0.8)
+resource_id = "rock_4"
+resource_type = "stone"
+
 [node name="Forest" type="ColorRect" parent="." unique_id=1194899704]
 z_index = -9
 offset_left = 120.0

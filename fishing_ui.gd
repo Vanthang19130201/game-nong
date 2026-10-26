@@ -42,8 +42,14 @@ func handle_interact() -> bool:
 	return true
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("fishing_reel") and not event.is_echo():
+		if not hud.blocks_world_input() and handle_interact():
+			get_viewport().set_input_as_handled()
+
+
 func _reel() -> void:
-	# Same state validation and reward path as keyboard E.
+	# SPACE and the mobile Reel button share the same state/reward validation.
 	if not hud.blocks_world_input():
 		handle_interact()
 

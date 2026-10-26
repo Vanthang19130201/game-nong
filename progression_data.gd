@@ -55,7 +55,7 @@ const UPGRADES: Dictionary = {
 		3: {"wood": 20, "stone": 10, "coins": 200, "capacity": 60}
 	}
 }
-const DOG_HOUSE_COST: Dictionary = {"wood": 15, "stone": 5, "coins": 0}
+const DOG_HOUSE_COST: Dictionary = {"wood": 5, "stone": 0, "coins": 0}
 # Future hooks only: these features are not implemented yet.
 const HOUSE_FUTURE_FEATURES: Dictionary = {
 	2: ["wardrobe", "basic_furniture"],

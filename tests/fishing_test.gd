@@ -109,6 +109,8 @@ func check_fishing() -> void:
 	await key(KEY_E, true)
 	check(spot.deadline == original_deadline and spot.state == spot.State.WAITING_FOR_BITE, "held key echo ignored")
 	await key(KEY_E)
+	check(spot.deadline == original_deadline and spot.state == spot.State.WAITING_FOR_BITE, "E does not reel while waiting")
+	await key(KEY_SPACE)
 	check(spot.state == spot.State.FAILED and spot.feedback == tr("FISHING_TOO_EARLY"), "early input fails")
 	for index in range(5):
 		await key(KEY_E)
@@ -125,11 +127,13 @@ func check_fishing() -> void:
 	end_cooldown()
 	# Real keyboard success follows exactly the same state clock.
 	await key(KEY_E)
-	await create_timer(spot.bite_delay + 0.02).timeout
+	await create_timer(maxf(0.001,spot.deadline-spot.now()+0.02)).timeout
 	check(spot.state == spot.State.BITE_WINDOW, "real success window")
 	await key(KEY_E)
+	check(spot.state == spot.State.BITE_WINDOW and fish_count() == 0, "E does not reel in bite window")
+	await key(KEY_SPACE)
 	check(spot.state == spot.State.SUCCESS and fish_count() == 1, "keyboard success grants one fish")
-	await key(KEY_E)
+	await key(KEY_SPACE)
 	check(fish_count() == 1, "success cannot duplicate fish")
 	end_cooldown()
 	# Touch-ready buttons use the same start/reel logic, including early failures.

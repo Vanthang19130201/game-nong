@@ -474,7 +474,7 @@ func build_dog_house() -> bool:
 	if has_dog_house:
 		return fail(tr("ERROR_DOG_HOUSE_OWNED"))
 	if not can_pay_material_cost(Progression.DOG_HOUSE_COST):
-		return fail(tr("ERROR_DOG_HOUSE_COST") % [Progression.DOG_HOUSE_COST["wood"], Progression.DOG_HOUSE_COST["stone"]])
+		return fail(tr("ERROR_DOG_HOUSE_COST") % Progression.DOG_HOUSE_COST["wood"])
 	_pay_material_cost(Progression.DOG_HOUSE_COST)
 	has_dog_house = true
 	inventory_changed.emit()

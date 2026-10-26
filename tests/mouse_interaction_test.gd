@@ -140,14 +140,18 @@ func run_checks() -> void:
 	await click_world(spot.position + Vector2(-250,-100))
 	check(spot.state == spot.State.WAITING_FOR_BITE, "empty click does not reel")
 	await click_world(spot.position)
-	check(spot.state == spot.State.FAILED, "click too early keeps fishing rules")
+	check(spot.state == spot.State.WAITING_FOR_BITE, "world click cannot reel")
+	await key(KEY_SPACE)
+	check(spot.state == spot.State.FAILED, "SPACE too early keeps fishing rules")
 	hud.fishing_ui.close_session()
 	spot.state = spot.State.IDLE
 	await click_world(spot.position)
 	spot.state = spot.State.BITE_WINDOW
 	spot.deadline = spot.now()+1
 	await click_world(spot.position)
-	check(spot.state == spot.State.SUCCESS and inv.small_fish+inv.river_fish+inv.golden_fish == 1, "click reels fish")
+	check(spot.state == spot.State.BITE_WINDOW, "world click does not catch fish")
+	await key(KEY_SPACE)
+	check(spot.state == spot.State.SUCCESS and inv.small_fish+inv.river_fish+inv.golden_fish == 1, "SPACE reels fish")
 	await click_world(spot.position)
 	check(inv.small_fish+inv.river_fish+inv.golden_fish == 1 and inv.fishing_attempts_used == 2, "no duplicate fish or extra attempts")
 	hud.fishing_ui.close_session()

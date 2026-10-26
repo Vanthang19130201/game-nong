@@ -51,6 +51,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func interact_at_screen_position(screen_position: Vector2) -> void:
 	if (is_instance_valid(hud) and hud.blocks_world_input()) or is_instance_valid(active_resource):
 		return
+	if is_instance_valid(hud) and is_instance_valid(hud.fishing_ui.active_spot):
+		return
 	var world_position: Vector2 = get_canvas_transform().affine_inverse() * screen_position
 	var target: Node2D = mouse_interaction.target_at(world_position)
 	if target != null:
@@ -68,7 +70,7 @@ func can_interact_with(target: Node) -> bool:
 	if (is_instance_valid(hud) and hud.blocks_world_input()) or is_instance_valid(active_resource):
 		return false
 	if is_instance_valid(hud) and is_instance_valid(hud.fishing_ui.active_spot):
-		return target == hud.fishing_ui.active_spot and target.state in [target.State.WAITING_FOR_BITE, target.State.BITE_WINDOW]
+		return false
 	return target.can_interact()
 
 
@@ -79,8 +81,6 @@ func try_interact(target: Node = null) -> void:
 	if last_interaction_frame == frame:
 		return
 	if target == null and is_instance_valid(hud) and is_instance_valid(hud.fishing_ui.active_spot):
-		last_interaction_frame = frame
-		hud.fishing_ui.handle_interact()
 		return
 	if is_instance_valid(active_resource):
 		return
@@ -90,10 +90,7 @@ func try_interact(target: Node = null) -> void:
 		return
 	# Keyboard and mouse share one dispatch, even if both arrive in one frame.
 	last_interaction_frame = frame
-	if is_instance_valid(hud) and hud.fishing_ui.active_spot == target:
-		hud.fishing_ui.handle_interact()
-	else:
-		target.interact(self)
+	target.interact(self)
 
 
 func _nearest_interactable() -> Node2D:

@@ -31,6 +31,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'stability_edge_test.gd') -Desti
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'dairy_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'spinning_machine_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'rock_types_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'fishing_resource_update_test.gd') -Destination $testRoot -Force
 $projectPath = Join-Path $testRoot 'project.godot'
 Add-Content -LiteralPath $projectPath -Value "`n[debug]`nfile_logging/enable_file_logging=false"
 # Reuse the project's existing imports; no editor/settings writes are needed.
@@ -56,7 +57,8 @@ $stages = @('core', 'position_write', 'position_read', 'legacy_write', 'legacy_r
     'edge_input','edge_move','edge_orders','edge_orders_read','edge_orders_again','edge_decoration','edge_decoration_read',
     'dairy_core','dairy_write','dairy_read','dairy_again','dairy_reset_read','dairy_legacy_write','dairy_legacy_read',
     'spinning_core','spinning_write','spinning_read','spinning_again','spinning_reset_read','spinning_legacy_write','spinning_legacy_read',
-    'rock_core','rock_write','rock_read','rock_respawn_write','rock_respawn_read','rock_legacy_write','rock_legacy_read','rock_reset_read')
+    'rock_core','rock_write','rock_read','rock_respawn_write','rock_respawn_read','rock_legacy_write','rock_legacy_read','rock_reset_read',
+    'resource_update_core','resource_update_write','resource_update_read','resource_update_legacy_write','resource_update_legacy_read')
 foreach ($stage in $stages) {
     $log = Join-Path $testRoot "$stage.log"
     $ErrorActionPreference = 'Continue'
@@ -75,6 +77,7 @@ foreach ($stage in $stages) {
     if ($stage.StartsWith('dairy_')) { $testScript = 'dairy_test.gd' }
     if ($stage.StartsWith('spinning_')) { $testScript = 'spinning_machine_test.gd' }
     if ($stage.StartsWith('rock_')) { $testScript = 'rock_types_test.gd' }
+    if ($stage.StartsWith('resource_update_')) { $testScript = 'fishing_resource_update_test.gd' }
     if ($stage -eq 'localization') { $testScript = 'localization_test.gd' }
     if ($stage -eq 'storage_ui') { $testScript = 'storage_ui_test.gd' }
     & $Godot --headless --path $testRoot --script $testScript --quit-after 1800 -- $stage *> $log

@@ -26,8 +26,35 @@ func _ready() -> void:
 	decoration_manager.name = "DecorationManager"
 	decoration_manager.set_script(preload("res://decoration_manager.gd"))
 	add_child(decoration_manager)
+	_place_resources()
 	Inventory.inventory_changed.connect(_update_pets)
 	_update_pets()
+
+
+func _place_resources() -> void:
+	# Keep resource positions unless they overlap restored buildings/plots/decor.
+	# Relocating a resource within its zone never changes its saved cooldown.
+	for resource in SaveManager.resources.values():
+		if Placement.can_place(resource,resource.global_position,false):
+			continue
+		var zone: String = SaveManager.LandData.zone_at(resource.global_position)
+		var area: Rect2 = SaveManager.LandData.ZONES[zone]["area"]
+		var found: bool = false
+		for y in range(int(area.position.y)+64,int(area.end.y)-32,64):
+			for x in range(int(area.position.x)+64,int(area.end.x)-32,64):
+				var point := Vector2(x,y)
+				var footprint: Rect2 = Placement.bounds(resource)
+				footprint.position += point-resource.global_position
+				if area.encloses(footprint) and Placement.can_place(resource,point,false):
+					resource.global_position = point
+					found = true
+					break
+			if found:
+				break
+		if not found:
+			# A completely filled zone cannot safely accept another resource.
+			resource.zone_id = "unplaced"
+		resource._update_zone(true)
 
 
 func _restore_owned_land_positions() -> void:
