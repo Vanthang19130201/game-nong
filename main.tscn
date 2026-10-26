@@ -19,6 +19,7 @@
 [ext_resource type="SpriteFrames" path="res://assets/characters/directional_frames.tres" id="93_frames"]
 [ext_resource type="Script" uid="uid://bftdjeeaw3cnf" path="res://building_visual.gd" id="94_building"]
 [ext_resource type="PackedScene" path="res://warehouse.tscn" id="95_warehouse"]
+[ext_resource type="Script" uid="uid://bch0xhj4wimph" path="res://farm_camera.gd" id="96_camera"]
 
 [sub_resource type="RectangleShape2D" id="HouseInteractionShape"]
 size = Vector2(260, 220)
@@ -27,7 +28,7 @@ size = Vector2(260, 220)
 load_path = "res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex"
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_6rjdj"]
-size = Vector2(28, 28)
+size = Vector2(29, 26)
 
 [sub_resource type="RectangleShape2D" id="RiverUpperShape"]
 size = Vector2(140, 790)
@@ -176,12 +177,15 @@ limit_top = 0
 limit_right = 2400
 limit_bottom = 2400
 position_smoothing_enabled = true
+script = ExtResource("96_camera")
 
 [node name="Icon" type="Sprite2D" parent="Player" unique_id=1308617484]
-scale = Vector2(0.546875, 0.51562494)
+position = Vector2(-1.0000162, 7.6293945e-06)
+scale = Vector2(0.42187527, 0.38281235)
 texture = SubResource("CompressedTexture2D_cegan")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player" unique_id=1192634142]
+position = Vector2(-0.5, 1)
 shape = SubResource("RectangleShape2D_6rjdj")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Player" unique_id=410885356]

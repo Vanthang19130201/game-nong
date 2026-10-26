@@ -10,7 +10,9 @@ static func snap_position(position: Vector2) -> Vector2:
 # Shared by edit mode and future building/decor placement. Preview nodes never
 # participate in gameplay, collision queries or saves.
 static func can_place(source: Node2D, position: Vector2) -> bool:
-	if not FarmData.valid_building_position(position):
+	var stable_id = SaveManager.buildings.find_key(source)
+	var valid_anchor: bool = FarmData.valid_saved_building_position(stable_id, position) if stable_id != null else FarmData.valid_building_position(position)
+	if not valid_anchor:
 		return false
 	var footprint: Rect2 = bounds(source)
 	footprint.position += position - source.global_position

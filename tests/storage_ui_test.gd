@@ -122,7 +122,7 @@ func run_checks() -> void:
 	hud._toggle_storage()
 	await key(KEY_P)
 	check(hud.shop_build_panel.visible and not panel.visible and hud.blocks_world_input(), "P replaces storage")
-	check(hud.shop_build_tabs.get_tab_count() == 2, "two shop/build tabs")
+	check(hud.shop_build_tabs.get_tab_count() == 3, "shop/build/decoration tabs")
 	hud.shop_build_tabs.current_tab = 1
 	await process_frame
 	check(hud.build_panel.is_visible_in_tree() and not hud.shop_panel.is_visible_in_tree(), "build tab")

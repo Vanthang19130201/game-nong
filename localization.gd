@@ -42,6 +42,7 @@ const NAME_KEYS: Dictionary = {
 	"hammer": "ITEM_HAMMER",
 	"fishing rod": "ITEM_FISHING_ROD",
 	"house": "BUILDING_HOUSE",
+	"warehouse": "BUILDING_BARN",
 	"silo": "BUILDING_SILO",
 	"barn": "BUILDING_BARN",
 	"feed mill": "BUILDING_FEED_MILL",

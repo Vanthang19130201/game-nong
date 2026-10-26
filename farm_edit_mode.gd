@@ -111,8 +111,9 @@ func movable_buildings() -> Dictionary:
 	var result: Dictionary = {}
 	for id in SaveManager.buildings:
 		var building = SaveManager.buildings[id]
-		var owned: bool = Inventory.has_dog_house if id == "dog_house" else Inventory.owns_building(id)
-		var movable: bool = hud.FarmData.BUILDINGS[id].get("movable", Inventory.Progression.BUILDINGS.has(id))
+		var data: Dictionary = hud.FarmData.BUILDINGS[id]
+		var owned: bool = data.get("always_owned", false) or (Inventory.has_dog_house if id == "dog_house" else Inventory.owns_building(id))
+		var movable: bool = data.get("movable", Inventory.Progression.BUILDINGS.has(id))
 		if owned and movable and is_instance_valid(building) and building.is_visible_in_tree():
 			result[id] = building
 	var manager = hud.get_parent().get("decoration_manager")
@@ -198,10 +199,8 @@ func place_move() -> bool:
 		SaveManager.building_positions[selected_id] = previous
 		Inventory.fail(tr("EDIT_SAVE_FAILED"))
 		return false
-	if selected_id == "dog_house":
-		var farm = selected.get_parent()
-		if is_instance_valid(farm.dog):
-			farm.dog.set_home_point(selected)
+	# The dog's home_point already references the same DogHouse node.
+	# Moving that node must not restart the dog's current walk or idle timer.
 	cancel_selection()
 	return true
 

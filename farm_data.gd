@@ -11,7 +11,9 @@ const BUILDABLE_LAND := Rect2(120, 100, 1560, 2180)
 const FIELD_RESERVE := Rect2(950, 360, 820, 540)
 # Stable world IDs, scene references and default positions.
 const BUILDINGS: Dictionary = {
-	"house": {"node": "House", "position": Vector2(700, 400), "scene": ""},
+	"house": {"movable": true, "always_owned": true, "node": "House", "position": Vector2(700, 400), "scene": ""},
+	"warehouse": {"movable": true, "always_owned": true, "preserve_scale": true, "node": "Warehouse", "position": Vector2(1136, 375), "scene": "res://warehouse.tscn"},
+	"order_board": {"movable": true, "always_owned": true, "node": "OrderBoard", "position": Vector2(920, 420), "scene": "res://order_board.tscn"},
 	"feed_mill": {"movable": true, "node": "FeedMill", "position": Vector2(1160, 1020), "scene": "res://feed_mill.tscn"},
 	"chicken_coop": {"movable": true, "node": "ChickenCoop", "position": Vector2(1500, 1020), "scene": "res://chicken_coop.tscn"},
 	"cow_shed": {"movable": true, "node": "CowShed", "position": Vector2(900, 1020), "scene": "res://cow_shed.tscn"},
@@ -24,6 +26,11 @@ static func valid_building_position(value: Variant) -> bool:
 		return false
 	# Keep the full placeholder inside the accessible mainland and out of fields.
 	return BUILDABLE_LAND.has_point(value) and not FIELD_RESERVE.has_point(value)
+
+static func valid_saved_building_position(id: String, value: Variant) -> bool:
+	# Existing scene landmarks may sit at the edge of the reserved field area.
+	return valid_building_position(value) or (value is Vector2 and value == BUILDINGS[id]["position"])
+
 const PRICE_TIERS: Array[Dictionary] = [
 	{"last": 8, "price": 0}, {"last": 12, "price": 100},
 	{"last": 16, "price": 200}, {"last": 20, "price": 350},

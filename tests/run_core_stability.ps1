@@ -25,6 +25,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'warehouse_test.gd') -Destinatio
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'mouse_interaction_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'farm_edit_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'land_expansion_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'camera_control_test.gd') -Destination $testRoot -Force
 $projectPath = Join-Path $testRoot 'project.godot'
 Add-Content -LiteralPath $projectPath -Value "`n[debug]`nfile_logging/enable_file_logging=false"
 # Reuse the project's existing imports; no editor/settings writes are needed.
@@ -45,7 +46,7 @@ $stages = @('core', 'position_write', 'position_read', 'legacy_write', 'legacy_r
     'audit_core', 'audit_write', 'audit_read', 'audit_again', 'audit_close', 'localization', 'storage_ui',
     'bakery_core', 'bakery_write', 'bakery_read', 'bakery_again', 'bakery_reset_read',
     'crop_core', 'crop_write', 'crop_read', 'crop_again', 'warehouse_core', 'warehouse_write', 'warehouse_read', 'mouse_core',
-    'edit_core', 'edit_write', 'edit_read', 'land_core', 'land_write', 'land_read', 'land_reset_read', 'land_legacy_write', 'land_legacy_read')
+    'edit_core', 'edit_write', 'edit_read', 'edit_legacy_write', 'edit_legacy_read', 'land_core', 'land_write', 'land_read', 'land_reset_read', 'land_legacy_write', 'land_legacy_read', 'camera_core')
 foreach ($stage in $stages) {
     $log = Join-Path $testRoot "$stage.log"
     $ErrorActionPreference = 'Continue'
@@ -58,6 +59,7 @@ foreach ($stage in $stages) {
     if ($stage.StartsWith('mouse_')) { $testScript = 'mouse_interaction_test.gd' }
     if ($stage.StartsWith('edit_')) { $testScript = 'farm_edit_test.gd' }
     if ($stage.StartsWith('land_')) { $testScript = 'land_expansion_test.gd' }
+    if ($stage.StartsWith('camera_')) { $testScript = 'camera_control_test.gd' }
     if ($stage -eq 'localization') { $testScript = 'localization_test.gd' }
     if ($stage -eq 'storage_ui') { $testScript = 'storage_ui_test.gd' }
     & $Godot --headless --path $testRoot --script $testScript --quit-after 1800 -- $stage *> $log

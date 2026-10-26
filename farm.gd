@@ -65,7 +65,7 @@ func ensure_cow_shed_exists() -> void:
 func _update_buildings() -> void:
 	for id in FarmData.BUILDINGS:
 		var info: Dictionary = FarmData.BUILDINGS[id]
-		var owned: bool = id == "house" or (Inventory.has_dog_house if id == "dog_house" else Inventory.owns_building(id))
+		var owned: bool = info.get("always_owned", false) or (Inventory.has_dog_house if id == "dog_house" else Inventory.owns_building(id))
 		var building = get_node_or_null(info["node"])
 		if building == null and owned:
 			var scene = load(info["scene"]) if not info["scene"].is_empty() else null
@@ -80,7 +80,8 @@ func _update_buildings() -> void:
 		if not SaveManager.register_building(id, building):
 			continue
 		building.visible = owned
-		building.scale = Vector2.ONE
+		if not info.get("preserve_scale", false):
+			building.scale = Vector2.ONE
 		building.z_index = maxi(1, building.z_index)
 		if id == "dog_house":
 			dog_house = building

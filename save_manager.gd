@@ -141,7 +141,7 @@ func save_game() -> bool:
 		var position: Vector2 = building_positions.get(id, FarmData.BUILDINGS[id]["position"])
 		if buildings.has(id) and is_instance_valid(buildings[id]):
 			position = buildings[id].position
-		if not FarmData.valid_building_position(position):
+		if not FarmData.valid_saved_building_position(id, position):
 			push_warning("Invalid building position, using default: " + id)
 			position = FarmData.BUILDINGS[id]["position"]
 			if buildings.has(id) and is_instance_valid(buildings[id]):
@@ -285,7 +285,7 @@ func _load_game() -> void:
 	bakery_queue = Inventory.BakeryData.restore_queue(data.get_value("bakery", "bakery_queue", [])) if Inventory.owns_bakery else []
 	for id in FarmData.BUILDINGS:
 		var position = data.get_value("building_positions", id, FarmData.BUILDINGS[id]["position"])
-		if not FarmData.valid_building_position(position):
+		if not FarmData.valid_saved_building_position(id, position):
 			push_warning("Invalid saved building position: " + id)
 			position = FarmData.BUILDINGS[id]["position"]
 		building_positions[id] = position
