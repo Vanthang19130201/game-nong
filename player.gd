@@ -24,7 +24,7 @@ func _physics_process(_delta):
 		"move_up",
 		"move_down"
 	)
-	if is_instance_valid(hud) and hud.blocks_world_input():
+	if is_instance_valid(hud) and hud.blocks_world_input() and not hud.edit_farm.active:
 		direction = Vector2.ZERO
 
 	velocity = direction * speed
@@ -34,7 +34,10 @@ func _physics_process(_delta):
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		interact_at_screen_position(event.position)
+		if is_instance_valid(hud) and hud.edit_farm.active:
+			hud.edit_farm.click_world(event.position)
+		else:
+			interact_at_screen_position(event.position)
 		get_viewport().set_input_as_handled()
 		return
 	if not event.is_action_pressed("interact") or event.is_echo():
@@ -45,10 +48,16 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # Mouse clicks (and future mobile taps) use the same dispatcher as E.
 func interact_at_screen_position(screen_position: Vector2) -> void:
+	if (is_instance_valid(hud) and hud.blocks_world_input()) or is_instance_valid(active_resource):
+		return
 	var world_position: Vector2 = get_canvas_transform().affine_inverse() * screen_position
 	var target: Node2D = mouse_interaction.target_at(world_position)
 	if target != null:
 		try_interact(target)
+	else:
+		var zone = mouse_interaction.land_at(world_position)
+		if zone != null:
+			hud.open_land_purchase(zone.zone_id)
 	mouse_interaction.clear_hover()
 
 

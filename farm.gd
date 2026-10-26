@@ -4,7 +4,10 @@ extends Node2D
 const FarmData = preload("res://farm_data.gd")
 const SOIL_SCENE = preload("res://soil_plot.tscn")
 const DOG_SCENE = preload("res://dog.tscn")
+const LAND_SCENE = preload("res://land_zone.tscn")
+const Placement = preload("res://building_placement.gd")
 var dog: CharacterBody2D
+var decoration_manager: Node
 
 @onready var dog_home: Node2D = $DogHomePoint
 @onready var dog_house: Node2D = get_node_or_null("DogHouse")
@@ -12,10 +15,47 @@ var dog: CharacterBody2D
 
 func _ready() -> void:
 	_create_farm_grid()
+	for id in SaveManager.LandData.ZONES:
+		var zone = LAND_SCENE.instantiate()
+		zone.zone_id = id
+		zone.name = id
+		add_child(zone)
 	Inventory.inventory_changed.connect(_update_buildings)
 	_update_buildings()
+	decoration_manager = Node.new()
+	decoration_manager.name = "DecorationManager"
+	decoration_manager.set_script(preload("res://decoration_manager.gd"))
+	add_child(decoration_manager)
 	Inventory.inventory_changed.connect(_update_pets)
 	_update_pets()
+
+
+func _restore_owned_land_positions() -> void:
+	var changed: bool = false
+	for id in SaveManager.buildings:
+		var building = SaveManager.buildings[id]
+		if not is_instance_valid(building) or not building.visible:
+			continue
+		if SaveManager.LandData.owns_rect(Placement.bounds(building), SaveManager.unlocked_land_zones):
+			continue
+		var destination: Vector2 = FarmData.BUILDINGS[id]["position"]
+		if not Placement.can_place(building,destination):
+			# Deterministic fallback for legacy farms whose defaults are occupied.
+			var found: bool = false
+			for y in range(128,1472,64):
+				for x in range(128,1664,64):
+					var point := Vector2(x,y)
+					if Placement.can_place(building,point):
+						destination = point
+						found = true
+						break
+				if found:
+					break
+		building.global_position = destination
+		SaveManager.building_positions[id] = building.position
+		changed = true
+	if changed:
+		SaveManager.save_game.call_deferred()
 
 
 func ensure_cow_shed_exists() -> void:
@@ -44,6 +84,7 @@ func _update_buildings() -> void:
 		building.z_index = maxi(1, building.z_index)
 		if id == "dog_house":
 			dog_house = building
+	_restore_owned_land_positions()
 
 
 func _update_pets() -> void:
@@ -60,6 +101,8 @@ func _update_pets() -> void:
 		remove_child(dog)
 		dog.queue_free()
 		dog = null
+	if is_instance_valid(dog):
+		dog.wander_bounds = $Player.farm_bounds
 
 func _create_farm_grid() -> void:
 	for number in range(1, FarmData.MAX_PLOTS + 1):

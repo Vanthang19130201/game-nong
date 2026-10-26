@@ -26,6 +26,8 @@ func update_hover(screen_position: Vector2) -> void:
 	if get_viewport().gui_get_hovered_control() == null:
 		var world_position: Vector2 = player.get_canvas_transform().affine_inverse() * screen_position
 		target = target_at(world_position)
+		if target == null and not player.hud.blocks_world_input():
+			target = land_at(world_position)
 	if target != hovered:
 		clear_hover()
 		hovered = target
@@ -46,6 +48,12 @@ func clear_hover() -> void:
 	if is_instance_valid(hint):
 		hint.hide()
 	Input.set_default_cursor_shape(Input.CURSOR_ARROW)
+
+func land_at(world_position: Vector2) -> Node2D:
+	for zone in get_tree().get_nodes_in_group("land_zones"):
+		if not zone.unlocked and zone.contains_point(world_position):
+			return zone
+	return null
 
 func target_at(world_position: Vector2) -> Node2D:
 	var nearest: Node2D
@@ -73,6 +81,11 @@ func _contains_point(node: Node, world_position: Vector2) -> bool:
 	return false
 
 func _display_name(target: Node) -> String:
+	if target.get("decoration_id") != null:
+		return tr(SaveManager.DecorationData.TYPES[target.decoration_id]["name_key"])
+	if target.is_in_group("land_zones"):
+		var data: Dictionary = SaveManager.LandData.ZONES[target.zone_id]
+		return tr("LAND_HOVER_INFO") % [target.display_name, data["cost_coins"], data["cost_wood"], data["cost_stone"]]
 	if target.get("plot_id") != null:
 		return Localization.display_name(target.crop_type) if not target.crop_type.is_empty() else tr("MOUSE_SOIL_PLOT")
 	if target.get("resource_type") != null:

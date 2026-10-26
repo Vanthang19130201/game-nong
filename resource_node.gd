@@ -50,10 +50,10 @@ func restore_save_data(data: Dictionary) -> void:
 
 
 func _update_zone(force: bool = false) -> void:
-	var unlocked: bool = Inventory.is_zone_unlocked(zone_id)
+	var unlocked: bool = Inventory.is_zone_unlocked(zone_id) and SaveManager.LandData.resource_access(global_position, SaveManager.unlocked_land_zones)
 	var was_active: bool = zone_active
 	zone_active = unlocked
-	visible = unlocked
+	visible = Inventory.is_zone_unlocked(zone_id)
 	set_process(unlocked)
 	set_deferred("monitoring", unlocked)
 	$CollisionShape2D.set_deferred("disabled", not unlocked)

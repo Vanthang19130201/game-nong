@@ -3,6 +3,11 @@ extends Node
 const FarmData = preload("res://farm_data.gd")
 const CropData = preload("res://crop_data.gd")
 const Progression = preload("res://progression_data.gd")
+const LandData = preload("res://land_data.gd")
+const DecorationData = preload("res://decoration_data.gd")
+var placed_decorations: Array = []
+var next_decoration_id: int = 1
+var unlocked_land_zones: Array[String] = ["farm_core"]
 const RESOURCE_IDS: Array[String] = ["tree_1", "tree_2", "tree_3", "tree_4", "tree_5", "rock_1", "rock_2", "rock_3"]
 const STATION_IDS: Array[String] = ["feed_mill", "chicken_coop", "cow_shed"]
 const SAVE_PATH: String = "user://save.cfg"
@@ -28,6 +33,23 @@ var resources: Dictionary = {}
 var saved_resources: Dictionary = {}
 var buildings: Dictionary = {}
 var building_positions: Dictionary = {}
+
+
+func purchase_land(id: String) -> bool:
+	if not LandData.ZONES.has(id) or id in unlocked_land_zones:
+		return false
+	if not LandData.is_adjacent(id, unlocked_land_zones):
+		return Inventory.fail(tr("LAND_NEEDS_NEIGHBOR"))
+	var cost: Dictionary = LandData.ZONES[id]
+	if Inventory.coins < cost["cost_coins"] or Inventory.wood < cost["cost_wood"] or Inventory.stone < cost["cost_stone"]:
+		return Inventory.fail(tr("ERROR_MATERIALS"))
+	Inventory.coins -= cost["cost_coins"]
+	Inventory.wood -= cost["cost_wood"]
+	Inventory.stone -= cost["cost_stone"]
+	unlocked_land_zones.append(id)
+	# Ownership and all costs are complete before the existing autosave signal.
+	Inventory.inventory_changed.emit()
+	return true
 
 
 func register_building(id: String, building: Node2D) -> bool:
@@ -105,6 +127,9 @@ func save_game() -> bool:
 	if resetting:
 		return false
 	var data := ConfigFile.new()
+	data.set_value("decorations", "placed", placed_decorations)
+	data.set_value("decorations", "next_id", next_decoration_id)
+	data.set_value("land", "unlocked_land_zones", unlocked_land_zones)
 	data.set_value("buildings", "owns_bakery", Inventory.owns_bakery)
 	data.set_value("bakery", "bakery_queue", bakery_queue)
 	data.set_value("game", "version", 11)
@@ -188,6 +213,9 @@ func reset_game() -> bool:
 				return false
 
 	resetting = true
+	placed_decorations.clear()
+	next_decoration_id = 1
+	unlocked_land_zones = ["farm_core"]
 	Inventory.owns_bakery = false
 	bakery_queue.clear()
 	Inventory.has_fishing_rod = false
@@ -247,6 +275,11 @@ func reset_game() -> bool:
 
 func _load_game() -> void:
 	var data: ConfigFile = _read_snapshot()
+	placed_decorations = DecorationData.restore(data.get_value("decorations","placed",[]))
+	next_decoration_id = _read_int(data,"decorations","next_id",1,1)
+	for record in placed_decorations:
+		next_decoration_id = maxi(next_decoration_id, record["instance_id"].trim_prefix("decor_").to_int()+1)
+	unlocked_land_zones = LandData.restore_unlocked(data.get_value("land", "unlocked_land_zones", []))
 	var bakery_owned = data.get_value("buildings", "owns_bakery", false)
 	Inventory.owns_bakery = bakery_owned if bakery_owned is bool else false
 	bakery_queue = Inventory.BakeryData.restore_queue(data.get_value("bakery", "bakery_queue", [])) if Inventory.owns_bakery else []

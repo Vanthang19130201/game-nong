@@ -10,6 +10,9 @@ const UI_THEME: Theme = preload("res://assets/ui/ui_theme.tres")
 @onready var shop_build_tabs: TabContainer = $ShopBuildPanel/Margin/Content/Tabs
 var transaction_feedback: VBoxContainer
 var bakery_panel: PanelContainer
+var edit_farm: Node
+var land_panel: PanelContainer
+var decoration_panel: ScrollContainer
 @onready var fishing_ui: Control = $FishingUI
 @onready var fish_market_panel: PanelContainer = $FishMarketPanel
 @onready var storage_panel: PanelContainer = $StoragePanel
@@ -68,6 +71,14 @@ var debug_panel: PanelContainer
 
 func _ready() -> void:
 	add_to_group("farm_hud")
+	land_panel = PanelContainer.new()
+	land_panel.name = "LandPurchasePanel"
+	land_panel.set_script(preload("res://land_purchase_panel.gd"))
+	add_child(land_panel)
+	edit_farm = Node.new()
+	edit_farm.name = "FarmEditMode"
+	edit_farm.set_script(preload("res://farm_edit_mode.gd"))
+	add_child(edit_farm)
 	get_viewport().size_changed.connect(_fit_order_panel)
 	bakery_panel = PanelContainer.new()
 	bakery_panel.name = "BakeryPanel"
@@ -82,7 +93,7 @@ func _ready() -> void:
 		debug_panel.set_script(preload("res://dev_debug_panel.gd"))
 		add_child(debug_panel)
 		debug_panel.visibility_changed.connect(_on_main_panel_visibility_changed)
-	for panel in [bakery_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel, reset_confirmation, plot_purchase, tools_unlock_popup, fishing_ui.panel]:
+	for panel in [land_panel, bakery_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel, reset_confirmation, plot_purchase, tools_unlock_popup, fishing_ui.panel]:
 		panel.visibility_changed.connect(_on_main_panel_visibility_changed)
 	crop_ids = CropData.CROPS.keys()
 	var content: VBoxContainer = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent
@@ -150,6 +161,11 @@ func _ready() -> void:
 
 
 func _setup_shop_build() -> void:
+	decoration_panel = ScrollContainer.new()
+	decoration_panel.name = "DecorationPanel"
+	decoration_panel.set_script(preload("res://decoration_catalog.gd"))
+	shop_build_tabs.add_child(decoration_panel)
+	shop_build_tabs.set_tab_title(2,tr("DECOR_TAB"))
 	shop_build_tabs.set_tab_title(0, tr("SHOP_BUILD_SHOP_TAB"))
 	shop_build_tabs.set_tab_title(1, tr("SHOP_BUILD_BUILD_TAB"))
 	$ShopBuildPanel/Margin/Content/CloseButton.pressed.connect(_close_game_panels)
@@ -178,6 +194,7 @@ func _open_shop_build(tab: int) -> void:
 	shop_build_tabs.current_tab = tab
 	shop_panel.visible = tab == 0
 	build_panel.visible = tab == 1
+	decoration_panel.visible = tab == 2
 	_fit_shop_build()
 
 
@@ -394,11 +411,21 @@ func _collect() -> void:
 
 
 func blocks_world_input() -> bool:
-	return bakery_panel.visible or settings_panel.visible or shop_build_panel.visible or storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or station_panel.visible or order_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
+	return land_panel.visible or edit_farm.active or bakery_panel.visible or settings_panel.visible or shop_build_panel.visible or storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or station_panel.visible or order_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
 
 
 func _input(event: InputEvent) -> void:
 	# Handle UI keys before any farm node receives _unhandled_input.
+	if edit_farm.active:
+		if event.is_action_pressed("ui_cancel") and not event.is_echo():
+			edit_farm.cancel_or_exit()
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("rotate_placement") and not event.is_echo():
+			edit_farm.rotate_preview()
+			get_viewport().set_input_as_handled()
+		elif event.is_action("interact") or event.is_action("toggle_shop_build") or event.is_action("toggle_inventory") or (event is InputEventKey and event.keycode == KEY_F3):
+			get_viewport().set_input_as_handled()
+		return
 	if event.is_action("toggle_shop_build"):
 		if event.is_action_pressed("toggle_shop_build") and not event.is_echo():
 			_toggle_shop()
@@ -427,6 +454,8 @@ func close_current_panel() -> void:
 		reset_confirmation.hide()
 	elif plot_purchase.visible:
 		plot_purchase.hide()
+	elif land_panel.visible:
+		land_panel.close()
 	elif settings_panel.visible:
 		settings_panel.hide()
 	elif storage_panel.visible:
@@ -456,6 +485,7 @@ func close_current_panel() -> void:
 
 
 func _close_game_panels() -> void:
+	land_panel.close()
 	bakery_panel.close()
 	settings_panel.hide()
 	shop_build_panel.hide()
@@ -476,7 +506,14 @@ func _close_game_panels() -> void:
 
 
 func _native_dialog_open() -> bool:
-	return reset_confirmation.visible or plot_purchase.visible or tools_unlock_popup.visible
+	return edit_farm.active or reset_confirmation.visible or plot_purchase.visible or tools_unlock_popup.visible
+
+
+func open_land_purchase(id: String) -> void:
+	if blocks_world_input() or not SaveManager.LandData.ZONES.has(id) or id in SaveManager.unlocked_land_zones:
+		return
+	_close_game_panels()
+	land_panel.open(id)
 
 
 func open_warehouse(warehouse: Node) -> void:
@@ -503,6 +540,8 @@ func open_fish_market(market: Node) -> void:
 
 
 func close_all_panels() -> void:
+	if edit_farm.active:
+		edit_farm.exit_mode()
 	_close_game_panels()
 	reset_confirmation.hide()
 	plot_purchase.hide()
@@ -511,7 +550,7 @@ func close_all_panels() -> void:
 
 func _on_main_panel_visibility_changed() -> void:
 	# A HUD dropdown must not stack over an existing modal or fishing session.
-	crop_selector.disabled = _native_dialog_open() or fishing_ui.panel.visible or [bakery_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel].any(func(panel): return panel.visible) or (is_instance_valid(debug_panel) and debug_panel.visible)
+	crop_selector.disabled = _native_dialog_open() or fishing_ui.panel.visible or [land_panel, bakery_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel].any(func(panel): return panel.visible) or (is_instance_valid(debug_panel) and debug_panel.visible)
 	_show_tool_unlock_if_needed.call_deferred()
 
 
@@ -639,6 +678,12 @@ func open_build() -> void:
 
 
 func _create_build_rows() -> void:
+	var edit_button := Button.new()
+	edit_button.name = "EditFarmButton"
+	edit_button.text = tr("EDIT_FARM")
+	edit_button.focus_mode = Control.FOCUS_NONE
+	edit_button.pressed.connect(edit_farm.enter_mode)
+	build_rows.add_child(edit_button)
 	for id in Progression.BUILDINGS:
 		var row := HBoxContainer.new()
 		var label := Label.new()
