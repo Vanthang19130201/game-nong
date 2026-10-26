@@ -64,12 +64,16 @@ func remove(instance_id: String) -> bool:
 	var record: Dictionary = _record(instance_id)
 	if record.is_empty() or not instances.has(instance_id):
 		return false
-	SaveManager.placed_decorations.erase(record)
+	var index: int = SaveManager.placed_decorations.find(record)
+	SaveManager.placed_decorations.remove_at(index)
+	if not SaveManager.save_game():
+		SaveManager.placed_decorations.insert(index,record)
+		return false
 	var decoration = instances[instance_id]
 	instances.erase(instance_id)
 	get_parent().remove_child(decoration)
 	decoration.queue_free()
-	return SaveManager.save_game()
+	return true
 
 func _record(instance_id: String) -> Dictionary:
 	for record in SaveManager.placed_decorations:

@@ -119,7 +119,8 @@ func register_plot(plot: Node) -> bool:
 func empty_plot(id: String) -> Dictionary:
 	return {
 		"plot_id": id, "unlocked": FarmData.plot_number(id) <= Inventory.unlocked_plot_count, "state": "EMPTY", "crop_type": "",
-		"planted_at": 0.0, "ready_at": 0.0
+		"planted_at": 0.0, "ready_at": 0.0,
+		"position": FarmData.plot_position(FarmData.plot_number(id))
 	}
 
 
@@ -411,6 +412,11 @@ func _read_plot(data: ConfigFile, id: String) -> Dictionary:
 	var legacy_id: String = "soil_%d" % FarmData.plot_number(id)
 	if not data.has_section(id) and data.has_section(legacy_id):
 		id = legacy_id
+	var position = data.get_value(id, "position", result["position"])
+	if position is Vector2 and position.is_finite():
+		var footprint := Rect2(position - FarmData.PLOT_SIZE / 2.0, FarmData.PLOT_SIZE)
+		if FarmData.BUILDABLE_LAND.encloses(footprint) and LandData.owns_rect(footprint, unlocked_land_zones):
+			result["position"] = position
 	var unlocked = data.get_value(id, "unlocked", result["unlocked"])
 	result["unlocked"] = unlocked if unlocked is bool else result["unlocked"]
 	var saved_state = data.get_value(id, "state", "EMPTY")

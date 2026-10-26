@@ -95,6 +95,9 @@ func _process(_delta: float) -> void:
 	if is_instance_valid(preview):
 		update_preview(point)
 		return
+	update_hover(point)
+
+func update_hover(point: Vector2) -> void:
 	var target: Node2D = null
 	if get_viewport().gui_get_hovered_control() == null:
 		target = target_at(point)
@@ -116,6 +119,10 @@ func movable_buildings() -> Dictionary:
 		var movable: bool = data.get("movable", Inventory.Progression.BUILDINGS.has(id))
 		if owned and movable and is_instance_valid(building) and building.is_visible_in_tree():
 			result[id] = building
+	for id in SaveManager.plots:
+		var plot = SaveManager.plots[id]
+		if is_instance_valid(plot) and plot.is_unlocked() and plot.is_visible_in_tree():
+			result[id] = plot
 	var manager = hud.get_parent().get("decoration_manager")
 	if is_instance_valid(manager):
 		for id in manager.instances:
@@ -134,6 +141,8 @@ func target_at(point: Vector2) -> Node2D:
 	return result
 
 func click_world(screen_position: Vector2) -> void:
+	if not active or delete_confirmation.visible:
+		return
 	var player = get_tree().get_first_node_in_group("farm_player")
 	var point: Vector2 = player.get_canvas_transform().affine_inverse() * screen_position
 	if is_instance_valid(preview):
@@ -143,12 +152,16 @@ func click_world(screen_position: Vector2) -> void:
 		select_building(target_at(point))
 
 func select_building(building: Node2D) -> void:
+	if not active or delete_confirmation.visible:
+		return
 	cancel_selection()
 	_clear_hover()
 	if building == null or building not in movable_buildings().values():
 		return
 	selected = building
 	selected_id = building.instance_id if building.get("decoration_id") != null else str(SaveManager.buildings.find_key(building))
+	if building.get("plot_id") != null:
+		selected_id = building.plot_id
 	delete_button.visible = building.get("decoration_id") != null
 	selected_color = building.modulate
 	building.modulate *= Color(1.1,1.1,0.9)
@@ -157,7 +170,7 @@ func select_building(building: Node2D) -> void:
 	menu.show()
 
 func begin_move() -> void:
-	if not is_instance_valid(selected):
+	if not active or delete_confirmation.visible or is_instance_valid(preview) or not is_instance_valid(selected):
 		return
 	menu.hide()
 	_clear_hover()
@@ -193,10 +206,13 @@ func place_move() -> bool:
 		return false
 	var previous: Vector2 = selected.position
 	selected.global_position = proposed_position
-	SaveManager.building_positions[selected_id] = selected.position
+	var is_plot: bool = selected.get("plot_id") != null
+	if not is_plot:
+		SaveManager.building_positions[selected_id] = selected.position
 	if not SaveManager.save_game():
 		selected.position = previous
-		SaveManager.building_positions[selected_id] = previous
+		if not is_plot:
+			SaveManager.building_positions[selected_id] = previous
 		Inventory.fail(tr("EDIT_SAVE_FAILED"))
 		return false
 	# The dog's home_point already references the same DogHouse node.
@@ -232,6 +248,8 @@ func _update_info() -> void:
 			info.text = tr("DECOR_PLACING_HINT") % tr(SaveManager.DecorationData.TYPES[placing_decoration]["name_key"])
 		elif is_instance_valid(selected) and selected.get("decoration_id") != null:
 			info.text = tr("EDIT_MOVING_HINT") % tr(SaveManager.DecorationData.TYPES[selected.decoration_id]["name_key"]) + tr("DECOR_ROTATE_HINT")
+		elif is_instance_valid(selected) and selected.get("plot_id") != null:
+			info.text = tr("EDIT_MOVING_HINT") % tr("MOUSE_SOIL_PLOT")
 		else:
 			info.text = tr("EDIT_MOVING_HINT") % Localization.display_name(selected_id)
 
@@ -257,16 +275,19 @@ func rotate_preview() -> void:
 	update_preview(proposed_position)
 
 func _ask_delete() -> void:
-	if not active or not is_instance_valid(selected) or selected.get("decoration_id") == null:
+	if not active or delete_confirmation.visible or is_instance_valid(preview) or not is_instance_valid(selected) or selected.get("decoration_id") == null:
 		return
 	menu.hide()
 	delete_confirmation.popup_centered()
 	delete_confirmation.get_cancel_button().grab_focus()
 
 func _delete_selected() -> void:
-	if is_instance_valid(selected) and hud.get_parent().decoration_manager.remove(selected_id):
+	if not active or not is_instance_valid(selected) or selected.get("decoration_id") == null:
+		return
+	if hud.get_parent().decoration_manager.remove(selected_id):
 		cancel_selection()
 	else:
+		menu.show()
 		Inventory.fail(tr("EDIT_SAVE_FAILED"))
 
 func _inventory_changed() -> void:

@@ -4,6 +4,7 @@ const STARTING_PLOTS: int = 8
 const MAX_PLOTS: int = 32
 const GRID_ORIGIN: Vector2 = Vector2(1100, 520)
 const GRID_STEP: Vector2 = Vector2(74, 58)
+const PLOT_SIZE: Vector2 = Vector2(64, 48)
 const FISHING_LEVEL: int = 10
 const RIVER_LEFT: float = 1800.0
 const SAFE_MAIN_SIDE: Vector2 = Vector2(1740, 850)

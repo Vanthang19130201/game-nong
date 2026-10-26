@@ -10,8 +10,12 @@ static func snap_position(position: Vector2) -> Vector2:
 # Shared by edit mode and future building/decor placement. Preview nodes never
 # participate in gameplay, collision queries or saves.
 static func can_place(source: Node2D, position: Vector2) -> bool:
+	var is_plot: bool = source.get("plot_id") != null
 	var stable_id = SaveManager.buildings.find_key(source)
 	var valid_anchor: bool = FarmData.valid_saved_building_position(stable_id, position) if stable_id != null else FarmData.valid_building_position(position)
+	if is_plot:
+		# Soil may use the field reserve; buildings keep their existing restriction.
+		valid_anchor = source.is_unlocked() and position.is_finite() and OWNED_LAND.has_point(position)
 	if not valid_anchor:
 		return false
 	var footprint: Rect2 = bounds(source)
@@ -30,7 +34,9 @@ static func can_place(source: Node2D, position: Vector2) -> bool:
 	for obstacle in obstacles:
 		if not is_instance_valid(obstacle) or obstacle == source or not obstacle.is_visible_in_tree():
 			continue
-		var padding: float = 0.0 if source.is_in_group("farm_decorations") or source.get("decoration_id") != null or obstacle.is_in_group("farm_decorations") else 4.0
+		if is_plot and obstacle.is_in_group("farm_decorations") and not SaveManager.DecorationData.TYPES[obstacle.decoration_id]["solid"]:
+			continue
+		var padding: float = 0.0 if is_plot or source.is_in_group("farm_decorations") or source.get("decoration_id") != null or obstacle.is_in_group("farm_decorations") else 4.0
 		if footprint.grow(padding).intersects(bounds(obstacle)):
 			return false
 	return true

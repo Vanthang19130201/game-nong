@@ -153,7 +153,7 @@ func _is_valid_order(value: Variant) -> bool:
 	var silo_required: int = 0
 	var barn_required: int = 0
 	for item in requirements:
-		if not item_available(item):
+		if not item is String or not item_available(item):
 			return false
 		if not (requirements[item] is int) or requirements[item] <= 0:
 			return false
@@ -170,7 +170,8 @@ func _is_valid_order(value: Variant) -> bool:
 	if silo_required > Inventory.silo_capacity or barn_required > Inventory.barn_capacity:
 		return false
 	for key in ["coin_reward", "exp_reward"]:
-		var reward = value.get(key, 0)
-		if not (reward is int) or reward <= 0:
+		var reward = value.get(key, -1)
+		# Some existing processed goods grant zero EXP; those orders remain valid.
+		if not (reward is int) or reward < (1 if key == "coin_reward" else 0):
 			return false
 	return true

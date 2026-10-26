@@ -35,12 +35,14 @@ func _ready() -> void:
 func get_save_data() -> Dictionary:
 	return {
 		"plot_id": plot_id, "unlocked": is_unlocked(), "state": PlotState.keys()[state],
-		"crop_type": crop_type, "planted_at": planted_at, "ready_at": ready_at
+		"crop_type": crop_type, "planted_at": planted_at, "ready_at": ready_at,
+		"position": position
 	}
 
 
 func restore_save_data(data: Dictionary) -> void:
 	grow_timer.stop()
+	position = data.get("position", FarmData.plot_position(FarmData.plot_number(plot_id)))
 	crop_type = data["crop_type"]
 	planted_at = data["planted_at"]
 	ready_at = data["ready_at"]
@@ -58,6 +60,11 @@ func restore_save_data(data: Dictionary) -> void:
 		_:
 			_clear_crop()
 	_update_label()
+
+
+func get_placement_rect() -> Rect2:
+	# Crops can grow taller without changing the soil's placement footprint.
+	return global_transform * Rect2(-FarmData.PLOT_SIZE / 2.0, FarmData.PLOT_SIZE)
 
 
 func _update_label() -> void:

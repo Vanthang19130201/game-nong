@@ -115,5 +115,3 @@ func _create_farm_grid() -> void:
 			plot.plot_id = id
 			plot.position = FarmData.plot_position(number)
 			add_child(plot)
-		else:
-			plot.position = FarmData.plot_position(number)

@@ -122,7 +122,7 @@ func run_checks() -> void:
 		hud.open_build()
 		hud.build_rows.get_node("EditFarmButton").pressed.emit()
 		check(editor.active and not hud.shop_build_panel.visible and hud.blocks_world_input(), "Build menu enters edit mode")
-		check(editor.movable_buildings().size() == 9, "eight owned landmarks/buildings plus decoration")
+		check(editor.movable_buildings().size() == 9 + inv.unlocked_plot_count, "owned landmarks/buildings, decoration and unlocked plots")
 		for node_name in ["River","RiverWalls","Bridge","FishingSpot","FishMarket","Ground","FarmYard","farm_core","land_01"]:
 			var fixed = farm.get_node(node_name)
 			var color: Color = fixed.modulate

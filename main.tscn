@@ -158,10 +158,10 @@ position = Vector2(908, 951)
 position = Vector2(650, 760)
 
 [node name="HomeLabel" type="Label" parent="DogHomePoint" unique_id=287868724]
-offset_left = -196.0
-offset_top = -97.0
-offset_right = -47.0
-offset_bottom = -57.0
+offset_left = -126.0
+offset_top = -6.0
+offset_right = 23.0
+offset_bottom = 34.0
 text = "WORLD_DOG_HOME"
 
 [node name="HUD" parent="." unique_id=786439489 instance=ExtResource("4_hud")]

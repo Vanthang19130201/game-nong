@@ -2,6 +2,7 @@ extends CharacterBody2D
 
 var active_resource: Node = null
 var mouse_interaction: Node
+var last_interaction_frame: int = -1
 
 @export var speed: float = 200.0
 @export var farm_bounds: Rect2 = Rect2(50, 50, 2300, 2300)
@@ -74,7 +75,12 @@ func can_interact_with(target: Node) -> bool:
 func try_interact(target: Node = null) -> void:
 	if is_instance_valid(hud) and hud.blocks_world_input():
 		return
-	if target == null and is_instance_valid(hud) and hud.fishing_ui.handle_interact():
+	var frame: int = Engine.get_process_frames()
+	if last_interaction_frame == frame:
+		return
+	if target == null and is_instance_valid(hud) and is_instance_valid(hud.fishing_ui.active_spot):
+		last_interaction_frame = frame
+		hud.fishing_ui.handle_interact()
 		return
 	if is_instance_valid(active_resource):
 		return
@@ -82,6 +88,8 @@ func try_interact(target: Node = null) -> void:
 		target = _nearest_interactable()
 	if not can_interact_with(target):
 		return
+	# Keyboard and mouse share one dispatch, even if both arrive in one frame.
+	last_interaction_frame = frame
 	if is_instance_valid(hud) and hud.fishing_ui.active_spot == target:
 		hud.fishing_ui.handle_interact()
 	else:
