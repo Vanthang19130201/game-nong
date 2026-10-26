@@ -17,6 +17,9 @@ func _ready() -> void:
 
 func item_info() -> Dictionary:
 	var items: Dictionary = {}
+	for item in Inventory.BakeryData.RECIPES:
+		var recipe: Dictionary = Inventory.BakeryData.RECIPES[item]
+		items[item] = {"name": recipe["name"], "level": recipe["level"], "price": recipe["price"], "exp": 0}
 	for crop in CropData.CROPS:
 		var info: Dictionary = CropData.CROPS[crop]
 		items[crop.to_lower()] = {
@@ -37,6 +40,8 @@ func item_available(item: String) -> bool:
 		return false
 	if Inventory.FishingData.FISH.has(item):
 		return Inventory.is_zone_unlocked("fishing") and Inventory.has_fishing_rod
+	if Inventory.BakeryData.RECIPES.has(item):
+		return Inventory.owns_bakery
 	if item == "egg":
 		return Inventory.owns_feed_mill and Inventory.owns_chicken_coop and Inventory.chicken_count > 0
 	if item == "milk":
@@ -79,6 +84,7 @@ func restore_orders(saved: Variant, saved_next_id: int = 1) -> void:
 
 
 func reset_orders() -> void:
+	next_order_id = 1
 	restore_orders([])
 
 

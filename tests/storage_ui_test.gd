@@ -74,11 +74,11 @@ func run_checks() -> void:
 	check(not panel.visible, "touch Close button")
 	hud._toggle_shop()
 	hud._toggle_storage()
-	check(panel.visible and not hud.shop_panel.visible, "storage replaces Shop")
+	check(panel.visible and not hud.shop_panel.is_visible_in_tree(), "storage replaces Shop")
 	hud.open_build()
-	check(not panel.visible and hud.build_panel.visible, "Build replaces storage")
+	check(not panel.visible and hud.build_panel.is_visible_in_tree(), "Build replaces storage")
 	hud._toggle_storage()
-	check(panel.visible and not hud.build_panel.visible, "storage replaces Build")
+	check(panel.visible and not hud.build_panel.is_visible_in_tree(), "storage replaces Build")
 	hud.get_node("Layout/Actions/OrdersButton").pressed.emit()
 	check(hud.order_panel.visible and not panel.visible, "HUD Order button")
 	hud._toggle_storage()
@@ -96,6 +96,10 @@ func run_checks() -> void:
 	plot._on_grow_timer_timeout()
 	plot.harvest()
 	check(produce.text.ends_with("Cà rốt: 0") and produce.text.contains("Nông sản\nLúa mì: 1"), "harvest refresh")
+	check(hud.transaction_feedback.visible and hud.transaction_feedback.text == "+1 Lúa mì\n+10 Kinh nghiệm", "successful harvest feedback")
+	var toast_count: int = hud.transaction_feedback.get_child_count()
+	plot.harvest()
+	check(hud.transaction_feedback.get_child_count() == toast_count and inv.wheat == 1, "empty plot gives no reward or feedback")
 	check(inv.buy_seed("WHEAT") and produce.text.contains("Hạt giống\nLúa mì: 10"), "buy refresh")
 	inv.tools_unlock_notified = true
 	inv.player_level = 10
@@ -113,6 +117,67 @@ func run_checks() -> void:
 	hud._toggle_storage()
 	check(manager.reset_game() and not panel.visible, "reset closes storage")
 	check(produce.text.contains("Hạt giống\nLúa mì: 10") and goods.text.contains("0 / 20") and materials.text == "Gỗ: 0\nĐá: 0", "reset data refresh")
+	# P uses the same modal as the HUD button, for both tabs.
+	check(InputMap.action_get_events("toggle_shop_build")[0].physical_keycode == KEY_P, "physical P binding")
+	hud._toggle_storage()
+	await key(KEY_P)
+	check(hud.shop_build_panel.visible and not panel.visible and hud.blocks_world_input(), "P replaces storage")
+	check(hud.shop_build_tabs.get_tab_count() == 2, "two shop/build tabs")
+	hud.shop_build_tabs.current_tab = 1
+	await process_frame
+	check(hud.build_panel.is_visible_in_tree() and not hud.shop_panel.is_visible_in_tree(), "build tab")
+	await key(KEY_P, true)
+	check(hud.shop_build_panel.visible, "P echo ignored")
+	await key(KEY_P)
+	check(not hud.shop_build_panel.visible, "P closes build tab")
+	await key(KEY_P)
+	check(hud.shop_panel.is_visible_in_tree(), "P opens shop tab")
+	check(hud.crop_selector.disabled, "shop blocks crop dropdown")
+	hud._buy_seed("WHEAT")
+	check(inv.wheat_seed == 11 and inv.coins == 95, "UI buy unchanged")
+	check(hud.transaction_feedback.text.contains("+1 " + tr("ITEM_WHEAT_SEED")) and hud.transaction_feedback.text.contains("-5 Xu"), "successful buy feedback")
+	inv.coins = 0
+	hud._buy_seed("WHEAT")
+	check(inv.wheat_seed == 11 and hud.transaction_feedback.text == "Không đủ xu", "failed buy no fake reward")
+	hud._sell_crop("WHEAT")
+	check(hud.transaction_feedback.text == "Không có vật phẩm để bán", "failed sell feedback")
+	inv.wheat = 1
+	hud._sell_crop("WHEAT")
+	check(inv.wheat == 0 and inv.coins == 10 and hud.transaction_feedback.text.contains("-1 Lúa mì") and hud.transaction_feedback.text.contains("+10 Xu"), "sell feedback")
+	await create_timer(1.5).timeout
+	check(not hud.transaction_feedback.visible, "feedback disappears")
+	await key(KEY_ESCAPE)
+	check(not hud.shop_build_panel.visible and not hud.blocks_world_input(), "ESC closes combined modal")
+	check(not hud.crop_selector.disabled, "closing modal restores crop dropdown")
+	hud.get_node("ResetControls/SettingsButton").pressed.emit()
+	check(hud.settings_panel.visible and hud.crop_selector.disabled, "settings blocks crop dropdown")
+	hud.reset_button.pressed.emit()
+	check(hud.reset_confirmation.visible and hud.crop_selector.disabled, "confirmation blocks crop dropdown")
+	await key(KEY_ESCAPE)
+	check(not hud.crop_selector.disabled and not hud.reset_confirmation.visible, "cancel restores input")
+	hud.open_orders()
+	check(hud.order_panel.visible and hud.crop_selector.disabled, "orders blocks crop dropdown")
+	await key(KEY_P)
+	check(not hud.order_panel.visible and hud.shop_build_panel.visible, "P replaces orders")
+	await key(KEY_TAB)
+	check(not hud.shop_build_panel.visible and panel.visible, "Tab replaces shop")
+	await key(KEY_ESCAPE)
+	# Consecutive feedback is bounded, readable and never intercepts input.
+	for i in range(8):
+		hud.show_transaction_feedback("-1 Lúa mì\n+10 Xu")
+	await process_frame
+	await process_frame
+	var feedback = hud.transaction_feedback
+	check(feedback.get_child_count() == 4, "toast burst bounded")
+	for i in range(feedback.get_child_count()):
+		var toast = feedback.get_child(i)
+		var lines = toast.get_child(0)
+		check(lines.get_child_count() == 2 and toast.mouse_filter == Control.MOUSE_FILTER_IGNORE, "two readable lines, no input capture")
+		check(lines.get_child(0).get_theme_color("font_color") == Color("ffab70") and lines.get_child(1).get_theme_color("font_color") == Color("8df59b"), "loss/gain colors")
+		if i > 0:
+			check(not toast.get_global_rect().intersects(feedback.get_child(i-1).get_global_rect()), "toasts do not overlap")
+	await create_timer(1.55).timeout
+	check(not feedback.visible and feedback.get_child_count() == 0, "burst cleans up without stale callbacks")
 	# The panel stays inside a narrow mobile viewport and has touch-sized tabs.
 	root.size = Vector2i(360,640)
 	await create_timer(0.1).timeout

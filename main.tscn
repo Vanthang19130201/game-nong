@@ -42,6 +42,12 @@ offset_bottom = 1600.0
 mouse_filter = 2
 color = Color(0.25, 0.42, 0.25, 1)
 
+[node name="rock3" parent="Ground" unique_id=818927594 instance=ExtResource("10_resource")]
+position = Vector2(985, 1384)
+scale = Vector2(0.7, 0.7)
+resource_id = "rock_3"
+resource_type = "stone"
+
 [node name="FarmYard" type="ColorRect" parent="." unique_id=209976864]
 z_index = -9
 offset_left = 500.0
@@ -104,10 +110,10 @@ fallback_paths = Array[NodePath]([NodePath("../../Visual")])
 position = Vector2(920, 420)
 
 [node name="FieldLabel" type="Label" parent="." unique_id=997779398]
-offset_left = 1190.0
-offset_top = 410.0
-offset_right = 1190.0
-offset_bottom = 410.0
+offset_left = 1297.0
+offset_top = 437.0
+offset_right = 1380.0
+offset_bottom = 454.0
 theme_override_font_sizes/font_size = 12
 text = "WORLD_FIELDS"
 
@@ -235,10 +241,12 @@ fallback_paths = Array[NodePath]([NodePath("../../Visual"), NodePath("../../Labe
 
 [node name="tree1" parent="." unique_id=1109680128 instance=ExtResource("10_resource")]
 position = Vector2(450, 220)
+scale = Vector2(0.6, 0.6)
 resource_id = "tree_1"
 
 [node name="tree2" parent="." unique_id=1225731878 instance=ExtResource("10_resource")]
 position = Vector2(700, 180)
+scale = Vector2(0.7, 0.7)
 resource_id = "tree_2"
 
 [node name="tree3" parent="." unique_id=953674573 instance=ExtResource("10_resource")]
@@ -246,26 +254,24 @@ position = Vector2(1000, 200)
 resource_id = "tree_3"
 
 [node name="tree4" parent="." unique_id=378735597 instance=ExtResource("10_resource")]
-position = Vector2(1680, 240)
+position = Vector2(1299, 210)
+scale = Vector2(0.8, 0.8)
 resource_id = "tree_4"
 
 [node name="tree5" parent="." unique_id=1753866739 instance=ExtResource("10_resource")]
-position = Vector2(1650, 420)
+position = Vector2(1480, 343)
+scale = Vector2(0.8, 0.8)
 resource_id = "tree_5"
 
 [node name="rock1" parent="." unique_id=630415661 instance=ExtResource("10_resource")]
-position = Vector2(350, 900)
+position = Vector2(359, 866)
 resource_id = "rock_1"
 resource_type = "stone"
 
 [node name="rock2" parent="." unique_id=899675760 instance=ExtResource("10_resource")]
-position = Vector2(900, 1250)
+position = Vector2(1249, 1359)
+scale = Vector2(0.5, 0.5)
 resource_id = "rock_2"
-resource_type = "stone"
-
-[node name="rock3" parent="." unique_id=1736186964 instance=ExtResource("10_resource")]
-position = Vector2(1670, 1410)
-resource_id = "rock_3"
 resource_type = "stone"
 
 [node name="Forest" type="ColorRect" parent="." unique_id=1194899704]

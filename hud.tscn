@@ -18,7 +18,6 @@ script = ExtResource("1_hud")
 [node name="StoragePanel" parent="." instance=ExtResource("4_storage")]
 
 [node name="ResetControls" type="Control" parent="."]
-visible = false
 theme = ExtResource("99_theme")
 anchors_preset = 15
 anchor_right = 1.0
@@ -27,17 +26,17 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="ResetButton" type="Button" parent="ResetControls"]
+[node name="SettingsButton" type="Button" parent="ResetControls"]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -82.0
+offset_left = -92.0
 offset_top = 8.0
 offset_right = -12.0
 offset_bottom = 36.0
 grow_horizontal = 0
 focus_mode = 0
-text = "RESET_GAME"
+text = "UI_SETTINGS"
 
 [node name="ResetConfirmation" type="ConfirmationDialog" parent="."]
 theme = ExtResource("99_theme")
@@ -46,7 +45,7 @@ size = Vector2i(360, 140)
 exclusive = true
 unresizable = true
 dialog_text = "RESET_CONFIRM"
-ok_button_text = "RESET_GAME"
+ok_button_text = "RESET_DELETE_PROGRESS"
 cancel_button_text = "UI_CANCEL"
 
 [node name="Layout" type="VBoxContainer" parent="."]
@@ -106,6 +105,7 @@ focus_mode = 0
 text = "UI_SHOP_SHORT"
 
 [node name="BuildButton" type="Button" parent="Layout/Actions"]
+visible = false
 custom_minimum_size = Vector2(90, 40)
 layout_mode = 2
 focus_mode = 0
@@ -139,108 +139,131 @@ visible = false
 layout_mode = 2
 mouse_filter = 2
 
-[node name="ShopPanel" type="PanelContainer" parent="."]
-theme = ExtResource("99_theme")
-z_index = 10
+[node name="ShopBuildPanel" type="PanelContainer" parent="."]
 visible = false
-offset_left = 720.0
-offset_top = 190.0
-offset_right = 1136.0
-offset_bottom = 620.0
+z_index = 25
+theme = ExtResource("99_theme")
 
-[node name="Margin" type="MarginContainer" parent="ShopPanel"]
+[node name="Margin" type="MarginContainer" parent="ShopBuildPanel"]
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="Content" type="VBoxContainer" parent="ShopBuildPanel/Margin"]
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="ShopBuildPanel/Margin/Content"]
+theme_type_variation = &"Heading"
+text = "SHOP_BUILD_TITLE"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Tabs" type="TabContainer" parent="ShopBuildPanel/Margin/Content"]
+size_flags_vertical = 3
+tab_alignment = 1
+
+[node name="CloseButton" type="Button" parent="ShopBuildPanel/Margin/Content"]
+custom_minimum_size = Vector2(140, 40)
+size_flags_horizontal = 4
+focus_mode = 0
+text = "UI_CLOSE"
+[node name="ShopPanel" type="PanelContainer" parent="ShopBuildPanel/Margin/Content/Tabs"]
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 12
 
-[node name="Scroll" type="ScrollContainer" parent="ShopPanel/Margin"]
+[node name="Scroll" type="ScrollContainer" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin"]
 layout_mode = 2
 horizontal_scroll_mode = 0
 
-[node name="ShopContent" type="VBoxContainer" parent="ShopPanel/Margin/Scroll"]
+[node name="ShopContent" type="VBoxContainer" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll"]
 size_flags_horizontal = 3
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="TitleLabel" type="Label" parent="ShopPanel/Margin/Scroll/ShopContent"]
+[node name="TitleLabel" type="Label" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
 theme_type_variation = &"Heading"
 layout_mode = 2
 text = "TITLE_SHOP"
 
-[node name="BuyButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
+[node name="BuyButton" type="Button" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
 text = "UI_BUY_WHEAT_SEED"
 
-[node name="SellButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
+[node name="SellButton" type="Button" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
 text = "UI_SELL_WHEAT"
 
-[node name="CornBuyButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
+[node name="CornBuyButton" type="Button" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
 text = "UI_BUY_CORN_SEED"
 
-[node name="CornSellButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
+[node name="CornSellButton" type="Button" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
 text = "UI_SELL_CORN"
 
-[node name="CarrotBuyButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
+[node name="CarrotBuyButton" type="Button" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
 text = "UI_BUY_CARROT_SEED"
 
-[node name="CarrotSellButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
+[node name="CarrotSellButton" type="Button" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
 text = "UI_SELL_CARROT"
 
-[node name="EggSellButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
+[node name="EggSellButton" type="Button" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
 text = "DEFAULT_SELL_EGG"
 
-[node name="MilkSellButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
+[node name="MilkSellButton" type="Button" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
 layout_mode = 2
 focus_mode = 0
 text = "DEFAULT_SELL_MILK"
 
-[node name="StorageActionsLabel" type="Label" parent="ShopPanel/Margin/Scroll/ShopContent"]
+[node name="StorageActionsLabel" type="Label" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
 layout_mode = 2
 text = "TITLE_BARN"
 
-[node name="DiscardChickenFeed" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
+[node name="DiscardChickenFeed" type="Button" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
 layout_mode = 2
 focus_mode = 0
 text = "UI_DISCARD_CHICKEN"
 
-[node name="DiscardCowFeed" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
+[node name="DiscardCowFeed" type="Button" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
 layout_mode = 2
 focus_mode = 0
 text = "UI_DISCARD_COW"
 
-[node name="PetsLabel" type="Label" parent="ShopPanel/Margin/Scroll/ShopContent"]
+[node name="PetsLabel" type="Label" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
 layout_mode = 2
 text = "DEFAULT_PETS"
 
-[node name="DogBuyButton" type="Button" parent="ShopPanel/Margin/Scroll/ShopContent"]
+[node name="DogBuyButton" type="Button" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
 text = "DEFAULT_BUY_DOG"
 
-[node name="MessageLabel" type="Label" parent="ShopPanel/Margin/Scroll/ShopContent"]
+[node name="MessageLabel" type="Label" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
 
@@ -334,42 +357,36 @@ layout_mode = 2
 layout_mode = 2
 focus_mode = 0
 text = "UI_CLOSE"
-[node name="BuildPanel" type="PanelContainer" parent="."]
-theme = ExtResource("99_theme")
-z_index = 25
-visible = false
-offset_left = 280.0
-offset_top = 190.0
-offset_right = 1100.0
-offset_bottom = 620.0
+[node name="BuildPanel" type="PanelContainer" parent="ShopBuildPanel/Margin/Content/Tabs"]
+layout_mode = 2
 
-[node name="Margin" type="MarginContainer" parent="BuildPanel"]
+[node name="Margin" type="MarginContainer" parent="ShopBuildPanel/Margin/Content/Tabs/BuildPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 16
 theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 16
 
-[node name="Content" type="VBoxContainer" parent="BuildPanel/Margin"]
+[node name="Content" type="VBoxContainer" parent="ShopBuildPanel/Margin/Content/Tabs/BuildPanel/Margin"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Title" type="Label" parent="BuildPanel/Margin/Content"]
+[node name="Title" type="Label" parent="ShopBuildPanel/Margin/Content/Tabs/BuildPanel/Margin/Content"]
 theme_type_variation = &"Heading"
 layout_mode = 2
 text = "TITLE_BUILD_UPPER"
 
-[node name="Scroll" type="ScrollContainer" parent="BuildPanel/Margin/Content"]
+[node name="Scroll" type="ScrollContainer" parent="ShopBuildPanel/Margin/Content/Tabs/BuildPanel/Margin/Content"]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="Rows" type="VBoxContainer" parent="BuildPanel/Margin/Content/Scroll"]
+[node name="Rows" type="VBoxContainer" parent="ShopBuildPanel/Margin/Content/Tabs/BuildPanel/Margin/Content/Scroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 16
 
-[node name="CloseButton" type="Button" parent="BuildPanel/Margin/Content"]
+[node name="CloseButton" type="Button" parent="ShopBuildPanel/Margin/Content/Tabs/BuildPanel/Margin/Content"]
 layout_mode = 2
 focus_mode = 0
 text = "UI_CLOSE"
@@ -437,5 +454,46 @@ text = "UI_UPGRADE_HOUSE"
 
 [node name="CloseButton" type="Button" parent="HousePanel/Margin/Content"]
 layout_mode = 2
+focus_mode = 0
+text = "UI_CLOSE"
+
+[node name="SettingsPanel" type="PanelContainer" parent="."]
+visible = false
+z_index = 35
+theme = ExtResource("99_theme")
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -110.0
+offset_right = 160.0
+offset_bottom = 110.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="SettingsPanel"]
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="Content" type="VBoxContainer" parent="SettingsPanel/Margin"]
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="SettingsPanel/Margin/Content"]
+theme_type_variation = &"Heading"
+text = "UI_SETTINGS"
+horizontal_alignment = 1
+
+[node name="ResetButton" type="Button" parent="SettingsPanel/Margin/Content"]
+custom_minimum_size = Vector2(0, 44)
+focus_mode = 0
+text = "RESET_FROM_START"
+
+[node name="CloseButton" type="Button" parent="SettingsPanel/Margin/Content"]
+custom_minimum_size = Vector2(140, 40)
+size_flags_horizontal = 4
 focus_mode = 0
 text = "UI_CLOSE"

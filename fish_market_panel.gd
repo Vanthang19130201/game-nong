@@ -50,4 +50,9 @@ func refresh() -> void:
 func _sell(fish: String, all: bool) -> void:
 	if not visible or not is_instance_valid(active_market) or not active_market.can_interact():
 		return
-	Inventory.sell_fish(fish, all)
+	var amount: int = Inventory.get(fish) if all else 1
+	var previous_coins: int = Inventory.coins
+	if Inventory.sell_fish(fish, all):
+		var hud = get_tree().get_first_node_in_group("farm_hud")
+		if hud != null:
+			hud.show_transaction_feedback(tr("TRADE_ITEM") % [-amount, Localization.display_name(fish)] + "\n" + tr("TRADE_COINS") % (Inventory.coins - previous_coins))

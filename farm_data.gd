@@ -13,7 +13,8 @@ const BUILDINGS: Dictionary = {
 	"feed_mill": {"node": "FeedMill", "position": Vector2(1160, 1020), "scene": "res://feed_mill.tscn"},
 	"chicken_coop": {"node": "ChickenCoop", "position": Vector2(1500, 1020), "scene": "res://chicken_coop.tscn"},
 	"cow_shed": {"node": "CowShed", "position": Vector2(900, 1020), "scene": "res://cow_shed.tscn"},
-	"dog_house": {"node": "DogHouse", "position": Vector2(550, 700), "scene": "res://dog_house.tscn"}
+	"dog_house": {"node": "DogHouse", "position": Vector2(550, 700), "scene": "res://dog_house.tscn"},
+	"bakery": {"node": "Bakery", "position": Vector2(1250, 1320), "scene": "res://bakery.tscn"}
 }
 
 static func valid_building_position(value: Variant) -> bool:

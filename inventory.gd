@@ -7,12 +7,18 @@ const FarmData = preload("res://farm_data.gd")
 const ToolData = preload("res://tool_data.gd")
 const CropData = preload("res://crop_data.gd")
 const FishingData = preload("res://fishing_data.gd")
+const BakeryData = preload("res://bakery_data.gd")
 const DOG_PRICE: int = 300
 const EGG_PRICE: int = 18
 const MILK_PRICE: int = 30
 const Progression = preload("res://progression_data.gd")
 const SILO_ITEMS: Array[String] = ["wheat_seed", "wheat", "corn_seed", "corn", "carrot_seed", "carrot"]
-const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "egg", "milk", "small_fish", "river_fish", "golden_fish"]
+const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "egg", "milk", "small_fish", "river_fish", "golden_fish", "bread", "corn_bread", "carrot_pie"]
+var owns_bakery: bool = false
+var bread: int = 0
+var corn_bread: int = 0
+var carrot_pie: int = 0
+
 var small_fish: int = 0
 var river_fish: int = 0
 var golden_fish: int = 0
@@ -506,5 +512,14 @@ func buy_plot(number: int) -> bool:
 		return fail(tr("ERROR_COINS"))
 	coins -= price
 	unlocked_plot_count = number
+	inventory_changed.emit()
+	return true
+
+
+func sell_bakery_item(item: String) -> bool:
+	if not BakeryData.RECIPES.has(item) or get(item) <= 0:
+		return false
+	set(item, get(item) - 1)
+	coins += BakeryData.RECIPES[item]["price"]
 	inventory_changed.emit()
 	return true

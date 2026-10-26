@@ -5,6 +5,10 @@ const CATALOGS: Dictionary = {
 	"en": preload("res://localization/en.gd")
 }
 const NAME_KEYS: Dictionary = {
+	"bakery": "BUILDING_BAKERY",
+	"bread": "ITEM_BREAD",
+	"corn bread": "ITEM_CORN_BREAD",
+	"carrot pie": "ITEM_CARROT_PIE",
 	"level": "UI_LEVEL",
 	"coins": "UI_COINS",
 	"exp": "UI_EXP",

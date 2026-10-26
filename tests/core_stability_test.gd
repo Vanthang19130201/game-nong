@@ -223,7 +223,7 @@ func check_core() -> void:
 	hud._show_reset_confirmation()
 	check(hud.reset_confirmation.visible and not hud.house_panel.visible, "reset replaces house modal")
 	hud.open_build()
-	check(not hud.build_panel.visible, "confirmation refuses another panel")
+	check(not hud.build_panel.is_visible_in_tree(), "confirmation refuses another panel")
 	await key(KEY_ESCAPE)
 	check(not hud.blocks_world_input() and inv.house_level == 2, "cancel reset changes nothing")
 	# Overlapping interactables: one E chooses the closer OrderBoard, not House too.
@@ -233,9 +233,11 @@ func check_core() -> void:
 	await key(KEY_E)
 	check(hud.order_panel.visible and not hud.house_panel.visible, "nearest interaction only")
 	hud.open_build()
-	check(hud.build_panel.visible and not hud.order_panel.visible, "main modal switching")
+	check(hud.build_panel.is_visible_in_tree() and not hud.order_panel.visible, "main modal switching")
 	hud._toggle_shop()
-	check(hud.shop_panel.visible and not hud.build_panel.visible, "shop replaces build")
+	check(not hud.shop_build_panel.visible, "shop shortcut closes either tab")
+	hud._toggle_shop()
+	check(hud.shop_panel.is_visible_in_tree() and not hud.build_panel.is_visible_in_tree(), "shop shortcut opens shop tab")
 	var before: Vector2 = player.position
 	Input.action_press("move_right")
 	await create_timer(0.15).timeout

@@ -122,7 +122,8 @@ func harvest() -> void:
 	var harvested_crop: String = crop_type
 	_clear_crop()
 	_update_label()
-	Inventory.collect_crop(harvested_crop)
+	if Inventory.collect_crop(harvested_crop):
+		get_tree().call_group("farm_hud", "show_harvest_feedback", harvested_crop)
 
 
 func _clear_crop() -> void:

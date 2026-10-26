@@ -6,6 +6,10 @@ const CropData = preload("res://crop_data.gd")
 const Progression = preload("res://progression_data.gd")
 const FishingData = preload("res://fishing_data.gd")
 const UI_THEME: Theme = preload("res://assets/ui/ui_theme.tres")
+@onready var shop_build_panel: PanelContainer = $ShopBuildPanel
+@onready var shop_build_tabs: TabContainer = $ShopBuildPanel/Margin/Content/Tabs
+var transaction_feedback: VBoxContainer
+var bakery_panel: PanelContainer
 @onready var fishing_ui: Control = $FishingUI
 @onready var fish_market_panel: PanelContainer = $FishMarketPanel
 @onready var storage_panel: PanelContainer = $StoragePanel
@@ -18,14 +22,15 @@ var rod_upgrade: Button
 @onready var shop_button: Button = $Layout/Actions/ShopButton
 @onready var crop_selector: OptionButton = $Layout/Actions/CropSelector
 @onready var save_status: Label = $Layout/SaveStatus
-@onready var shop_panel: PanelContainer = $ShopPanel
-@onready var buy_button: Button = $ShopPanel/Margin/Scroll/ShopContent/BuyButton
-@onready var sell_button: Button = $ShopPanel/Margin/Scroll/ShopContent/SellButton
-@onready var message_label: Label = $ShopPanel/Margin/Scroll/ShopContent/MessageLabel
-@onready var reset_button: Button = $ResetControls/ResetButton
+@onready var shop_panel: PanelContainer = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel
+@onready var buy_button: Button = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/BuyButton
+@onready var sell_button: Button = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/SellButton
+@onready var message_label: Label = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/MessageLabel
+@onready var reset_button: Button = $SettingsPanel/Margin/Content/ResetButton
+@onready var settings_panel: PanelContainer = $SettingsPanel
 @onready var reset_confirmation: ConfirmationDialog = $ResetConfirmation
-@onready var egg_sell_button: Button = $ShopPanel/Margin/Scroll/ShopContent/EggSellButton
-@onready var dog_buy_button: Button = $ShopPanel/Margin/Scroll/ShopContent/DogBuyButton
+@onready var egg_sell_button: Button = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/EggSellButton
+@onready var dog_buy_button: Button = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/DogBuyButton
 @onready var station_panel: PanelContainer = $StationPanel
 @onready var station_info: Label = $StationPanel/Margin/Content/Info
 @onready var produce_button: Button = $StationPanel/Margin/Content/ProduceButton
@@ -54,8 +59,8 @@ var debug_panel: PanelContainer
 @onready var tools_unlock_popup: AcceptDialog = $ToolsUnlocked
 
 @onready var storage_label: Label = $Layout/StorageLabel
-@onready var build_panel: PanelContainer = $BuildPanel
-@onready var build_rows: VBoxContainer = $BuildPanel/Margin/Content/Scroll/Rows
+@onready var build_panel: PanelContainer = $ShopBuildPanel/Margin/Content/Tabs/BuildPanel
+@onready var build_rows: VBoxContainer = $ShopBuildPanel/Margin/Content/Tabs/BuildPanel/Margin/Content/Scroll/Rows
 @onready var recipe_selector: OptionButton = $StationPanel/Margin/Content/RecipeSelector
 @onready var animal_buy: Button = $StationPanel/Margin/Content/AnimalBuy
 @onready var animal_sell: Button = $StationPanel/Margin/Content/AnimalSell
@@ -63,15 +68,29 @@ var debug_panel: PanelContainer
 
 func _ready() -> void:
 	add_to_group("farm_hud")
+	bakery_panel = PanelContainer.new()
+	bakery_panel.name = "BakeryPanel"
+	bakery_panel.z_index = 29
+	bakery_panel.set_script(preload("res://bakery_panel.gd"))
+	add_child(bakery_panel)
+	$ResetControls/SettingsButton.pressed.connect(_toggle_settings)
+	$SettingsPanel/Margin/Content/CloseButton.pressed.connect(settings_panel.hide)
+	_setup_shop_build()
 	if OS.is_debug_build():
 		debug_panel = PanelContainer.new()
 		debug_panel.set_script(preload("res://dev_debug_panel.gd"))
 		add_child(debug_panel)
 		debug_panel.visibility_changed.connect(_on_main_panel_visibility_changed)
-	for panel in [shop_panel, build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel]:
+	for panel in [bakery_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel, reset_confirmation, plot_purchase, tools_unlock_popup, fishing_ui.panel]:
 		panel.visibility_changed.connect(_on_main_panel_visibility_changed)
 	crop_ids = CropData.CROPS.keys()
-	var content: VBoxContainer = $ShopPanel/Margin/Scroll/ShopContent
+	var content: VBoxContainer = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent
+	for item in Inventory.BakeryData.RECIPES:
+		var button := Button.new()
+		button.text = tr("UI_SELL_CROP") % [Localization.display_name(item), Inventory.BakeryData.RECIPES[item]["price"]]
+		button.focus_mode = Control.FOCUS_NONE
+		button.pressed.connect(_sell_bakery_item.bind(item))
+		content.add_child(button)
 	for crop in crop_ids:
 		crop_selector.add_item(Localization.display_name(CropData.CROPS[crop]["name"]))
 		var prefix: String = "" if crop == "WHEAT" else crop.capitalize()
@@ -94,10 +113,10 @@ func _ready() -> void:
 	$Layout/Actions/BuildButton.pressed.connect(open_build)
 	$Layout/Actions/StorageButton.pressed.connect(_toggle_storage)
 	$Layout/Actions/OrdersButton.pressed.connect(open_orders)
-	$BuildPanel/Margin/Content/CloseButton.pressed.connect(build_panel.hide)
-	$ShopPanel/Margin/Scroll/ShopContent/MilkSellButton.pressed.connect(_sell_milk)
-	$ShopPanel/Margin/Scroll/ShopContent/DiscardChickenFeed.pressed.connect(_discard_feed.bind("chicken_feed"))
-	$ShopPanel/Margin/Scroll/ShopContent/DiscardCowFeed.pressed.connect(_discard_feed.bind("cow_feed"))
+	$ShopBuildPanel/Margin/Content/Tabs/BuildPanel/Margin/Content/CloseButton.pressed.connect(_close_game_panels)
+	$ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/MilkSellButton.pressed.connect(_sell_milk)
+	$ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/DiscardChickenFeed.pressed.connect(_discard_feed.bind("chicken_feed"))
+	$ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/DiscardCowFeed.pressed.connect(_discard_feed.bind("cow_feed"))
 	animal_buy.pressed.connect(_buy_station_animal)
 	animal_sell.pressed.connect(_sell_station_animal)
 	Inventory.inventory_changed.connect(_update_inventory)
@@ -117,6 +136,66 @@ func _ready() -> void:
 	OrderManager.orders_changed.connect(_refresh_orders)
 	_apply_ui_theme(self)
 	_update_inventory()
+
+
+func _setup_shop_build() -> void:
+	shop_build_tabs.set_tab_title(0, tr("SHOP_BUILD_SHOP_TAB"))
+	shop_build_tabs.set_tab_title(1, tr("SHOP_BUILD_BUILD_TAB"))
+	$ShopBuildPanel/Margin/Content/CloseButton.pressed.connect(_close_game_panels)
+	$ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/TitleLabel.hide()
+	$ShopBuildPanel/Margin/Content/Tabs/BuildPanel/Margin/Content/Title.hide()
+	$ShopBuildPanel/Margin/Content/Tabs/BuildPanel/Margin/Content/CloseButton.hide()
+	transaction_feedback = VBoxContainer.new()
+	transaction_feedback.set_script(preload("res://transaction_feedback.gd"))
+	transaction_feedback.name = "TransactionFeedback"
+	transaction_feedback.z_index = 100
+	transaction_feedback.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(transaction_feedback)
+	transaction_feedback.hide()
+	get_viewport().size_changed.connect(_fit_shop_build)
+	_fit_shop_build.call_deferred()
+
+
+func _fit_shop_build() -> void:
+	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	shop_build_panel.size = Vector2(860, 560).min(viewport_size - Vector2(24, 32))
+	shop_build_panel.position = (viewport_size - shop_build_panel.size) / 2.0
+
+
+func _open_shop_build(tab: int) -> void:
+	shop_build_panel.show()
+	shop_build_tabs.current_tab = tab
+	shop_panel.visible = tab == 0
+	build_panel.visible = tab == 1
+	_fit_shop_build()
+
+
+func show_transaction_feedback(text: String) -> void:
+	transaction_feedback.show_message(text)
+
+
+func show_harvest_feedback(crop: String) -> void:
+	show_transaction_feedback(tr("TRADE_ITEM") % [1, Localization.display_name(crop)] + "\n" + tr("HARVEST_EXP_FEEDBACK") % CropData.CROPS[crop]["harvest_exp"])
+
+
+func _sell_bakery_item(item: String) -> void:
+	if not _trade(Inventory.sell_bakery_item.bind(item), item, -1):
+		show_transaction_feedback(tr("TRADE_NO_ITEM"))
+
+
+func open_bakery(bakery: Node) -> void:
+	if blocks_world_input() or not bakery.can_interact():
+		return
+	_close_game_panels()
+	bakery_panel.open(bakery)
+
+
+func _trade(action: Callable, item: String, amount: int) -> bool:
+	var previous_coins: int = Inventory.coins
+	if not action.call():
+		return false
+	show_transaction_feedback(tr("TRADE_ITEM") % [amount, Localization.display_name(item)] + "\n" + tr("TRADE_COINS") % (Inventory.coins - previous_coins))
+	return true
 
 
 func _apply_ui_theme(node: Node) -> void:
@@ -143,7 +222,7 @@ func _update_inventory() -> void:
 	egg_sell_button.text = tr("UI_SELL_EGG") % Inventory.EGG_PRICE
 	dog_buy_button.disabled = Inventory.has_dog
 	dog_buy_button.text = tr("UI_OWNED") if Inventory.has_dog else tr("UI_BUY_DOG") % Inventory.DOG_PRICE
-	$ShopPanel/Margin/Scroll/ShopContent/PetsLabel.text = tr("UI_PETS") % Inventory.DOG_PRICE
+	$ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/PetsLabel.text = tr("UI_PETS") % Inventory.DOG_PRICE
 	for i in range(crop_ids.size()):
 		var crop: String = crop_ids[i]
 		var info: Dictionary = CropData.CROPS[crop]
@@ -169,6 +248,14 @@ func _select_crop(index: int) -> void:
 	Inventory.select_crop(crop_ids[index])
 
 
+func _toggle_settings() -> void:
+	if _native_dialog_open():
+		return
+	var was_open: bool = settings_panel.visible
+	_close_game_panels()
+	settings_panel.visible = not was_open
+
+
 func _show_reset_confirmation() -> void:
 	close_all_panels()
 	reset_confirmation.popup_centered()
@@ -182,45 +269,52 @@ func _reset_game() -> void:
 		_close_game_panels()
 		message_label.text = ""
 		save_status.text = tr("RESET_DONE")
+		get_tree().reload_current_scene.call_deferred()
 	else:
 		save_status.text = tr("RESET_FAILED")
+		show_transaction_feedback(tr("RESET_FAILED"))
 
 
 func _toggle_shop() -> void:
 	if _native_dialog_open():
 		return
-	var was_open: bool = shop_panel.visible
+	var was_open: bool = shop_build_panel.visible
 	_close_game_panels()
-	shop_panel.visible = not was_open
+	if not was_open:
+		_open_shop_build(0)
 	shop_button.text = tr("UI_SHOP_SHORT")
 	message_label.text = ""
 
 
 func _buy_seed(crop: String = "WHEAT") -> void:
-	if Inventory.buy_seed(crop):
+	if _trade(Inventory.buy_seed.bind(crop), crop.to_lower() + "_seed", 1):
 		message_label.text = tr("MSG_BOUGHT_SEED") % Localization.display_name(CropData.CROPS[crop]["name"])
 	elif not Inventory.is_unlocked(crop):
 		message_label.text = tr("MSG_CROP_LOCKED")
 	else:
 		message_label.text = tr("MSG_COINS_OR_SILO")
+		show_transaction_feedback(tr("TRADE_NO_COINS") if Inventory.coins < CropData.CROPS[crop]["seed_buy_price"] else tr("ERROR_SILO_BUY"))
 
 
 func _sell_crop(crop: String) -> void:
-	if Inventory.sell_crop(crop):
+	if _trade(Inventory.sell_crop.bind(crop), crop.to_lower(), -1):
 		message_label.text = tr("MSG_SOLD_CROP") % Localization.display_name(CropData.CROPS[crop]["name"])
 	else:
 		message_label.text = tr("MSG_NO_CROP") % Localization.display_name(CropData.CROPS[crop]["name"])
+		show_transaction_feedback(tr("TRADE_NO_ITEM"))
 
 
 func _sell_egg() -> void:
-	message_label.text = tr("MSG_SOLD_EGG") if Inventory.sell_egg() else tr("MSG_NO_EGG")
+	if not _trade(Inventory.sell_egg, "egg", -1):
+		show_transaction_feedback(tr("TRADE_NO_ITEM"))
 
 
 func _buy_dog() -> void:
-	if Inventory.buy_dog():
+	if _trade(Inventory.buy_dog, "dog", 1):
 		message_label.text = tr("MSG_DOG_BOUGHT")
 	else:
 		message_label.text = tr("MSG_DOG_OWNED") if Inventory.has_dog else tr("MSG_NEED_COINS") % Inventory.DOG_PRICE
+		show_transaction_feedback(tr("MSG_DOG_OWNED") if Inventory.has_dog else tr("TRADE_NO_COINS"))
 
 
 func open_station(station: Node) -> void:
@@ -229,7 +323,6 @@ func open_station(station: Node) -> void:
 	_close_game_panels()
 	active_station = station
 	active_station.state_changed.connect(_update_station_panel)
-	shop_panel.hide()
 	shop_button.text = tr("UI_SHOP_SHORT")
 	station_panel.show()
 	_update_station_panel()
@@ -290,12 +383,16 @@ func _collect() -> void:
 
 
 func blocks_world_input() -> bool:
-	return storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or shop_panel.visible or station_panel.visible or order_panel.visible or build_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
+	return bakery_panel.visible or settings_panel.visible or shop_build_panel.visible or storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or station_panel.visible or order_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
 
 
 func _input(event: InputEvent) -> void:
 	# Handle UI keys before any farm node receives _unhandled_input.
-	if event.is_action("toggle_inventory"):
+	if event.is_action("toggle_shop_build"):
+		if event.is_action_pressed("toggle_shop_build") and not event.is_echo():
+			_toggle_shop()
+		get_viewport().set_input_as_handled()
+	elif event.is_action("toggle_inventory"):
 		if event.is_action_pressed("toggle_inventory") and not event.is_echo():
 			_toggle_storage()
 		get_viewport().set_input_as_handled()
@@ -319,6 +416,8 @@ func close_current_panel() -> void:
 		reset_confirmation.hide()
 	elif plot_purchase.visible:
 		plot_purchase.hide()
+	elif settings_panel.visible:
+		settings_panel.hide()
 	elif storage_panel.visible:
 		storage_panel.hide()
 	elif tools_unlock_popup.visible:
@@ -331,22 +430,24 @@ func close_current_panel() -> void:
 		debug_panel.hide()
 	elif fish_market_panel.visible:
 		fish_market_panel.close()
+	elif bakery_panel.visible:
+		bakery_panel.close()
 	elif house_panel.visible:
 		close_house()
 	elif order_panel.visible:
 		order_panel.hide()
-	elif build_panel.visible:
-		build_panel.hide()
+	elif shop_build_panel.visible:
+		_close_game_panels()
 	elif station_panel.visible:
 		close_station()
-	elif shop_panel.visible:
-		shop_panel.hide()
-		shop_button.text = tr("UI_SHOP_SHORT")
 	elif is_instance_valid(fishing_ui.active_spot):
 		fishing_ui.close_session()
 
 
 func _close_game_panels() -> void:
+	bakery_panel.close()
+	settings_panel.hide()
+	shop_build_panel.hide()
 	storage_panel.hide()
 	fish_market_panel.close()
 	fishing_ui.close_session()
@@ -355,10 +456,8 @@ func _close_game_panels() -> void:
 	crop_selector.get_popup().hide()
 	recipe_selector.get_popup().hide()
 	close_house()
-	build_panel.hide()
 	close_station()
 	order_panel.hide()
-	shop_panel.hide()
 	shop_button.text = tr("UI_SHOP_SHORT")
 	var player = get_tree().get_first_node_in_group("farm_player")
 	if player != null and is_instance_valid(player.active_resource):
@@ -394,7 +493,8 @@ func close_all_panels() -> void:
 
 
 func _on_main_panel_visibility_changed() -> void:
-	crop_selector.disabled = storage_panel.visible
+	# A HUD dropdown must not stack over an existing modal or fishing session.
+	crop_selector.disabled = _native_dialog_open() or fishing_ui.panel.visible or [bakery_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel].any(func(panel): return panel.visible) or (is_instance_valid(debug_panel) and debug_panel.visible)
 	_show_tool_unlock_if_needed.call_deferred()
 
 
@@ -484,10 +584,12 @@ func _complete_order(order_id: String) -> void:
 
 func _show_message(message: String) -> void:
 	save_status.text = message
+	show_transaction_feedback(message)
 
 
 func _sell_milk() -> void:
-	message_label.text = tr("MSG_SOLD_MILK") if Inventory.sell_milk() else tr("MSG_NO_MILK")
+	if not _trade(Inventory.sell_milk, "milk", -1):
+		show_transaction_feedback(tr("TRADE_NO_ITEM"))
 
 
 func _discard_feed(item: String) -> void:
@@ -505,7 +607,7 @@ func open_build() -> void:
 	if _native_dialog_open():
 		return
 	_close_game_panels()
-	build_panel.show()
+	_open_shop_build(1)
 	_update_build_rows()
 
 
@@ -604,25 +706,25 @@ func _update_build_rows() -> void:
 	dog_house_button.text = tr("UI_DOG_HOUSE_BUILT") if Inventory.has_dog_house else tr("UI_BUILD_DOG_HOUSE") % [dog_house_cost["wood"], dog_house_cost["stone"]]
 
 func _buy_building(id: String) -> void:
-	Inventory.buy_building(id)
+	_trade(Inventory.buy_building.bind(id), id, 1)
 
 
 func _buy_animal(animal: String) -> void:
-	Inventory.buy_animal(animal)
+	_trade(Inventory.buy_animal.bind(animal), animal, 1)
 
 
 func _sell_animal(animal: String) -> void:
-	Inventory.sell_animal(animal)
+	_trade(Inventory.sell_animal.bind(animal), animal, -1)
 
 
 func _buy_station_animal() -> void:
 	if is_instance_valid(active_station) and Progression.PRODUCTS.has(active_station.station_id):
-		Inventory.buy_animal(Progression.PRODUCTS[active_station.station_id]["animal"])
+		_buy_animal(Progression.PRODUCTS[active_station.station_id]["animal"])
 
 
 func _sell_station_animal() -> void:
 	if is_instance_valid(active_station) and Progression.PRODUCTS.has(active_station.station_id):
-		Inventory.sell_animal(Progression.PRODUCTS[active_station.station_id]["animal"])
+		_sell_animal(Progression.PRODUCTS[active_station.station_id]["animal"])
 
 func _upgrade_structure(id: String) -> void:
 	Inventory.upgrade_structure(id)
@@ -631,7 +733,7 @@ func _upgrade_structure(id: String) -> void:
 func _build_dog_house() -> void:
 	Inventory.build_dog_house()
 func _create_tool_rows() -> void:
-	var content: VBoxContainer = $ShopPanel/Margin/Scroll/ShopContent
+	var content: VBoxContainer = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent
 	var title := Label.new()
 	title.text = tr("TOOLS_TITLE")
 	content.add_child(title)
@@ -709,7 +811,7 @@ func _on_plot_popup_visibility_changed() -> void:
 
 
 func _create_rod_row() -> void:
-	var content = $ShopPanel/Margin/Scroll/ShopContent
+	var content = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent
 	rod_info = Label.new()
 	rod_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	rod_upgrade = Button.new()

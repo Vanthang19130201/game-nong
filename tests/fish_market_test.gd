@@ -85,7 +85,7 @@ func run_checks() -> void:
 		await key(KEY_E)
 		check(panel.visible and spot.state == spot.State.IDLE, "nearest target wins overlap")
 		hud.open_build()
-		check(hud.build_panel.visible and not panel.visible, "switching panels never stacks")
+		check(hud.build_panel.is_visible_in_tree() and not panel.visible, "switching panels never stacks")
 		hud.close_all_panels()
 		player.position = spot.position
 		await create_timer(0.1).timeout
