@@ -38,6 +38,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'cozy_ui_test.gd') -Destination 
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'plot_purchase_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'ui_polish_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'visual_asset_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'building_artwork_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'animal_wander_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'animal_entity_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'station_status_test.gd') -Destination $testRoot -Force
@@ -62,7 +63,7 @@ $stages = @('core', 'position_write', 'position_read', 'legacy_write', 'legacy_r
     'invalid_write', 'invalid_read', 'offline_write', 'offline_read',
     'backup_write', 'backup_read', 'defaults_write', 'defaults_read', 'duplicates',
     'fishing_core', 'fishing_limits', 'fishing_write', 'fishing_read', 'market_core', 'market_read', 'stall_core', 'stall_write', 'stall_read', 'stall_reset_read',
-    'audit_core', 'audit_write', 'audit_read', 'audit_again', 'audit_close', 'localization', 'storage_ui', 'cozy_ui', 'plot_popup', 'ui_polish', 'art_core',
+    'audit_core', 'audit_write', 'audit_read', 'audit_again', 'audit_close', 'localization', 'storage_ui', 'cozy_ui', 'plot_popup', 'ui_polish', 'art_core', 'building_artwork',
     'orders_core', 'orders_write', 'orders_read', 'orders_expired_read', 'orders_legacy_write', 'orders_legacy_read',
     'bakery_core', 'bakery_write', 'bakery_read', 'bakery_again', 'bakery_reset_read',
     'bakery_cakes', 'bakery_cakes_write', 'bakery_cakes_read', 'bakery_cakes_again', 'bakery_legacy_write', 'bakery_legacy_read',
@@ -109,6 +110,7 @@ foreach ($stage in $stages) {
     if ($stage -eq 'plot_popup') { $testScript = 'plot_purchase_test.gd' }
     if ($stage -eq 'ui_polish') { $testScript = 'ui_polish_test.gd' }
     if ($stage -eq 'art_core') { $testScript = 'visual_asset_test.gd' }
+    if ($stage -eq 'building_artwork') { $testScript = 'building_artwork_test.gd' }
     if ($stage.StartsWith('animals_')) { $testScript = 'animal_wander_test.gd' }
     if ($stage.StartsWith('animal_entity_')) { $testScript = 'animal_entity_test.gd' }
     if ($stage.StartsWith('station_status_')) { $testScript = 'station_status_test.gd' }

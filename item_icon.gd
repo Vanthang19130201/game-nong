@@ -1,10 +1,20 @@
 extends Control
 
-# Project-owned vector placeholders. Replace this visual with textures later.
+# Crop artwork with project-owned vector fallbacks for other items and seeds.
+var _crop_texture: Texture2D
+
 @export var item_id: String = "":
 	set(value):
 		item_id = value
+		_crop_texture = _get_crop_texture()
 		queue_redraw()
+
+const CROP_TEXTURE_PATHS: Dictionary = {
+	"wheat": "res://assets/crops/wheat/stage_3.png",
+	"corn": "res://assets/crops/corn/stage_3.png",
+	"carrot": "res://assets/crops/carrot/stage_3.png",
+}
+static var _texture_cache: Dictionary = {}
 
 const INK := Color("68462f")
 const GREEN := Color("67974e")
@@ -16,9 +26,16 @@ const COLORS: Dictionary = {
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_crop_texture = _get_crop_texture()
 	resized.connect(queue_redraw)
 
 func _draw() -> void:
+	if _crop_texture != null:
+		var texture_size := Vector2(_crop_texture.get_size())
+		if texture_size.x > 0.0 and texture_size.y > 0.0:
+			var fit_size := texture_size * minf(size.x / texture_size.x, size.y / texture_size.y)
+			draw_texture_rect(_crop_texture, Rect2((size - fit_size) * 0.5, fit_size), false)
+			return
 	var side: float = minf(size.x,size.y)
 	draw_set_transform((size-Vector2.ONE*side)/2,0,Vector2.ONE*side/64)
 	var id: String = item_id.trim_suffix("_seed")
@@ -106,6 +123,17 @@ func _draw() -> void:
 		draw_style_box(_rounded(color),Rect2(12,15,40,38))
 		draw_line(Vector2(16,25),Vector2(48,25),INK,3,true)
 		draw_line(Vector2(32,18),Vector2(32,49),Color("f2d5a1"),5,true)
+
+func _get_crop_texture() -> Texture2D:
+	var path: String = CROP_TEXTURE_PATHS.get(item_id, "")
+	if path.is_empty():
+		return null
+	if _texture_cache.has(path):
+		var cached: Variant = _texture_cache[path]
+		return cached if cached is Texture2D else null
+	var loaded: Resource = load(path) if ResourceLoader.exists(path) else null
+	_texture_cache[path] = loaded
+	return loaded if loaded is Texture2D else null
 
 func _poly(points: Array, color: Color) -> void:
 	draw_colored_polygon(PackedVector2Array(points),color)

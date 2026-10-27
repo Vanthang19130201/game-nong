@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="192" viewBox="0 0 256 192">
+  <ellipse cx="128" cy="173" rx="110" ry="11" fill="#38291f" opacity="0.18"/>
+  <g stroke="#59402f" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M47 72H57V165H47ZM199 72H209V165H199Z" fill="#b88c5c"/>
+    <path d="M37 75L55 33H201L219 75Z" fill="#eee2bd"/>
+    <path d="M55 33H84L76 75H37ZM113 33H142L144 75H112ZM171 33H201L219 75H181Z" fill="#8b9d6c" stroke="none"/>
+    <path d="M37 75L55 33H201L219 75Z" fill="none"/>
+    <path d="M37 75V84Q47 96 58 84Q69 96 80 84Q91 96 102 84Q113 96 124 84Q135 96 146 84Q157 96 168 84Q179 96 190 84Q205 96 219 84V75Z" fill="#eee2bd"/>
+    <path d="M38 76V83Q47 95 58 84L60 76M81 76L80 84Q91 96 102 84V76M146 76V84Q157 96 168 84V76M190 76V84Q205 96 218 84V76" fill="#8b9d6c" stroke="none"/>
+    <path d="M43 126H213V162H43Z" fill="#ba8b58"/>
+    <path d="M52 133H204V153H52Z" fill="#cda36e" stroke="none"/>
+    <path d="M83 130V160M128 130V160M173 130V160" fill="none" stroke="#8e653f" stroke-width="3"/>
+    <path d="M38 120H218V132H38Z" fill="#ddbc83"/>
+    <path d="M61 113L65 97M69 113L72 94M77 113L80 99" fill="none" stroke="#9b9d58" stroke-width="3"/>
+    <path d="M63 101L57 95M64 105L71 99M70 99L65 92M72 103L78 97M78 105L85 99" fill="none" stroke="#d3ad52" stroke-width="5"/>
+    <path d="M104 112Q99 92 108 91Q119 92 115 113M119 113Q116 96 124 96Q133 96 130 113" fill="#e0ba5e" stroke-width="3"/>
+    <path d="M101 105L110 116L119 105M119 108L125 117L133 107" fill="#8a9d69" stroke-width="3"/>
+    <path d="M151 101L164 105L151 117Z" fill="#d78e51" stroke-width="3"/>
+    <path d="M164 104L172 93M163 102L164 91M162 103L157 95" fill="none" stroke="#809460" stroke-width="3"/>
+    <path d="M54 109H88L84 120H58ZM99 111H135L131 120H103ZM143 111H178L174 120H147Z" fill="#ab7c4d" stroke-width="3"/>
+    <path d="M210 103H228V130H210" fill="#d3b783" stroke-width="3"/>
+    <circle cx="219" cy="116" r="7" fill="#e3bc60" stroke-width="3"/>
+    <path d="M216 116H222" fill="none" stroke-width="2"/>
+    <path d="M23 145H57V169H23Z" fill="#b48956" stroke-width="4"/>
+    <path d="M25 149L54 165M54 149L25 165M23 155H57" fill="none" stroke="#7e5a3a" stroke-width="3"/>
+    <path d="M192 153H227V170H192Z" fill="#bd9664" stroke-width="4"/>
+    <path d="M196 159H223M203 153V168M216 153V168" fill="none" stroke="#85613f" stroke-width="3"/>
+  </g>
+</svg>

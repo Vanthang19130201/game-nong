@@ -11,6 +11,7 @@ size = Vector2(160, 110)
 
 [node name="OrderBoard" type="Area2D"]
 script = ExtResource("1")
+metadata/placement_rect = Rect2(-72, -36, 144, 72)
 
 [node name="Visual" type="ColorRect" parent="."]
 offset_left = -72.0
@@ -21,14 +22,18 @@ mouse_filter = 2
 color = Color(0.52, 0.35, 0.18, 1)
 
 [node name="Label" type="Label" parent="."]
+z_index = 1
 script = ExtResource("95_prompt")
 area_path = NodePath("..")
 base_text = "WORLD_ORDER_BOARD"
 theme_override_font_sizes/font_size = 12
-offset_left = -72.0
-offset_top = 48.0
-offset_right = 72.0
-offset_bottom = 84.0
+theme_override_colors/font_color = Color(1, 0.96, 0.84, 1)
+theme_override_colors/font_outline_color = Color(0.22, 0.15, 0.1, 1)
+theme_override_constants/outline_size = 3
+offset_left = -110.0
+offset_top = -110.0
+offset_right = 110.0
+offset_bottom = -74.0
 horizontal_alignment = 1
 vertical_alignment = 1
 mouse_filter = 2
@@ -40,5 +45,8 @@ shape = SubResource("BoardShape")
 
 [node name="Sprite2D" type="Sprite2D" parent="Visuals"]
 z_index = -1
+position = Vector2(0, -6)
 script = ExtResource("90_art")
 fallback_paths = Array[NodePath]([NodePath("../../Visual")])
+artwork_id = "order_board"
+target_size = Vector2(150, 115)

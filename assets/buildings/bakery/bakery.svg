@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="192" viewBox="0 0 256 192">
+  <ellipse cx="128" cy="173" rx="108" ry="11" fill="#38291f" opacity="0.18"/>
+  <g stroke="#59402f" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M48 80H204V164H48Z" fill="#eed6a6"/>
+    <path d="M187 84H204V164H187Z" fill="#c9ab7f" stroke="none"/>
+    <path d="M166 69V30H188V79" fill="#b97d60"/>
+    <path d="M161 27H193V38H161Z" fill="#d09a77"/>
+    <path d="M169 49H184M177 39V49M168 61H186" fill="none" stroke="#815945" stroke-width="3"/>
+    <path d="M34 86L57 60L120 42L183 60L218 86Z" fill="#bd6b50"/>
+    <path d="M51 75L120 54L198 75M82 65L89 77M117 56V74M151 64L145 77" fill="none" stroke="#df9672" stroke-width="4"/>
+    <path d="M45 90H207" fill="none" stroke="#85533d"/>
+    <path d="M76 164V126A41 41 0 0 1 158 126V164Z" fill="#c08d68"/>
+    <path d="M88 160V127A29 29 0 0 1 146 127V160Z" fill="#654632"/>
+    <path d="M96 154V133A21 21 0 0 1 138 133V154Z" fill="#df9654" stroke="none"/>
+    <path d="M101 154L106 137L114 147L121 129L132 154Z" fill="#f4c46c" stroke="none"/>
+    <path d="M86 162H149" fill="none" stroke="#4e392b" stroke-width="8"/>
+    <path d="M79 121L88 124M87 102L95 109M106 90L109 101M129 90L126 101M149 101L140 109M157 121L147 124" fill="none" stroke-width="3"/>
+    <path d="M175 91V101M201 91V101" fill="none" stroke="#856044" stroke-width="3"/>
+    <rect x="167" y="101" width="42" height="30" rx="4" fill="#c69b64"/>
+    <path d="M174 118Q176 107 188 109Q201 108 202 119L199 123H177Z" fill="#efc47f" stroke-width="3"/>
+    <path d="M182 112L180 118M191 112L189 118" fill="none" stroke-width="2"/>
+    <path d="M29 147L35 166H72L77 147Z" fill="#b48451"/>
+    <path d="M36 148V132Q39 123 44 132L47 148M48 148V127Q52 116 57 127L60 148M60 148L63 132Q68 124 71 134L70 148" fill="#e5b46e" stroke-width="4"/>
+    <path d="M32 148H75M36 158H71" fill="none" stroke="#775336" stroke-width="3"/>
+    <path d="M162 149H179V163H162M186 145H200M50 115H64M52 137H65M55 150V161" fill="none" stroke="#c6a37a" stroke-width="3"/>
+  </g>
+</svg>

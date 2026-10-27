@@ -7,18 +7,26 @@ size = Vector2(210,160)
 
 [node name="Dairy" type="Area2D"]
 script = ExtResource("1")
+metadata/placement_rect = Rect2(-85, -65, 170, 120)
 [node name="Visuals" type="Node2D" parent="."]
 [node name="BuildingSprite" type="Sprite2D" parent="Visuals"]
 script = ExtResource("2")
 fallback_paths = Array[NodePath]([NodePath("../Placeholder")])
+artwork_id = "dairy"
+target_size = Vector2(180, 135)
 [node name="Placeholder" type="Polygon2D" parent="Visuals"]
 polygon = PackedVector2Array(-85,55,-85,-35,0,-65,85,-35,85,55)
 color = Color(0.65,0.78,0.82,1)
 [node name="StatusLabel" type="Label" parent="."]
-offset_left = -85.0
-offset_top = -25.0
-offset_right = 85.0
-offset_bottom = 35.0
+z_index = 1
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.96, 0.84, 1)
+theme_override_colors/font_outline_color = Color(0.22, 0.15, 0.1, 1)
+theme_override_constants/outline_size = 3
+offset_left = -110.0
+offset_top = -122.0
+offset_right = 110.0
+offset_bottom = -80.0
 horizontal_alignment = 1
 mouse_filter = 2
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
