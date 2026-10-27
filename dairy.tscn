@@ -5,6 +5,7 @@
 [ext_resource type="Script" path="res://dairy.gd" id="1"]
 [ext_resource type="Script" path="res://artwork_sprite.gd" id="2"]
 [ext_resource type="Script" path="res://world_prompt.gd" id="3"]
+[ext_resource type="Script" path="res://building_ground_visual.gd" id="4_ground"]
 [sub_resource type="RectangleShape2D" id="Range"]
 size = Vector2(210,160)
 
@@ -23,6 +24,11 @@ target_size = Vector2(180, 135)
 [node name="Placeholder" type="Polygon2D" parent="Visuals"]
 polygon = PackedVector2Array(-85,55,-85,-35,0,-65,85,-35,85,55)
 color = Color(0.65,0.78,0.82,1)
+
+[node name="GroundTreatment" type="Node2D" parent="."]
+z_index = -4
+script = ExtResource("4_ground")
+building_kind = "dairy"
 [node name="StatusLabel" type="Label" parent="."]
 z_index = 1
 theme_override_font_sizes/font_size = 12

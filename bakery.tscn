@@ -5,6 +5,7 @@
 [ext_resource type="Script" path="res://bakery.gd" id="1"]
 [ext_resource type="Script" path="res://artwork_sprite.gd" id="2"]
 [ext_resource type="Script" path="res://world_prompt.gd" id="3"]
+[ext_resource type="Script" path="res://building_ground_visual.gd" id="4_ground"]
 [sub_resource type="RectangleShape2D" id="Area"]
 size = Vector2(210, 160)
 
@@ -28,6 +29,11 @@ offset_right = 85.0
 offset_bottom = 55.0
 color = Color(0.55, 0.29, 0.15, 1)
 mouse_filter = 2
+
+[node name="GroundTreatment" type="Node2D" parent="."]
+z_index = -4
+script = ExtResource("4_ground")
+building_kind = "bakery"
 
 [node name="StatusLabel" type="Label" parent="."]
 z_index = 1

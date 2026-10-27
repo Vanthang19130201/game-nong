@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://world_body.gd" id="98_body"]
 
 [ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
+[ext_resource type="Script" path="res://building_ground_visual.gd" id="91_ground"]
 
 [sub_resource type="RectangleShape2D" id="PhysicalBodyShape"]
 size = Vector2(58, 24)
@@ -34,6 +35,11 @@ vertical_alignment = 2
 text = "WORLD_DOG_HOUSE"
 
 [node name="Visuals" type="Node2D" parent="."]
+
+[node name="GroundTreatment" type="Node2D" parent="."]
+z_index = -4
+script = ExtResource("91_ground")
+building_kind = "dog_house"
 
 [node name="BuildingSprite" type="Sprite2D" parent="Visuals"]
 z_index = -1

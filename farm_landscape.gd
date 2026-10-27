@@ -2,6 +2,8 @@ extends Node2D
 
 # Static environment artwork is batched on this single node. It has no collision,
 # interaction, resource state, timers, or per-frame processing.
+const TREE_TEXTURE: Texture2D = preload("res://assets/environment/tree/Tree.png")
+const TREE_REGION := Rect2(0, 2, 1248, 1230)
 const PATH_EDGE := Color("8f805b")
 const PATH_DIRT := Color("b9a77d")
 const PATH_LIGHT := Color("c8b88c", 0.52)
@@ -53,6 +55,19 @@ func _draw_grass_patches() -> void:
 	]:
 		_draw_ellipse(patch[0], patch[1], Color("6f914d", 0.12))
 
+	# Gentle, irregular lawn color breaks up the large open southern plots.
+	for patch in [
+		[Vector2(540, 1840), Vector2(145, 42), Color("a5ad69", 0.10)],
+		[Vector2(1080, 1935), Vector2(180, 48), Color("8caf62", 0.11)],
+		[Vector2(1545, 2055), Vector2(145, 43), Color("a5ad69", 0.10)],
+		[Vector2(970, 2260), Vector2(190, 52), Color("8caf62", 0.10)],
+		[Vector2(380, 2220), Vector2(130, 40), Color("a5ad69", 0.09)],
+		[Vector2(1780, 2210), Vector2(145, 44), Color("8caf62", 0.10)],
+		[Vector2(360, 970), Vector2(120, 34), Color("a5ad69", 0.09)],
+		[Vector2(1630, 920), Vector2(94, 35), Color("8caf62", 0.10)]
+	]:
+		_draw_ellipse(patch[0], patch[1], patch[2])
+
 
 func _draw_paths() -> void:
 	# Main paths connect the house, storage, fields, animal yard, bridge, decks and market.
@@ -72,7 +87,7 @@ func _draw_paths() -> void:
 	for x in [1250.0, 1450.0]:
 		_path(PackedVector2Array([Vector2(x, 1140), Vector2(x, 1250)]), 24.0)
 	# A north-side spur reaches the field through its west gate, clear of both pens.
-	_path(PackedVector2Array([Vector2(820, 520), Vector2(900, 535), Vector2(1000, 585), Vector2(1058, 600)]), 24.0)
+	_path(PackedVector2Array([Vector2(820, 520), Vector2(900, 535), Vector2(1000, 585), Vector2(1040, 600)]), 20.0)
 	# The east bank route reaches both decks and the fish market.
 	_path(PackedVector2Array([Vector2(1975, 850), Vector2(2010, 885), Vector2(2040, 930), Vector2(2040, 1800)]), 28.0)
 	_path(PackedVector2Array([Vector2(2040, 930), Vector2(2040, 600), Vector2(2110, 550), Vector2(2160, 500), Vector2(2240, 410)]), 28.0)
@@ -110,26 +125,22 @@ func _draw_fences() -> void:
 
 
 func _draw_farmyard_props() -> void:
-	# House garden details are kept to its sides, leaving the door and order-board path clear.
-	_bush_cluster(Vector2(525, 555), 0.82)
-	_bush_cluster(Vector2(855, 525), 0.72)
-	_flower_cluster(Vector2(565, 575), 0.72, Color("f3e1b1"))
-	_flower_cluster(Vector2(850, 570), 0.62, Color("e9c97a"))
-	_barrel(Vector2(585, 600), 0.78)
-	_crate(Vector2(846, 635), 0.72)
-	_bench(Vector2(770, 605), 0.8)
+	# Moveable building props live in each building's GroundTreatment child.
 	_lamp_post(Vector2(980, 748), 0.85)
 	_lamp_post(Vector2(1715, 820), 0.9)
 	_wood_sign(Vector2(1010, 435), 0.75)
 
 
 func _draw_edge_nature() -> void:
-	# Static canopy clusters create a soft frame around the map. No resource nodes are added.
+	# Decorative trees frame the farm with the same artwork used by harvestable trees.
+	# These are background-only; resource nodes remain the only trees with collision.
 	for entry in [
 		[Vector2(30, 330), 0.85], [Vector2(45, 735), 0.72], [Vector2(36, 1035), 0.82],
 		[Vector2(48, 1585), 0.76], [Vector2(330, 2355), 0.9], [Vector2(740, 2360), 0.72],
 		[Vector2(1180, 2360), 0.82], [Vector2(1650, 2355), 0.76], [Vector2(1930, 2250), 0.72],
-		[Vector2(2370, 2150), 0.8], [Vector2(2365, 1820), 0.68], [Vector2(1720, 340), 0.6]
+		[Vector2(2370, 2150), 0.8], [Vector2(2365, 1820), 0.68], [Vector2(1720, 340), 0.6],
+		[Vector2(95, 1900), 0.68], [Vector2(95, 2200), 0.82], [Vector2(2250, 2320), 0.86],
+		[Vector2(2150, 2050), 0.68], [Vector2(2250, 1650), 0.74], [Vector2(1870, 2360), 0.72]
 	]:
 		_tree(entry[0], entry[1])
 	for entry in [
@@ -148,19 +159,33 @@ func _draw_edge_nature() -> void:
 		[Vector2(1965, 645), 0.72], [Vector2(1965, 1575), 0.68], [Vector2(2072, 1885), 0.62]
 	]:
 		_stone_cluster(entry[0], entry[1])
+	for entry in [
+		[Vector2(270, 1810), 0.72], [Vector2(410, 1930), 0.62], [Vector2(730, 1850), 0.68],
+		[Vector2(1010, 2010), 0.72], [Vector2(1260, 1880), 0.62], [Vector2(1490, 2180), 0.74],
+		[Vector2(1800, 2030), 0.68], [Vector2(2080, 2180), 0.72], [Vector2(2250, 1930), 0.62],
+		[Vector2(300, 2180), 0.66], [Vector2(845, 2310), 0.62], [Vector2(1580, 1880), 0.68]
+	]:
+		_stone_cluster(entry[0], entry[1])
 
 
 func _draw_small_ground_details() -> void:
 	for entry in [
 		[Vector2(365, 500), 0.62], [Vector2(590, 835), 0.62], [Vector2(990, 300), 0.68],
 		[Vector2(1682, 690), 0.58], [Vector2(370, 1560), 0.7],
-		[Vector2(1660, 1510), 0.68], [Vector2(540, 2250), 0.65], [Vector2(1850, 2140), 0.62]
+		[Vector2(1660, 1510), 0.68], [Vector2(540, 2250), 0.65], [Vector2(1850, 2140), 0.62],
+		[Vector2(250, 1780), 0.62], [Vector2(440, 1875), 0.58], [Vector2(675, 1980), 0.68],
+		[Vector2(880, 1815), 0.6], [Vector2(1135, 2075), 0.65], [Vector2(1380, 1935), 0.58],
+		[Vector2(1610, 2110), 0.65], [Vector2(1860, 1965), 0.58], [Vector2(2110, 2290), 0.68],
+		[Vector2(150, 2080), 0.6], [Vector2(560, 2140), 0.58], [Vector2(920, 2320), 0.62],
+		[Vector2(1230, 2200), 0.58], [Vector2(1730, 2280), 0.62], [Vector2(2300, 1800), 0.58]
 	]:
 		_tuft(entry[0], entry[1])
 	for entry in [
 		[Vector2(350, 760), 0.55], [Vector2(1658, 780), 0.55],
 		[Vector2(1010, 365), 0.5], [Vector2(1610, 360), 0.54], [Vector2(1660, 1480), 0.55],
-		[Vector2(780, 2220), 0.6], [Vector2(1280, 2290), 0.58]
+		[Vector2(780, 2220), 0.6], [Vector2(1280, 2290), 0.58],
+		[Vector2(320, 1880), 0.48], [Vector2(760, 2115), 0.5], [Vector2(1060, 1840), 0.48],
+		[Vector2(1450, 2020), 0.5], [Vector2(1890, 2300), 0.48]
 	]:
 		_flower_cluster(entry[0], entry[1], Color("f0dfb5"))
 
@@ -168,20 +193,10 @@ func _draw_small_ground_details() -> void:
 func _draw_final_decoration_pass() -> void:
 	# A few intentional clusters make the farm feel lived-in while keeping
 	# paths, entrances, crop footprints, and fishing cast areas open.
-	_draw_house_yard_details()
 	_draw_field_and_path_details()
 	_draw_production_yard_details()
 	_draw_market_and_waterfront_details()
 	_draw_south_farm_details()
-
-
-func _draw_house_yard_details() -> void:
-	# Mailbox and flower bed sit to the west of the house approach.
-	_mailbox(Vector2(585, 465), 0.82)
-	_flower_cluster(Vector2(535, 495), 0.82, Color("e9c97a"))
-	_flower_cluster(Vector2(565, 500), 0.62, Color("f3e1b1"))
-	_fence_segment(Vector2(425, 505), Vector2(485, 505), 3)
-	_fence_segment(Vector2(470, 535), Vector2(520, 535), 3)
 
 
 func _draw_field_and_path_details() -> void:
@@ -196,14 +211,8 @@ func _draw_field_and_path_details() -> void:
 
 
 func _draw_production_yard_details() -> void:
-	# These props stay outside the main east-west path and outside both animal
-	# pens. Their low contrast keeps them secondary to the buildings.
-	_sack_cluster(Vector2(1100, 1045), 0.78)
-	_barrel(Vector2(1075, 1065), 0.64)
-	_crate(Vector2(1102, 1270), 0.72)
-	_sack_cluster(Vector2(1080, 1300), 0.6)
-	_milk_can(Vector2(1565, 1320), 0.78)
-	_crate(Vector2(1605, 1340), 0.62)
+	# Building supplies are attached to their movable owners in scene files.
+	# Keep only detached yard seating and lighting here.
 	_bench(Vector2(1650, 1375), 0.78)
 	_flower_cluster(Vector2(1602, 1408), 0.65, Color("f3e1b1"))
 	_lamp_post(Vector2(815, 1215), 0.72)
@@ -387,18 +396,10 @@ func _fence_segment(start: Vector2, finish: Vector2, post_count: int) -> void:
 
 
 func _tree(point: Vector2, scale: float) -> void:
-	var radius := 31.0 * scale
-	_draw_ellipse(point + Vector2(4, 17 * scale), Vector2(radius * 1.15, radius * 0.38), Color("3e4e34", 0.24))
-	draw_colored_polygon(PackedVector2Array([
-		point + Vector2(-8, 5) * scale, point + Vector2(9, 5) * scale,
-		point + Vector2(13, 32) * scale, point + Vector2(-10, 32) * scale
-	]), Color("775336"))
-	draw_rect(Rect2(point + Vector2(-7, 8) * scale, Vector2(14, 20) * scale), Color("9a6845"), true)
-	for offset in [Vector2(-15, -3), Vector2(12, -11), Vector2(0, -25), Vector2(19, 8), Vector2(-18, 11)]:
-		var center: Vector2 = point + offset * scale
-		draw_circle(center + Vector2(1, 2) * scale, 19.0 * scale, Color("456c3e"))
-		draw_circle(center, 17.0 * scale, Color("6f914d"))
-		draw_circle(center + Vector2(-5, -5) * scale, 6.0 * scale, Color("91ad62", 0.74))
+	var size := Vector2(132, 130) * scale
+	_draw_ellipse(point + Vector2(3, 2) * scale, Vector2(size.x * 0.34, 7.0) * scale, Color("3e4e34", 0.2))
+	var destination := Rect2(point - Vector2(size.x * 0.5, size.y), size)
+	draw_texture_rect_region(TREE_TEXTURE, destination, TREE_REGION, Color.WHITE)
 
 
 func _bush_cluster(point: Vector2, scale: float) -> void:

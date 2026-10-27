@@ -5,6 +5,7 @@
 [ext_resource type="Script" path="res://warehouse.gd" id="1"]
 [ext_resource type="Script" path="res://warehouse_visual.gd" id="2"]
 [ext_resource type="Script" path="res://artwork_sprite.gd" id="3"]
+[ext_resource type="Script" path="res://building_ground_visual.gd" id="4_ground"]
 [sub_resource type="RectangleShape2D" id="Range"]
 size = Vector2(250, 220)
 [sub_resource type="RectangleShape2D" id="Body"]
@@ -38,6 +39,11 @@ fallback_paths = Array[NodePath]([NodePath("../Placeholder")])
 [node name="Placeholder" type="Polygon2D" parent="Visuals"]
 polygon = PackedVector2Array(-80, 55, -80, -40, 0, -75, 80, -40, 80, 55)
 color = Color(0.49, 0.38, 0.25, 1)
+
+[node name="GroundTreatment" type="Node2D" parent="."]
+z_index = -4
+script = ExtResource("4_ground")
+building_kind = "warehouse"
 [node name="Door" type="Polygon2D" parent="Visuals/Placeholder"]
 polygon = PackedVector2Array(-20, 55, -20, 0, 20, 0, 20, 55)
 color = Color(0.25, 0.2, 0.13, 1)

@@ -4,6 +4,7 @@
 
 [ext_resource type="Script" path="res://market_stall.gd" id="1"]
 [ext_resource type="Script" path="res://artwork_sprite.gd" id="2"]
+[ext_resource type="Script" path="res://building_ground_visual.gd" id="3_ground"]
 
 [sub_resource type="RectangleShape2D" id="Range"]
 size = Vector2(180, 170)
@@ -44,6 +45,11 @@ color = Color(0.54, 0.67, 0.38, 1)
 [node name="Counter" type="Polygon2D" parent="Visuals/Placeholder"]
 polygon = PackedVector2Array(-68, -4, 68, -4, 68, 7, -68, 7)
 color = Color(0.87, 0.72, 0.46, 1)
+
+[node name="GroundTreatment" type="Node2D" parent="."]
+z_index = -4
+script = ExtResource("3_ground")
+building_kind = "market_stall"
 
 [node name="NameLabel" type="Label" parent="Visuals"]
 z_index = 1
