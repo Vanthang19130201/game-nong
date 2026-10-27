@@ -35,6 +35,9 @@ var rod_info: Label
 var rod_upgrade: Button
 
 @onready var inventory_label: Label = $Layout/InventoryLabel
+var player_name_label: Label
+var player_level_label: Label
+var coin_count_label: Label
 @onready var shop_button: Button = $Layout/Actions/ShopButton
 @onready var crop_selector: OptionButton = $Layout/Actions/CropSelector
 @onready var save_status: Label = $Layout/SaveStatus
@@ -183,6 +186,7 @@ func _ready() -> void:
 	$ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/DiscardChickenFeed.pressed.connect(_discard_feed.bind("chicken_feed"))
 	$ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/DiscardCowFeed.pressed.connect(_discard_feed.bind("cow_feed"))
 	Inventory.inventory_changed.connect(_update_inventory)
+	SaveManager.player_name_changed.connect(_update_inventory)
 	shop_button.pressed.connect(_toggle_shop)
 	reset_button.pressed.connect(_show_reset_confirmation)
 	reset_confirmation.confirmed.connect(_reset_game)
@@ -208,6 +212,7 @@ func _ready() -> void:
 	_setup_cozy_ui()
 	_setup_feed_presentation()
 	_apply_ui_theme(self)
+	_setup_profile_hud()
 	_update_inventory()
 
 
@@ -316,9 +321,76 @@ func _apply_ui_theme(node: Node) -> void:
 		_apply_ui_theme(child)
 
 
+
+func _setup_profile_hud() -> void:
+	inventory_label.hide()
+
+	var layout: VBoxContainer = $Layout
+	layout.add_theme_constant_override("separation", 5)
+
+	$StatsBackdrop.offset_bottom = 158.0
+	layout.offset_bottom = 148.0
+
+	var header := HBoxContainer.new()
+	header.name = "ProfileHeader"
+	header.custom_minimum_size.y = 24
+	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layout.add_child(header)
+	layout.move_child(header, 0)
+
+	player_name_label = Label.new()
+	player_name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	player_name_label.clip_text = true
+	player_name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	player_name_label.add_theme_font_size_override("font_size", 18)
+	player_name_label.add_theme_color_override("font_color", Color("5b402d"))
+	player_name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	header.add_child(player_name_label)
+
+	player_level_label = Label.new()
+	player_level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	player_level_label.add_theme_font_size_override("font_size", 14)
+	player_level_label.add_theme_color_override("font_color", Color("6d5139"))
+	player_level_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	header.add_child(player_level_label)
+
+	var coin_row := HBoxContainer.new()
+	coin_row.name = "CoinRow"
+	coin_row.custom_minimum_size.y = 24
+	coin_row.add_theme_constant_override("separation", 6)
+	coin_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layout.add_child(coin_row)
+	layout.move_child(coin_row, 1)
+
+	var coin_icon := Control.new()
+	coin_icon.custom_minimum_size = Vector2(22, 22)
+	coin_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	coin_icon.set_script(preload("res://item_icon.gd"))
+	coin_icon.item_id = "coins"
+	coin_row.add_child(coin_icon)
+
+	coin_count_label = Label.new()
+	coin_count_label.add_theme_font_size_override("font_size", 16)
+	coin_count_label.add_theme_color_override("font_color", Color("5b402d"))
+	coin_count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	coin_row.add_child(coin_count_label)
+
+	$Layout/Experience/Title.add_theme_color_override("font_color", Color("7a6249"))
+	$Layout/Materials/WoodCount.add_theme_color_override("font_color", Color("5b402d"))
+	$Layout/Materials/StoneCount.add_theme_color_override("font_color", Color("5b402d"))
+
+
 func _update_inventory() -> void:
 	save_status.text = ""
-	inventory_label.text = tr("HUD_COMPACT") % [Inventory.coins, Inventory.player_level]
+	var display_name := SaveManager.player_name.strip_edges()
+	if display_name.is_empty():
+		display_name = "Farmer"
+	if is_instance_valid(player_name_label):
+		player_name_label.text = display_name
+	if is_instance_valid(player_level_label):
+		player_level_label.text = "Cấp %d" % Inventory.player_level
+	if is_instance_valid(coin_count_label):
+		coin_count_label.text = _format_number(Inventory.coins)
 	$Layout/Materials/WoodCount.text = "%s: %d" % [Localization.display_name("wood"), Inventory.wood]
 	$Layout/Materials/StoneCount.text = "%s: %d" % [Localization.display_name("stone"), Inventory.stone]
 	experience_bar.max_value = Inventory.exp_to_next_level()
@@ -414,13 +486,15 @@ func _show_reset_confirmation() -> void:
 
 
 func _reset_game() -> void:
-	if SaveManager.reset_game():
+	if SaveManager.reset_for_character_selection():
 		plot_purchase.hide()
 		pending_plot_number = 0
 		_close_game_panels()
 		message_label.text = ""
-		save_status.text = tr("RESET_DONE")
-		get_tree().reload_current_scene.call_deferred()
+
+		get_tree().change_scene_to_file.call_deferred(
+			"res://start_menu.tscn"
+		)
 	else:
 		save_status.text = tr("RESET_FAILED")
 		show_transaction_feedback(tr("RESET_FAILED"))
@@ -1268,6 +1342,15 @@ func show_item_hint(source: Control, message: String) -> void:
 	for hint in item_hints:
 		hint.text = message.replace("\n"," · ") if hint.is_visible_in_tree() else ""
 
+
+
+func _format_number(value: int) -> String:
+	var text := str(value)
+	var result := ""
+	while text.length() > 3:
+		result = "," + text.right(3) + result
+		text = text.left(text.length() - 3)
+	return text + result
 
 func clear_item_hint(source: Control) -> void:
 	if source != item_hint_source:
