@@ -1034,28 +1034,25 @@ func _apply_failed_style() -> void:
 func _set_panel_layout(
 	mode: String
 ) -> void:
+	var desired_size := Vector2(420.0, 380.0)
+	if mode == "bite":
+		desired_size = Vector2(420.0, 360.0)
+	elif mode == "catch":
+		desired_size = Vector2(330.0, 280.0)
 
-	match mode:
-		"bite":
-			panel.offset_left = -205.0
-			panel.offset_right = 205.0
-
-			panel.offset_top = -245.0
-			panel.offset_bottom = -28.0
-
-		"catch":
-			panel.offset_left = -165.0
-			panel.offset_right = 165.0
-
-			panel.offset_top = -225.0
-			panel.offset_bottom = -30.0
-
-		_:
-			panel.offset_left = -185.0
-			panel.offset_right = 185.0
-
-			panel.offset_top = -220.0
-			panel.offset_bottom = -30.0
+	var viewport_size := get_viewport_rect().size
+	var panel_size := Vector2(
+		minf(desired_size.x, maxf(240.0, viewport_size.x - 24.0)),
+		minf(desired_size.y, maxf(220.0, viewport_size.y - 24.0))
+	)
+	panel.anchor_top = 0.5
+	panel.anchor_bottom = 0.5
+	panel.offset_left = -panel_size.x * 0.5
+	panel.offset_right = panel_size.x * 0.5
+	panel.offset_top = -panel_size.y * 0.5
+	panel.offset_bottom = panel_size.y * 0.5
+	panel.custom_minimum_size = panel_size
+	info.custom_minimum_size.x = maxf(0.0, panel_size.x - 32.0)
 
 
 # ==================================================

@@ -8,6 +8,7 @@ const LAND_SCENE = preload("res://land_zone.tscn")
 const AnimalGroup = preload("res://animal_group.gd")
 const Placement = preload("res://building_placement.gd")
 const FishingWaterZone = preload("res://fishing_water_zone.gd")
+const WATER_AMBIENCE_SCRIPT = preload("res://pond_ambience.gd")
 
 var dog: CharacterBody2D
 var decoration_manager: Node
@@ -430,6 +431,7 @@ func _setup_fishing_waters() -> void:
 	)
 
 	add_child(river)
+	_add_water_ambience(river, "RiverAmbience")
 
 
 	# ============================================
@@ -469,6 +471,8 @@ func _setup_fishing_waters() -> void:
 	)
 
 	add_child(pond)
+
+	_add_water_ambience(pond, "PondAmbience")
 
 
 	# ============================================
@@ -525,3 +529,10 @@ func _setup_fishing_waters() -> void:
 	label.z_index = 2
 
 	add_child(label)
+
+
+func _add_water_ambience(water: Node2D, node_name: String) -> void:
+	var ambience := Node2D.new()
+	ambience.name = node_name
+	ambience.set_script(WATER_AMBIENCE_SCRIPT)
+	water.add_child(ambience)

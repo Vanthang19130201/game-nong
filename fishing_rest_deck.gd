@@ -1,6 +1,11 @@
 extends Node2D
 
 # Decorative dock only: no collision, input, fishing state, or per-frame work.
+func _ready() -> void:
+	# Player stays above the dock even when standing on its planks.
+	z_index = -1
+
+
 func _draw() -> void:
 	var deck := Rect2(-32, -52, 64, 104)
 	draw_rect(deck.grow(5), Color("604832"), true)

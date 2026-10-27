@@ -55,6 +55,7 @@ func begin_bite() -> void:
 func run_checks() -> void:
 	await process_frame
 	await process_frame
+	root.size = Vector2i(1152, 648)
 	inv = root.get_node("Inventory")
 	manager = root.get_node("SaveManager")
 	check(manager.SAVE_PATH == "res://test-save.cfg", "isolated save required")
@@ -65,6 +66,7 @@ func run_checks() -> void:
 	player = farm.get_node("Player")
 	spot = farm.get_node("FishingSpot")
 	var pond = farm.get_node("FishingPond")
+	var river = farm.get_node("RiverFishingWater")
 	await create_timer(0.1).timeout
 	check(pond.shape_mode == "polygon", "main fishing pond uses an irregular polygon")
 	check(pond.contains_world_point(Vector2(2240, 1190)), "pond center is fishable water")
@@ -80,7 +82,13 @@ func run_checks() -> void:
 	check(not bridge_visual_bounds.intersects(river_deck_visual_bounds), "river deck artwork does not overlap the bridge")
 	check(get_nodes_in_group("fishing_session_manager").size() == 1, "both rest decks reuse the single fishing manager")
 	check(not pond.contains_world_point(Vector2(1940, 1190)), "river bank remains outside the pond")
-	check(farm.get_node("FishMarket").position.y > pond.position.y + 700, "Fish Market is below the pond")
+	var fish_market: Node2D = farm.get_node("FishMarket")
+	check(fish_market.position.y < pond.position.y - 700, "Fish Market is above the pond")
+	check(fish_market.position == Vector2(2240, 340), "Fish Market sits on the northern bank with a gap from the pond")
+	check(is_equal_approx(farm.get_node("RiverRestDeck").z_index, -1.0) and is_equal_approx(farm.get_node("PondRestDeck").z_index, -1.0) and farm.get_node("Player").z_index == 0, "player draws above both dock decorations")
+	check(pond.get_node("PondAmbience") != null, "pond has a separate decorative water animation")
+	check(river.get_node("RiverAmbience") != null, "river has the same decorative fish and ripple effects")
+	check(river.contains_world_point(Vector2(1870, 800)) and not river.contains_world_point(Vector2(1945, 800)), "river effects stay inside the river water zone")
 	var stage: String = OS.get_cmdline_user_args()[0]
 	if stage == "fishing_read":
 		check(inv.has_fishing_rod and inv.fishing_rod_level == 3, "rod save restore")
@@ -139,6 +147,9 @@ func check_fishing() -> void:
 	check(player.fishing_prompt.visible, "valid bank position shows fishing prompt")
 	await key(KEY_E)
 	check(spot.state == spot.State.WAITING_FOR_BITE and hud.fishing_ui.active_spot == spot, "E starts session from the same target as the prompt")
+	await process_frame
+	var close_rect: Rect2 = hud.fishing_ui.close_button.get_global_rect()
+	check(close_rect.position.y >= 0.0 and close_rect.end.y <= float(root.size.y), "fishing close button stays fully inside the screen")
 	var original_deadline: float = spot.deadline
 	await key(KEY_E, true)
 	check(spot.deadline == original_deadline and spot.state == spot.State.WAITING_FOR_BITE, "held key echo ignored")

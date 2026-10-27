@@ -398,7 +398,7 @@ position = Vector2(1980, 1020)
 position = Vector2(2048, 1450)
 
 [node name="FishMarket" parent="." unique_id=1259020075 instance=ExtResource("15_market")]
-position = Vector2(2200, 2110)
+position = Vector2(2240, 340)
 
 [node name="Warehouse" parent="." unique_id=1215524133 instance=ExtResource("95_warehouse")]
 position = Vector2(424.00003, 617)
