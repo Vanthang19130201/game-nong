@@ -5,21 +5,26 @@ const UI_THEME: Theme = preload(
 )
 
 const FISH_CAST_DISTANCES: Array[float] = [
-	48.0,
-	60.0,
-	72.0,
-	86.0
+	40.0,
+	55.0,
+	70.0,
+	85.0,
+	100.0,
+	115.0,
+	130.0,
+	145.0
 ]
 
 var active_resource: Node = null
-
 var mouse_interaction: Node
-
 var last_interaction_frame: int = -1
 
 var facing_vector: Vector2 = Vector2.DOWN
 
 var fishing_prompt: Label
+
+var fishing_input_locked: bool = false
+var fishing_target_available: bool = false
 
 @export var speed: float = 200.0
 
@@ -39,15 +44,11 @@ var fishing_prompt: Label
 
 
 func _ready() -> void:
-	add_to_group(
-		"farm_player"
-	)
+	add_to_group("farm_player")
 
 	mouse_interaction = Node.new()
 
-	mouse_interaction.name = (
-		"WorldMouseInteraction"
-	)
+	mouse_interaction.name = "WorldMouseInteraction"
 
 	mouse_interaction.set_script(
 		preload(
@@ -55,9 +56,7 @@ func _ready() -> void:
 		)
 	)
 
-	add_child(
-		mouse_interaction
-	)
+	add_child(mouse_interaction)
 
 	_setup_fishing_prompt()
 
@@ -80,24 +79,19 @@ func _physics_process(
 		"move_down"
 	)
 
-	var fishing_active: bool = (
-		is_instance_valid(hud)
-		and is_instance_valid(
-			hud.fishing_ui
-		)
-		and is_instance_valid(
-			hud.fishing_ui.active_spot
-		)
-	)
+	var fishing_active := _fishing_active()
 
 	if (
 		not fishing_active
-		and direction.length_squared()
-		> 0.01
+		and direction.length_squared() > 0.01
 	):
 		facing_vector = _cardinal_direction(
 			direction
 		)
+
+	# ==================================================
+	# CÂU CÁ - BẮT E TRỰC TIẾP
+	# ==================================================
 
 	if fishing_active:
 		direction = Vector2.ZERO
@@ -121,8 +115,24 @@ func _physics_process(
 	_update_fishing_prompt()
 
 
+func _unlock_fishing_input() -> void:
+	fishing_input_locked = false
+
+
+func _fishing_active() -> bool:
+	return (
+		is_instance_valid(hud)
+		and is_instance_valid(
+			hud.fishing_ui
+		)
+		and is_instance_valid(
+			hud.fishing_ui.active_spot
+		)
+	)
+
+
 # ==================================================
-# INPUT
+# INPUT THƯỜNG
 # ==================================================
 
 func _unhandled_input(
@@ -130,8 +140,7 @@ func _unhandled_input(
 ) -> void:
 
 	if (
-		event
-		is InputEventMouseButton
+		event is InputEventMouseButton
 		and event.button_index
 		== MOUSE_BUTTON_LEFT
 		and event.pressed
@@ -161,30 +170,29 @@ func _unhandled_input(
 	):
 		return
 
-	get_viewport().set_input_as_handled()
+	# Route E directly into casting when a valid water target is ahead.
+	if not _fishing_active():
+		var target := _find_fishing_target()
+		if not target.is_empty():
+			request_fishing_cast(target)
+			get_viewport().set_input_as_handled()
+			return
 
-	# Nếu đang trang bị cần và đang nhìn vào nước,
-	# E sẽ ưu tiên câu cá.
-	if _try_start_free_fishing():
-		return
+	get_viewport().set_input_as_handled()
 
 	try_interact()
 
 
 # ==================================================
-# FREE FISHING
+# FISHING PROMPT
 # ==================================================
 
 func _setup_fishing_prompt() -> void:
 	fishing_prompt = Label.new()
 
-	fishing_prompt.name = (
-		"FishingPrompt"
-	)
+	fishing_prompt.name = "FishingPrompt"
 
-	fishing_prompt.text = (
-		"[E] Câu cá"
-	)
+	fishing_prompt.text = "[E] Câu cá"
 
 	fishing_prompt.theme = UI_THEME
 
@@ -230,9 +238,7 @@ func _setup_fishing_prompt() -> void:
 
 	fishing_prompt.hide()
 
-	add_child(
-		fishing_prompt
-	)
+	add_child(fishing_prompt)
 
 
 func _update_fishing_prompt() -> void:
@@ -242,23 +248,52 @@ func _update_fishing_prompt() -> void:
 		return
 
 	if not _can_prepare_fishing():
+		fishing_target_available = false
 		fishing_prompt.hide()
 		return
 
 	var target := _find_fishing_target()
+	fishing_target_available = not target.is_empty()
 
 	fishing_prompt.visible = (
-		not target.is_empty()
+		fishing_target_available
 	)
 
+
+func can_start_free_fishing() -> bool:
+	if fishing_input_locked or _fishing_active():
+		return false
+	return not _find_fishing_target().is_empty()
+
+
+func request_fishing_cast(
+	target: Dictionary = {}
+) -> bool:
+	if fishing_input_locked or _fishing_active():
+		return false
+
+	if target.is_empty():
+		target = _find_fishing_target()
+	if target.is_empty():
+		return false
+
+	fishing_input_locked = true
+	var started := _start_free_fishing(target)
+	get_tree().create_timer(0.15).timeout.connect(
+		_unlock_fishing_input
+	)
+	return started
+
+
+# ==================================================
+# KIỂM TRA CÓ ĐƯỢC CÂU KHÔNG
+# ==================================================
 
 func _can_prepare_fishing() -> bool:
 	if not is_instance_valid(hud):
 		return false
 
-	if is_instance_valid(
-		hud.fishing_ui.active_spot
-	):
+	if _fishing_active():
 		return false
 
 	if is_instance_valid(
@@ -292,6 +327,10 @@ func _can_prepare_fishing() -> bool:
 	)
 
 
+# ==================================================
+# TÌM NƯỚC PHÍA TRƯỚC
+# ==================================================
+
 func _find_fishing_target() -> Dictionary:
 	if not _can_prepare_fishing():
 		return {}
@@ -319,7 +358,7 @@ func _find_fishing_target() -> Dictionary:
 			):
 				continue
 
-			# Player phải đứng trên bờ.
+			# Player phải đứng ngoài nước.
 			if zone.contains_world_point(
 				global_position
 			):
@@ -338,39 +377,114 @@ func _find_fishing_target() -> Dictionary:
 	return {}
 
 
-func _try_start_free_fishing() -> bool:
-	var target := _find_fishing_target()
+# ==================================================
+# BẮT ĐẦU CÂU
+# ==================================================
+
+func _start_free_fishing(
+	target: Dictionary
+) -> bool:
 
 	if target.is_empty():
 		return false
 
-	var manager := (
+	var manager: Node = null
+
+	# Cách 1:
+	# tìm manager bằng group mới.
+	manager = (
 		get_tree()
 		.get_first_node_in_group(
 			"fishing_session_manager"
 		)
 	)
 
+	# Cách 2:
+	# fallback qua group fishing_spots cũ.
 	if not is_instance_valid(manager):
-		Inventory.fail(
-			"Không tìm thấy bộ điều khiển câu cá."
+		for candidate in (
+			get_tree()
+			.get_nodes_in_group(
+				"fishing_spots"
+			)
+		):
+			if (
+				is_instance_valid(candidate)
+				and candidate.has_method(
+					"start_free_session"
+				)
+			):
+				manager = candidate
+				break
+
+	# Cách 3:
+	# fallback tìm FishingSpot trực tiếp trong scene.
+	if not is_instance_valid(manager):
+		var scene := get_tree().current_scene
+
+		if scene != null:
+			var candidate := (
+				scene.get_node_or_null(
+					"FishingSpot"
+				)
+			)
+
+			if (
+				is_instance_valid(candidate)
+				and candidate.has_method(
+					"start_free_session"
+				)
+			):
+				manager = candidate
+
+	if not is_instance_valid(manager):
+		_show_fishing_error(
+			"Không tìm thấy FishingSpot."
 		)
-		return true
+
+		return false
 
 	if not manager.has_method(
 		"start_free_session"
 	):
-		Inventory.fail(
-			"Hệ thống câu cá chưa sẵn sàng."
+		_show_fishing_error(
+			"FishingSpot chưa có start_free_session()."
 		)
-		return true
 
-	return manager.start_free_session(
-		self,
-		target["point"],
-		target["water_id"]
+		return false
+
+	var started: bool = (
+		manager.start_free_session(
+			self,
+			target["point"],
+			target["water_id"]
+		)
 	)
 
+	return started
+
+
+func _show_fishing_error(
+	message: String
+) -> void:
+
+	if (
+		is_instance_valid(hud)
+		and hud.has_method(
+			"show_transaction_feedback"
+		)
+	):
+		hud.show_transaction_feedback(
+			message
+		)
+
+	else:
+		Inventory.fail(message)
+
+
+# ==================================================
+# TƯ THẾ NHÂN VẬT
+# ==================================================
 
 func begin_fishing_pose() -> void:
 	if is_instance_valid(
@@ -447,7 +561,7 @@ func _cardinal_direction(
 
 
 # ==================================================
-# NORMAL INTERACTION
+# NORMAL MOUSE INTERACTION
 # ==================================================
 
 func interact_at_screen_position(
@@ -465,12 +579,7 @@ func interact_at_screen_position(
 	):
 		return
 
-	if (
-		is_instance_valid(hud)
-		and is_instance_valid(
-			hud.fishing_ui.active_spot
-		)
-	):
+	if _fishing_active():
 		return
 
 	var world_position: Vector2 = (
@@ -529,12 +638,7 @@ func can_interact_with(
 	):
 		return false
 
-	if (
-		is_instance_valid(hud)
-		and is_instance_valid(
-			hud.fishing_ui.active_spot
-		)
-	):
+	if _fishing_active():
 		return false
 
 	return target.can_interact()

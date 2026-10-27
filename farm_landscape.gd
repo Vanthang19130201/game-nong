@@ -24,9 +24,11 @@ func _draw() -> void:
 		_path(PackedVector2Array([Vector2(x, 1080), Vector2(x, 1140)]), 24.0)
 	for x in [1250.0, 1450.0]:
 		_path(PackedVector2Array([Vector2(x, 1140), Vector2(x, 1250)]), 24.0)
-	_path(PackedVector2Array([Vector2(1980, 850), Vector2(2190, 850), Vector2(2190, 1040)]), 32.0)
-	_path(PackedVector2Array([Vector2(2020, 850), Vector2(2020, 1040)]), 24.0)
-	for point in [Vector2(2010, 1110), Vector2(2080, 1175), Vector2(2250, 1095), Vector2(2290, 790), Vector2(1965, 730), Vector2(2010, 680)]:
+	# Walkway approaches the bridge from the west side of the river decks,
+	# then follows the clear strip between the river and pond toward the market.
+	_path(PackedVector2Array([Vector2(1975, 850), Vector2(2035, 930), Vector2(2035, 1210), Vector2(1985, 1560), Vector2(1985, 1850), Vector2(2050, 2200), Vector2(2180, 2200)]), 28.0)
+	_path(PackedVector2Array([Vector2(1960, 890), Vector2(1960, 940)]), 22.0)
+	for point in [Vector2(1980, 680), Vector2(1970, 1190), Vector2(1980, 1715), Vector2(2370, 700), Vector2(2370, 1420), Vector2(2220, 1905), Vector2(1965, 730), Vector2(2010, 680)]:
 		_tuft(point, Color("a1b486"))
 	for point in [Vector2(209, 983), Vector2(526, 1080), Vector2(226, 1353), Vector2(535, 1335), Vector2(592, 790), Vector2(1035, 289)]:
 		_tuft(point, Color("9da26d"))

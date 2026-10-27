@@ -11,6 +11,7 @@ script = ExtResource("1")
 metadata/placement_rect = Rect2(-45, -45, 90, 90)
 
 [node name="Visual" type="ColorRect" parent="."]
+visible = false
 offset_left = -45.0
 offset_top = -45.0
 offset_right = 45.0
@@ -19,6 +20,7 @@ mouse_filter = 2
 color = Color(0.15, 0.55, 0.75, 1)
 
 [node name="Label" type="Label" parent="."]
+visible = false
 z_index = 1
 theme_override_font_sizes/font_size = 12
 theme_override_colors/font_color = Color(1, 0.96, 0.84, 1)
@@ -37,10 +39,12 @@ mouse_filter = 2
 text = "WORLD_FISHING_SPOT"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+disabled = true
 shape = SubResource("SpotShape")
 
 [node name="Visuals" type="Node2D" parent="."]
 [node name="FishingSprite" type="Sprite2D" parent="Visuals"]
+visible = false
 position = Vector2(-36, -8)
 script = ExtResource("2")
 artwork_id = "fishing_spot"

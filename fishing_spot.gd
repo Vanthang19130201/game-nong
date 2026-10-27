@@ -15,7 +15,7 @@ enum State {
 
 const CATCH_DISPLAY_TIME: float = 2.2
 const AUTO_RECAST_DELAY: float = 0.65
-const MAX_CAST_DISTANCE: float = 150.0
+const MAX_CAST_DISTANCE: float = 170.0
 
 var state: State = State.IDLE
 
@@ -40,6 +40,7 @@ var session_player_origin: Vector2 = (
 )
 
 var session_water_id: String = ""
+var session_facing_direction: Vector2 = Vector2.DOWN
 
 var fishing_visual: Node2D
 
@@ -87,17 +88,33 @@ func now() -> float:
 
 
 # ==================================================
-# OLD FIXED SPOT DISABLED
+# FREE CAST CONTROLLER
 # ==================================================
 
 func can_interact() -> bool:
-	return false
+	var farm_player := get_tree().get_first_node_in_group(
+		"farm_player"
+	)
+	return (
+		is_instance_valid(farm_player)
+		and farm_player.has_method("can_start_free_fishing")
+		and farm_player.can_start_free_fishing()
+	)
 
 
 func interact(
 	_body: Node2D = null
 ) -> void:
-	pass
+	var farm_player := _body
+	if not is_instance_valid(farm_player):
+		farm_player = get_tree().get_first_node_in_group(
+			"farm_player"
+		)
+	if (
+		is_instance_valid(farm_player)
+		and farm_player.has_method("request_fishing_cast")
+	):
+		farm_player.request_fishing_cast()
 
 
 # ==================================================
@@ -111,27 +128,36 @@ func start_free_session(
 ) -> bool:
 
 	if state != State.IDLE:
-		return false
+		return Inventory.fail("Phiên câu cá hiện tại chưa kết thúc.")
 
 	if not is_instance_valid(body):
-		return false
+		return Inventory.fail("Không tìm thấy người chơi để bắt đầu câu.")
 
 	if hud == null:
-		return false
+		return Inventory.fail("Không tìm thấy giao diện câu cá.")
 
 	if is_instance_valid(
 		hud.fishing_ui.active_spot
 	):
-		return false
+		return Inventory.fail("Bạn đang ở trong một phiên câu cá.")
 
 	if not Inventory.is_zone_unlocked(
 		"fishing"
 	):
-		return false
+		return Inventory.fail(tr("FISHING_UNLOCK_LEVEL_10"))
 
 	if not Inventory.has_fishing_rod:
 		return Inventory.fail(
 			tr("FISHING_NEED_ROD")
+		)
+
+	if not _valid_cast_target(
+		body,
+		cast_world_position,
+		water_id
+	):
+		return Inventory.fail(
+			"Không có vùng nước câu hợp lệ phía trước."
 		)
 
 	player = body
@@ -145,6 +171,12 @@ func start_free_session(
 	)
 
 	session_water_id = water_id
+	var facing_value: Variant = body.get("facing_vector")
+	session_facing_direction = (
+		facing_value.normalized()
+		if facing_value is Vector2
+		else Vector2.DOWN
+	)
 
 	if player.has_method(
 		"begin_fishing_pose"
@@ -163,6 +195,42 @@ func start_free_session(
 	)
 
 	return true
+
+
+func _valid_cast_target(
+	body: Node2D,
+	cast_world_position: Vector2,
+	water_id: String
+) -> bool:
+	if water_id.is_empty() or body.global_position.distance_to(
+		cast_world_position
+	) > MAX_CAST_DISTANCE:
+		return false
+
+	var cast_direction := (
+		cast_world_position - body.global_position
+	).normalized()
+	var facing_value: Variant = body.get("facing_vector")
+	var direction: Vector2 = (
+		facing_value.normalized()
+		if facing_value is Vector2
+		else cast_direction
+	)
+	if direction.dot(
+		cast_direction
+	) < 0.7:
+		return false
+
+	for zone in get_tree().get_nodes_in_group("fishing_water_zones"):
+		if (
+			is_instance_valid(zone)
+			and zone.water_id == water_id
+			and zone.contains_world_point(cast_world_position)
+			and not zone.contains_world_point(body.global_position)
+		):
+			return true
+
+	return false
 
 
 # ==================================================
@@ -529,12 +597,12 @@ func _update_fishing_visual() -> void:
 		return
 
 	# Dây xuất phát gần tay Player.
-	var origin := (
-		to_local(
-			player.global_position
-		)
-		+ Vector2(0, -14)
+	var hand_world_position := (
+		player.global_position
+		+ Vector2(0, -10)
+		+ session_facing_direction * 8.0
 	)
+	var origin := to_local(hand_world_position)
 
 	fishing_visual.set_cast_origin(
 		origin

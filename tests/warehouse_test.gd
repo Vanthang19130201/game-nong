@@ -52,7 +52,7 @@ func run_checks() -> void:
 			check(farm.get_node("Ground").size == Vector2(2400,2400) and player.get_node("Camera2D").limit_bottom == 2400, "expanded ground and camera")
 			var yard = farm.get_node("FarmYard")
 			check(yard.size.y > 850 and farm.get_node("Ground").get_rect().encloses(yard.get_rect()), "expanded farm yard remains inside map")
-			check(farm.get_node("Bridge").position == Vector2(1870,850) and farm.get_node("FishingSpot").position == Vector2(2020,1040), "bridge and dock stay aligned with the eastern river bank")
+			check(farm.get_node("Bridge").position == Vector2(1870,850) and farm.get_node("RiverRestDeck").position == Vector2(1980,1020), "bridge and river deck stay separate beside the eastern bank")
 			player.position = Vector2(300,400)
 			await create_timer(0.1).timeout
 			check(not warehouse.can_interact() and warehouse.get_node("Visuals/Prompt").text.is_empty(), "no permanent prompt or distant access")

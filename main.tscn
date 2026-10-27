@@ -26,6 +26,7 @@
 [ext_resource type="Texture2D" uid="uid://dodxigiotblcv" path="res://assets/environment/rocks/normal_rock.svg" id="100_shore_rock"]
 [ext_resource type="Script" uid="uid://lvma2u7kkurp" path="res://world_body.gd" id="101_body"]
 [ext_resource type="Texture2D" uid="uid://baqy30w1e2cpl" path="res://assets/characters/fallback.svg" id="102_fallback"]
+[ext_resource type="PackedScene" path="res://fishing_rest_deck.tscn" id="103_fishing_deck"]
 
 [sub_resource type="RectangleShape2D" id="HouseInteractionShape"]
 size = Vector2(260, 220)
@@ -361,7 +362,7 @@ mouse_filter = 2
 color = Color(0.28, 0.48, 0.4, 1)
 
 [node name="DecorativeRock" type="Sprite2D" parent="FishingArea" unique_id=27376775]
-position = Vector2(180, 1120)
+position = Vector2(120, 500)
 scale = Vector2(0.55, 0.55)
 texture = ExtResource("100_shore_rock")
 
@@ -388,10 +389,16 @@ shape = SubResource("RiverLowerShape")
 position = Vector2(1870, 850)
 
 [node name="FishingSpot" parent="." unique_id=1923137942 instance=ExtResource("14_fishing")]
-position = Vector2(2020, 1040)
+position = Vector2(0, 0)
+
+[node name="RiverRestDeck" parent="." instance=ExtResource("103_fishing_deck")]
+position = Vector2(1980, 1020)
+
+[node name="PondRestDeck" parent="." instance=ExtResource("103_fishing_deck")]
+position = Vector2(2048, 1450)
 
 [node name="FishMarket" parent="." unique_id=1259020075 instance=ExtResource("15_market")]
-position = Vector2(2190, 980)
+position = Vector2(2200, 2110)
 
 [node name="Warehouse" parent="." unique_id=1215524133 instance=ExtResource("95_warehouse")]
 position = Vector2(424.00003, 617)

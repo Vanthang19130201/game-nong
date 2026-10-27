@@ -75,7 +75,7 @@ func run_checks() -> void:
 	check(warehouse.position == Vector2(920, 260), "new farm Warehouse is near the main house")
 	check_art(warehouse.get_node("Visuals/BuildingSprite"), "warehouse")
 	check_art(farm.get_node("FishMarket/Visuals/BuildingSprite"), "fish_market")
-	check_art(farm.get_node("FishingSpot/Visuals/FishingSprite"), "fishing_spot")
+	check(not farm.get_node("FishingSpot/Visuals/FishingSprite").visible, "fishing controller has no fixed rod artwork")
 	check_art(farm.get_node("Bridge/Visuals/Sprite2D"), "fishing_bridge")
 	check_art(farm.get_node("River/Visuals/RiverSprite"), "river")
 	var home: Node2D = farm.get_node("DogHouse")
@@ -87,10 +87,9 @@ func run_checks() -> void:
 	check_label(warehouse.get_node("Visuals/BuildingSprite"), warehouse.get_node("Visuals/NameLabel"), "Warehouse")
 	check_label(home.get_node("Visuals/BuildingSprite"), home.get_node("Label"), "Dog House")
 	check_label(farm.get_node("Bridge/Visuals/Sprite2D"), farm.get_node("Bridge/Sign"), "Fishing Bridge")
-	check_label(farm.get_node("FishingSpot/Visuals/FishingSprite"), farm.get_node("FishingSpot/Label"), "Fishing Spot")
-	var bridge_sprite: Sprite2D = farm.get_node("Bridge/Visuals/Sprite2D")
-	var bridge_rect: Rect2 = bridge_sprite.global_transform * bridge_sprite.get_rect()
-	check(farm.get_node("FishingSpot").position == Vector2(2020, 1040) and not farm.get_node("FishingSpot/Label").get_global_rect().intersects(bridge_rect), "dock label stays clear of bridge artwork")
+	check(not farm.get_node("FishingSpot/Label").visible, "old dock has no permanent fishing prompt")
+	check(farm.get_node("FishingSpot").position == Vector2.ZERO and farm.get_node("FishingSpot/CollisionShape2D").disabled, "single fishing manager is hidden from the world layout")
+	check(farm.get_node("RiverRestDeck").position == Vector2(1980, 1020) and farm.get_node("PondRestDeck").position == Vector2(2048, 1450), "two separate decorative decks align with their banks")
 	check(not farm.get_node("FishingAreaLabel").visible and farm.get_node("Bridge/Sign").visible, "fishing area uses one heading attached to its bridge")
 	check(farm.get_node("Landscape").get_script().resource_path == "res://farm_landscape.gd", "static paths and quarry terrain exist")
 	check(manager.resources.size() == 12 and manager.plots.size() == 32, "original resource IDs and crop plots preserved")
@@ -128,6 +127,9 @@ func run_checks() -> void:
 	Input.action_release("move_right")
 	check(player.position.x < 1800, "locked bridge blocks passage")
 	inv.player_level = 10
+	inv.fishing_unlocked = true
+	inv.has_fishing_rod = true
+	inv.fishing_rod_level = 1
 	inv.tools_unlock_notified = true
 	inv.normalize_exp()
 	inv.inventory_changed.emit()
@@ -139,6 +141,8 @@ func run_checks() -> void:
 	check(player.position.x > 1960, "player crosses the wooden bridge without getting stuck")
 	var spot: Area2D = farm.get_node("FishingSpot")
 	player.global_position = spot.global_position
+	player.facing_vector = Vector2.RIGHT
+	hud.hotbar.select_slot(7)
 	await create_timer(0.15).timeout
 	if "--capture" in OS.get_cmdline_user_args():
 		await capture_map("fishing-ready", Vector2(2050, 950))

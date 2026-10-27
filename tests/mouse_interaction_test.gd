@@ -62,6 +62,9 @@ func run_checks() -> void:
 	player = farm.get_node("Player")
 	hud = farm.get_node("HUD")
 	inv.player_level = 18
+	inv.fishing_unlocked = true
+	inv.has_fishing_rod = true
+	inv.fishing_rod_level = 1
 	inv.tools_unlock_notified = true
 	inv.coins = 100000
 	inv.normalize_exp()
@@ -135,6 +138,9 @@ func run_checks() -> void:
 		check(inv.get(resource_type) == amount and amount >= 2, "no duplicate gathering reward")
 	var spot = farm.get_node("FishingSpot")
 	await stand(spot.position)
+	player.facing_vector = Vector2.RIGHT
+	hud.hotbar.select_slot(7)
+	await create_timer(0.1).timeout
 	await click_world(spot.position)
 	check(spot.state == spot.State.WAITING_FOR_BITE and inv.fishing_attempts_used == 1, "click layer-0 FishingSpot casts")
 	await click_world(spot.position + Vector2(-250,-100))

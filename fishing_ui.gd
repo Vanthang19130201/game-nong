@@ -484,19 +484,20 @@ func _reel() -> void:
 
 
 func _start() -> void:
-	var spot = _nearby_spot()
-
-	if spot == null:
+	var player := get_tree().get_first_node_in_group(
+		"farm_player"
+	)
+	if player == null or not player.has_method("request_fishing_cast"):
 		return
 
 	if hud.blocks_world_input():
 		return
 
-	spot.start_session()
+	player.request_fishing_cast()
 
 
 # ==================================================
-# NEARBY SPOT
+# FREE CAST AVAILABILITY
 # ==================================================
 
 func _nearby_spot() -> Node:
@@ -510,31 +511,13 @@ func _nearby_spot() -> Node:
 	if player == null:
 		return null
 
-	var nearest: Node = null
-
-	var distance: float = INF
-
-	for spot in get_tree().get_nodes_in_group(
-		"fishing_spots"
+	if (
+		player.has_method("can_start_free_fishing")
+		and player.can_start_free_fishing()
 	):
-		var candidate_distance: float = (
-			player.global_position
-			.distance_squared_to(
-				spot.global_position
-			)
-		)
+		return player
 
-		if (
-			spot.can_interact()
-			and candidate_distance < distance
-		):
-			nearest = spot
-
-			distance = (
-				candidate_distance
-			)
-
-	return nearest
+	return null
 
 
 # ==================================================

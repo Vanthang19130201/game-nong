@@ -6,7 +6,7 @@ extends Camera2D
 @export var zoom_smoothing: float = 12.0
 
 # Zoom riêng khi vào chế độ câu cá.
-@export var fishing_zoom: float = 1.45
+@export var fishing_zoom: float = 1.2
 
 var target_zoom: float = 1.0
 var following_player: bool = true
@@ -200,10 +200,8 @@ func enter_fishing_focus(world_position: Vector2) -> void:
 
 	end_pan()
 
-	# Focus lệch về phía mặt nước.
-	pan_center = _clamp_center(
-		world_position + Vector2(-58, 12)
-	)
+	# FishingSpot supplies the midpoint between Player and bobber.
+	pan_center = _clamp_center(world_position)
 
 	following_player = false
 

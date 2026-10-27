@@ -403,62 +403,69 @@ func _create_farm_grid() -> void:
 
 
 func _setup_fishing_waters() -> void:
-	# ============================================
-	# SÔNG - VÙNG CÓ THỂ CÂU
-	# ============================================
 
 	var river := FishingWaterZone.new()
 
 	river.name = "RiverFishingWater"
-
 	river.water_id = "river"
-
 	river.shape_mode = "rect"
 
+	# Sông thật trong main.tscn:
+	# x = 1800 -> 1940
+	# y = 0 -> 2400
 	river.zone_size = Vector2(
 		140,
-		1050
+		2400
 	)
 
-	# Sông đã có artwork riêng.
 	river.draw_visual = false
 
-	# RiverWalls hiện tại đã chặn Player.
+	# Sông đã có RiverWalls nên không cần tạo collision nữa.
 	river.block_player = false
 
+	# Tâm chính xác của sông.
 	river.position = Vector2(
 		1870,
-		1400
+		1200
 	)
 
 	add_child(river)
 
 
 	# ============================================
-	# HỒ CÂU CÁ MỚI
+	# HỒ CÂU CÁ
 	# ============================================
 
 	var pond := FishingWaterZone.new()
 
 	pond.name = "FishingPond"
-
 	pond.water_id = "pond"
-
-	pond.shape_mode = "ellipse"
-
-	pond.zone_size = Vector2(
-		320,
-		220
-	)
+	pond.shape_mode = "polygon"
+	pond.zone_polygon = PackedVector2Array([
+		Vector2(-34, -700), Vector2(34, -710),
+		Vector2(86, -680), Vector2(119, -622),
+		Vector2(131, -523), Vector2(115, -408),
+		Vector2(146, -278), Vector2(132, -127),
+		Vector2(151, 20), Vector2(138, 180),
+		Vector2(120, 341), Vector2(91, 482),
+		Vector2(54, 610), Vector2(0, 665),
+		Vector2(-68, 640), Vector2(-112, 575),
+		Vector2(-138, 470), Vector2(-126, 335),
+		Vector2(-151, 190), Vector2(-133, 35),
+		Vector2(-151, -125), Vector2(-132, -285),
+		Vector2(-148, -440), Vector2(-123, -560),
+		Vector2(-90, -650)
+	])
 
 	pond.draw_visual = true
-
-	# Không cho Player đi xuống hồ.
 	pond.block_player = true
+	pond.water_color = Color("68aeb0")
+	pond.deep_water_color = Color("427f8d")
+	pond.bank_color = Color("c6ad78")
 
 	pond.position = Vector2(
-		2180,
-		1510
+		2240,
+		1190
 	)
 
 	add_child(pond)
@@ -471,7 +478,6 @@ func _setup_fishing_waters() -> void:
 	var label := Label.new()
 
 	label.name = "FishingPondLabel"
-
 	label.text = "Hồ câu cá"
 
 	label.theme = preload(
@@ -479,8 +485,8 @@ func _setup_fishing_waters() -> void:
 	)
 
 	label.position = Vector2(
-		2115,
-		1368
+		2098,
+		455
 	)
 
 	label.custom_minimum_size = Vector2(
