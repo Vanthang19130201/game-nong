@@ -7,6 +7,8 @@ const DOG_SCENE = preload("res://dog.tscn")
 const LAND_SCENE = preload("res://land_zone.tscn")
 const AnimalGroup = preload("res://animal_group.gd")
 const Placement = preload("res://building_placement.gd")
+const FishingWaterZone = preload("res://fishing_water_zone.gd")
+
 var dog: CharacterBody2D
 var decoration_manager: Node
 var animal_groups: Dictionary = {}
@@ -17,20 +19,29 @@ var animal_groups: Dictionary = {}
 
 func _ready() -> void:
 	_create_farm_grid()
+	_setup_fishing_waters()
+
 	for id in SaveManager.LandData.ZONES:
 		var zone = LAND_SCENE.instantiate()
 		zone.zone_id = id
 		zone.name = id
 		add_child(zone)
+
 	Inventory.inventory_changed.connect(_update_buildings)
 	_update_buildings()
+
 	decoration_manager = Node.new()
 	decoration_manager.name = "DecorationManager"
-	decoration_manager.set_script(preload("res://decoration_manager.gd"))
+	decoration_manager.set_script(
+		preload("res://decoration_manager.gd")
+	)
 	add_child(decoration_manager)
+
 	_place_resources()
+
 	Inventory.inventory_changed.connect(_update_animals)
 	_update_animals()
+
 	Inventory.inventory_changed.connect(_update_pets)
 	_update_pets()
 
@@ -39,62 +50,159 @@ func _place_resources() -> void:
 	# Keep resource positions unless they overlap restored objects or the player.
 	# Relocating a resource within its zone never changes its saved cooldown.
 	for resource in SaveManager.resources.values():
-		if _resource_position_is_clear(resource, resource.global_position):
+		if _resource_position_is_clear(
+			resource,
+			resource.global_position
+		):
 			continue
-		var zone: String = SaveManager.LandData.zone_at(resource.global_position)
-		var area: Rect2 = SaveManager.LandData.ZONES[zone]["area"]
+
+		var zone: String = SaveManager.LandData.zone_at(
+			resource.global_position
+		)
+
+		var area: Rect2 = SaveManager.LandData.ZONES[
+			zone
+		]["area"]
+
 		var found: bool = false
-		for y in range(int(area.position.y)+64,int(area.end.y)-32,64):
-			for x in range(int(area.position.x)+64,int(area.end.x)-32,64):
-				var point := Vector2(x,y)
-				var footprint: Rect2 = Placement.bounds(resource)
-				footprint.position += point-resource.global_position
-				if area.encloses(footprint) and _resource_position_is_clear(resource, point):
+
+		for y in range(
+			int(area.position.y) + 64,
+			int(area.end.y) - 32,
+			64
+		):
+			for x in range(
+				int(area.position.x) + 64,
+				int(area.end.x) - 32,
+				64
+			):
+				var point := Vector2(x, y)
+
+				var footprint: Rect2 = Placement.bounds(
+					resource
+				)
+
+				footprint.position += (
+					point
+					- resource.global_position
+				)
+
+				if (
+					area.encloses(footprint)
+					and _resource_position_is_clear(
+						resource,
+						point
+					)
+				):
 					resource.global_position = point
 					found = true
 					break
+
 			if found:
 				break
+
 		if not found:
 			# A completely filled zone cannot safely accept another resource.
 			resource.zone_id = "unplaced"
+
 		resource._update_zone(true)
 
 
-func _resource_position_is_clear(resource: Node2D, point: Vector2) -> bool:
-	if not Placement.can_place(resource, point, false):
+func _resource_position_is_clear(
+	resource: Node2D,
+	point: Vector2
+) -> bool:
+	if not Placement.can_place(
+		resource,
+		point,
+		false
+	):
 		return false
+
 	var footprint := Placement.bounds(resource)
-	footprint.position += point - resource.global_position
-	var player_shape: CollisionShape2D = $Player/CollisionShape2D
-	var player_bounds: Rect2 = player_shape.global_transform * player_shape.shape.get_rect()
-	return not footprint.intersects(player_bounds.grow(8.0))
+
+	footprint.position += (
+		point
+		- resource.global_position
+	)
+
+	var player_shape: CollisionShape2D = (
+		$Player/CollisionShape2D
+	)
+
+	var player_bounds: Rect2 = (
+		player_shape.global_transform
+		* player_shape.shape.get_rect()
+	)
+
+	return not footprint.intersects(
+		player_bounds.grow(8.0)
+	)
 
 
 func _restore_owned_land_positions() -> void:
 	var changed: bool = false
+
 	for id in SaveManager.buildings:
 		var building = SaveManager.buildings[id]
-		if not is_instance_valid(building) or not building.visible:
+
+		if (
+			not is_instance_valid(building)
+			or not building.visible
+		):
 			continue
-		if SaveManager.LandData.owns_rect(Placement.bounds(building), SaveManager.unlocked_land_zones):
+
+		if SaveManager.LandData.owns_rect(
+			Placement.bounds(building),
+			SaveManager.unlocked_land_zones
+		):
 			continue
-		var destination: Vector2 = FarmData.BUILDINGS[id]["position"]
-		if not Placement.can_place(building,destination):
+
+		var destination: Vector2 = (
+			FarmData.BUILDINGS[id]["position"]
+		)
+
+		if not Placement.can_place(
+			building,
+			destination
+		):
 			# Deterministic fallback for legacy farms whose defaults are occupied.
 			var found: bool = false
-			for y in range(128,1472,64):
-				for x in range(128,1664,64):
-					var point := Vector2(x,y)
-					if Placement.can_place(building,point):
+
+			for y in range(
+				128,
+				1472,
+				64
+			):
+				for x in range(
+					128,
+					1664,
+					64
+				):
+					var point := Vector2(
+						x,
+						y
+					)
+
+					if Placement.can_place(
+						building,
+						point
+					):
 						destination = point
 						found = true
 						break
+
 				if found:
 					break
+
 		building.global_position = destination
-		SaveManager.building_positions[id] = building.position
+
+		SaveManager.building_positions[id] = (
+			building.position
+		)
+
 		changed = true
+
 	if changed:
 		SaveManager.save_game.call_deferred()
 
@@ -105,79 +213,309 @@ func ensure_cow_shed_exists() -> void:
 
 func _update_buildings() -> void:
 	for id in FarmData.BUILDINGS:
-		var info: Dictionary = FarmData.BUILDINGS[id]
-		var owned: bool = info.get("always_owned", false) or (Inventory.has_dog_house if id == "dog_house" else Inventory.owns_building(id))
-		var building = get_node_or_null(info["node"])
+		var info: Dictionary = (
+			FarmData.BUILDINGS[id]
+		)
+
+		var owned: bool = (
+			info.get("always_owned", false)
+			or (
+				Inventory.has_dog_house
+				if id == "dog_house"
+				else Inventory.owns_building(id)
+			)
+		)
+
+		var building = get_node_or_null(
+			info["node"]
+		)
+
 		if building == null and owned:
-			var scene = load(info["scene"]) if not info["scene"].is_empty() else null
-			if not (scene is PackedScene):
-				push_warning("Missing building scene: " + id)
+			var scene = (
+				load(info["scene"])
+				if not info["scene"].is_empty()
+				else null
+			)
+
+			if not (
+				scene is PackedScene
+			):
+				push_warning(
+					"Missing building scene: "
+					+ id
+				)
 				continue
+
 			building = scene.instantiate()
 			building.name = info["node"]
+
 			add_child(building)
+
 		if building == null:
 			continue
-		if not SaveManager.register_building(id, building):
+
+		if not SaveManager.register_building(
+			id,
+			building
+		):
 			continue
+
 		# The existing Dog House stays on the map as a visual landmark.
 		# Ownership and pet behavior continue to use Inventory.has_dog_house.
-		building.visible = owned or id == "dog_house"
-		if not info.get("preserve_scale", false):
+		building.visible = (
+			owned
+			or id == "dog_house"
+		)
+
+		if not info.get(
+			"preserve_scale",
+			false
+		):
 			building.scale = Vector2.ONE
-		building.z_index = maxi(1, building.z_index)
+
+		building.z_index = maxi(
+			1,
+			building.z_index
+		)
+
 		if id == "dog_house":
 			dog_house = building
+
 	_restore_owned_land_positions()
 
 
 func _update_animals() -> void:
 	# Only counts are saved. World entities are reconstructed around their home.
 	for kind in Inventory.Progression.ANIMALS:
-		var id: String = Inventory.Progression.ANIMALS[kind]["building"]
-		var home = SaveManager.buildings.get(id)
+		var id: String = (
+			Inventory.Progression
+			.ANIMALS[kind]["building"]
+		)
+
+		var home = SaveManager.buildings.get(
+			id
+		)
+
 		if not is_instance_valid(home):
 			continue
-		var group = animal_groups.get(kind)
+
+		var group = animal_groups.get(
+			kind
+		)
+
 		if not is_instance_valid(group):
 			group = Node2D.new()
-			group.set_script(AnimalGroup)
-			group.name = "Chickens" if kind == "chicken" else "Cows"
+
+			group.set_script(
+				AnimalGroup
+			)
+
+			group.name = (
+				"Chickens"
+				if kind == "chicken"
+				else "Cows"
+			)
+
 			group.animal_type = kind
-			group.wander_radius = 150.0 if kind == "chicken" else 170.0
+
+			group.wander_radius = (
+				150.0
+				if kind == "chicken"
+				else 170.0
+			)
+
 			group.home = home
+
 			animal_groups[kind] = group
+
 			add_child(group)
+
 		group.home = home
 		group.sync_count()
 
 
 func _update_pets() -> void:
-	var home: Node2D = dog_house if Inventory.has_dog_house and is_instance_valid(dog_house) else dog_home
+	var home: Node2D = (
+		dog_house
+		if (
+			Inventory.has_dog_house
+			and is_instance_valid(dog_house)
+		)
+		else dog_home
+	)
+
 	if Inventory.has_dog:
 		if not is_instance_valid(dog):
 			dog = DOG_SCENE.instantiate()
+
 			dog.home_point = home
 			dog.position = home.position
+
 			if home == dog_house:
 				dog.position.y += 52.0
+
 			add_child(dog)
+
 		elif dog.home_point != home:
 			dog.set_home_point(home)
+
 	elif is_instance_valid(dog):
 		remove_child(dog)
 		dog.queue_free()
 		dog = null
+
 	if is_instance_valid(dog):
-		dog.wander_bounds = $Player.farm_bounds
+		dog.wander_bounds = (
+			$Player.farm_bounds
+		)
+
 
 func _create_farm_grid() -> void:
-	for number in range(1, FarmData.MAX_PLOTS + 1):
-		var id: String = FarmData.plot_id(number)
-		var plot = SaveManager.plots.get(id)
+	for number in range(
+		1,
+		FarmData.MAX_PLOTS + 1
+	):
+		var id: String = (
+			FarmData.plot_id(number)
+		)
+
+		var plot = SaveManager.plots.get(
+			id
+		)
+
 		if not is_instance_valid(plot):
 			plot = SOIL_SCENE.instantiate()
-			plot.name = "SoilPlot%d" % number
+
+			plot.name = (
+				"SoilPlot%d"
+				% number
+			)
+
 			plot.plot_id = id
-			plot.position = FarmData.plot_position(number)
+
+			plot.position = (
+				FarmData.plot_position(
+					number
+				)
+			)
+
 			add_child(plot)
+
+
+func _setup_fishing_waters() -> void:
+	# ============================================
+	# SÔNG - VÙNG CÓ THỂ CÂU
+	# ============================================
+
+	var river := FishingWaterZone.new()
+
+	river.name = "RiverFishingWater"
+
+	river.water_id = "river"
+
+	river.shape_mode = "rect"
+
+	river.zone_size = Vector2(
+		140,
+		1050
+	)
+
+	# Sông đã có artwork riêng.
+	river.draw_visual = false
+
+	# RiverWalls hiện tại đã chặn Player.
+	river.block_player = false
+
+	river.position = Vector2(
+		1870,
+		1400
+	)
+
+	add_child(river)
+
+
+	# ============================================
+	# HỒ CÂU CÁ MỚI
+	# ============================================
+
+	var pond := FishingWaterZone.new()
+
+	pond.name = "FishingPond"
+
+	pond.water_id = "pond"
+
+	pond.shape_mode = "ellipse"
+
+	pond.zone_size = Vector2(
+		320,
+		220
+	)
+
+	pond.draw_visual = true
+
+	# Không cho Player đi xuống hồ.
+	pond.block_player = true
+
+	pond.position = Vector2(
+		2180,
+		1510
+	)
+
+	add_child(pond)
+
+
+	# ============================================
+	# TÊN HỒ
+	# ============================================
+
+	var label := Label.new()
+
+	label.name = "FishingPondLabel"
+
+	label.text = "Hồ câu cá"
+
+	label.theme = preload(
+		"res://assets/ui/ui_theme.tres"
+	)
+
+	label.position = Vector2(
+		2115,
+		1368
+	)
+
+	label.custom_minimum_size = Vector2(
+		130,
+		24
+	)
+
+	label.horizontal_alignment = (
+		HORIZONTAL_ALIGNMENT_CENTER
+	)
+
+	label.add_theme_font_size_override(
+		"font_size",
+		13
+	)
+
+	label.add_theme_color_override(
+		"font_color",
+		Color("fff2cf")
+	)
+
+	label.add_theme_color_override(
+		"font_outline_color",
+		Color("4a3525")
+	)
+
+	label.add_theme_constant_override(
+		"outline_size",
+		3
+	)
+
+	label.mouse_filter = (
+		Control.MOUSE_FILTER_IGNORE
+	)
+
+	label.z_index = 2
+
+	add_child(label)
