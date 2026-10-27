@@ -264,6 +264,12 @@ func _draw_polygon_pond() -> void:
 			true
 		)
 
+	# A few small lily pads soften the pond surface without changing its shape.
+	_draw_lily_pad(Vector2(-72, -308), 0.82)
+	_draw_lily_pad(Vector2(86, -104), 0.72)
+	_draw_lily_pad(Vector2(-78, 385), 0.78)
+	_draw_lily_pad(Vector2(48, 548), 0.58)
+
 	for reed_base in [
 		Vector2(-147, -485), Vector2(-135, -65),
 		Vector2(-142, 345), Vector2(129, 255)
@@ -291,6 +297,19 @@ func _draw_reeds(base: Vector2) -> void:
 			2.5,
 			Color("90704a")
 		)
+
+
+func _draw_lily_pad(center: Vector2, scale: float) -> void:
+	var radius := 13.0 * scale
+	var points := PackedVector2Array()
+	for index in range(18):
+		var angle := TAU * float(index) / 18.0
+		points.append(center + Vector2(cos(angle) * radius, sin(angle) * radius * 0.68))
+	# Leave a small notch so it reads as a leaf, not a floating coin.
+	points[0] = center + Vector2(radius * 0.15, -radius * 0.12)
+	draw_colored_polygon(points, Color("71975a", 0.88))
+	draw_polyline(_close_polygon(points), Color("476f4d", 0.9), 1.4 * scale, true)
+	draw_line(center, center + Vector2(radius * 0.62, -radius * 0.34), Color("b2c783", 0.75), 1.0 * scale, true)
 
 
 func _scaled_polygon(

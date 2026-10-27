@@ -320,9 +320,9 @@ func _update_animals() -> void:
 			group.animal_type = kind
 
 			group.wander_radius = (
-				150.0
+				125.0
 				if kind == "chicken"
-				else 170.0
+				else 145.0
 			)
 
 			group.home = home

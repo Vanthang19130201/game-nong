@@ -95,6 +95,14 @@ static func create_preview(source: Node2D) -> Node2D:
 			copy = polygon
 		copy.transform = source.global_transform.affine_inverse() * graphic.get_global_transform()
 		preview.add_child(copy)
+	# Custom static drawing nodes can provide a lightweight preview copy. This
+	# keeps attached pen artwork visible while the parent building is moved.
+	for visual in source.find_children("*", "Node2D", true, false):
+		if not visual.has_method("create_visual_preview"):
+			continue
+		var custom_copy: Node2D = visual.create_visual_preview()
+		custom_copy.transform = source.global_transform.affine_inverse() * visual.global_transform
+		preview.add_child(custom_copy)
 	var outline := Polygon2D.new()
 	var rect: Rect2 = bounds(source)
 	rect.position -= source.global_position

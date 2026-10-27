@@ -21,6 +21,14 @@ func group_for(id: String) -> Node:
 func verify_groups(count: int) -> void:
 	for id in DESTINATIONS:
 		var group = group_for(id)
+		var home = manager.buildings[id]
+		var pen = home.get_node("AnimalPen")
+		check(pen.get_parent() == home and pen.global_position == home.global_position, "visual pen is attached to its saved building " + id)
+		check(group.global_position == home.global_position, "wander center and pen restore with the saved home " + id)
+		check(pen.gate_width >= 48.0 and pen.gate_width <= 72.0, "open gate is wide enough for the player " + id)
+		check(pen.find_children("*", "CollisionShape2D", true, false).is_empty(), "pen artwork has no collision " + id)
+		check(pen.half_size.x >= group.wander_radius + (12.0 if id == "cow_shed" else 8.0), "pen width contains the current wander radius " + id)
+		check(pen.half_size.y >= group.wander_radius + (12.0 if id == "cow_shed" else 8.0), "pen height contains the current wander radius " + id)
 		check(group.animals().size() == count, "exact instance count " + id)
 		for animal in group.animals():
 			check(animal.is_visible_in_tree(), "each owned animal is visible " + id)
@@ -52,6 +60,7 @@ func move_homes() -> void:
 		var animals_before: Array = group.animals()
 		editor.select_building(building)
 		editor.begin_move()
+		check(editor.preview.get_node_or_null("AnimalPenPreview") != null, "move preview contains the attached pen " + id)
 		editor.update_preview(DESTINATIONS[id])
 		check(editor.valid_position, "shared placement accepts move " + id)
 		check(editor.place_move(), "commit move " + id)
@@ -60,6 +69,7 @@ func move_homes() -> void:
 		check(building.get_instance_id() == instance and group.animals() == animals_before, "move reuses building and animals " + id)
 		check(building.get_save_data() == data, "move keeps animals and production timestamps " + id)
 		check(group.global_position == DESTINATIONS[id], "wander center follows moved home " + id)
+		check(building.get_node("AnimalPen").global_position == building.global_position, "fence follows the moved home " + id)
 		for animal in group.animals():
 			check(not animal.walking and animal.target == animal.position, "old walking targets cleared " + id)
 		editor.select_building(building)
@@ -83,6 +93,20 @@ func capture() -> void:
 	await create_timer(0.2).timeout
 	await RenderingServer.frame_post_draw
 	check(root.get_texture().get_image().save_png("res://animal_wander.png") == OK, "capture separate animal visuals")
+
+func check_gate_access() -> void:
+	var player: Node2D = farm.get_node("Player")
+	var original := player.global_position
+	for id in DESTINATIONS:
+		var home = manager.buildings[id]
+		var pen = home.get_node("AnimalPen")
+		var gate_y: float = pen.center_offset.y + pen.half_size.y
+		player.global_position = home.global_position + Vector2(0, gate_y + 48.0)
+		Input.action_press("move_up")
+		await create_timer(0.45).timeout
+		Input.action_release("move_up")
+		check(player.global_position.y < home.global_position.y + gate_y, "player can enter through the open visual gate " + id)
+	player.global_position = original
 
 func run_checks() -> void:
 	await process_frame
@@ -115,6 +139,7 @@ func run_checks() -> void:
 	else:
 		prepare()
 		if stage == "animals_core":
+			await check_gate_access()
 			for kind in ["chicken", "cow"]:
 				check(inv.sell_animal(kind), "existing animal sale")
 				check(group_for("chicken_coop" if kind == "chicken" else "cow_shed").animals().size() == 2, "sale removes exactly one visual immediately")

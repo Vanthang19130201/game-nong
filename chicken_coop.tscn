@@ -10,6 +10,7 @@
 
 [ext_resource type="Script" path="res://production_station.gd" id="1"]
 [ext_resource type="PackedScene" path="res://station_status.tscn" id="96_status"]
+[ext_resource type="Script" path="res://farm_animal_pen.gd" id="97_pen"]
 
 [sub_resource type="RectangleShape2D" id="AreaShape"]
 size = Vector2(144, 100)
@@ -21,6 +22,11 @@ size = Vector2(98, 38)
 script = ExtResource("1")
 station_id = "chicken_coop"
 metadata/placement_rect = Rect2(-64, -36, 128, 72)
+
+[node name="AnimalPen" type="Node2D" parent="."]
+z_index = -3
+script = ExtResource("97_pen")
+pen_type = "chicken"
 
 [node name="Visual" type="ColorRect" parent="."]
 offset_left = -64.0
