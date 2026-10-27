@@ -206,6 +206,8 @@ func refresh() -> void:
 			i == selected_slot
 		)
 
+	_sync_player_tool()
+
 	caption.text = tr(
 		"HOTBAR_SELECTED"
 	) % Localization.display_name(
@@ -270,6 +272,16 @@ func owned_count(id: String) -> int:
 		if value is int
 		else 0
 	)
+
+
+func _sync_player_tool() -> void:
+	var player := get_tree().get_first_node_in_group("farm_player")
+	if player == null or not player.has_method("set_equipped_tool"):
+		return
+	var item_id := selected_item()
+	if owned_count(item_id) <= 0:
+		item_id = ""
+	player.set_equipped_tool(item_id)
 
 
 func select_slot(index: int) -> void:

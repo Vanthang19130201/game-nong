@@ -597,10 +597,10 @@ func _update_fishing_visual() -> void:
 		return
 
 	# Dây xuất phát gần tay Player.
-	var hand_world_position := (
-		player.global_position
-		+ Vector2(0, -10)
-		+ session_facing_direction * 8.0
+	var hand_world_position: Vector2 = (
+		player.get_rod_tip_world_position()
+		if player.has_method("get_rod_tip_world_position")
+		else player.global_position + Vector2(0, -10) + session_facing_direction * 8.0
 	)
 	var origin := to_local(hand_world_position)
 

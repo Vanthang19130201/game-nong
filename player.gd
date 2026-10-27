@@ -25,6 +25,12 @@ var fishing_prompt: Label
 
 var fishing_input_locked: bool = false
 var fishing_target_available: bool = false
+var equipped_tool_id: String = ""
+var tool_visual: Node2D
+var action_motion_tween: Tween
+var action_motion_base_position: Vector2 = Vector2.ZERO
+var action_motion_base_rotation: float = 0.0
+var action_motion_active: bool = false
 
 @export var speed: float = 200.0
 
@@ -45,6 +51,10 @@ var fishing_target_available: bool = false
 
 func _ready() -> void:
 	add_to_group("farm_player")
+	tool_visual = Node2D.new()
+	tool_visual.name = "ToolVisual"
+	tool_visual.set_script(preload("res://tool_visual.gd"))
+	add_child(tool_visual)
 
 	mouse_interaction = Node.new()
 
@@ -66,6 +76,8 @@ func _ready() -> void:
 	)
 
 	$Camera2D.reset_smoothing()
+	if is_instance_valid(hud) and is_instance_valid(hud.hotbar):
+		set_equipped_tool(hud.hotbar.selected_item())
 
 
 func _physics_process(
@@ -111,8 +123,88 @@ func _physics_process(
 		farm_bounds.position,
 		farm_bounds.end
 	)
+	if is_instance_valid(tool_visual):
+		tool_visual.set_facing(_facing_name())
 
 	_update_fishing_prompt()
+
+
+func set_equipped_tool(item_id: String) -> void:
+	var next_tool := ""
+	if item_id == "axe" and Inventory.can_use_tool("axe"):
+		next_tool = "axe"
+	elif item_id == "hammer" and Inventory.can_use_tool("hammer"):
+		next_tool = "hammer"
+	elif item_id == "fishing_rod" and Inventory.has_fishing_rod:
+		next_tool = "fishing_rod"
+	equipped_tool_id = next_tool
+	if is_instance_valid(tool_visual):
+		tool_visual.set_equipped(equipped_tool_id, _facing_name())
+
+
+func play_tool_swing(item_id: String, target_world_position: Vector2) -> void:
+	if item_id != equipped_tool_id or not is_instance_valid(tool_visual):
+		return
+	tool_visual.play_swing(target_world_position)
+
+
+func stop_tool_swing() -> void:
+	if is_instance_valid(tool_visual):
+		tool_visual.stop_swing()
+
+
+func is_tool_selected(item_id: String) -> bool:
+	return (
+		is_instance_valid(hud)
+		and is_instance_valid(hud.hotbar)
+		and hud.hotbar.has_method("is_equipped")
+		and hud.hotbar.is_equipped(item_id)
+	)
+
+
+func start_action_motion(action: String, target_world_position: Vector2 = Vector2.ZERO) -> void:
+	stop_action_motion()
+	var visual := get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
+	if not is_instance_valid(visual):
+		return
+	action_motion_base_position = visual.position
+	action_motion_base_rotation = visual.rotation
+	action_motion_active = true
+	action_motion_tween = create_tween().set_loops()
+	if action == "fishing":
+		action_motion_tween.tween_property(visual, "position:y", action_motion_base_position.y - 1.5, 0.32).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		action_motion_tween.parallel().tween_property(visual, "rotation", action_motion_base_rotation - 0.025, 0.32).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		action_motion_tween.tween_property(visual, "position:y", action_motion_base_position.y + 0.5, 0.42).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		action_motion_tween.parallel().tween_property(visual, "rotation", action_motion_base_rotation + 0.02, 0.42).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		return
+	var direction := (target_world_position - global_position).normalized()
+	if direction == Vector2.ZERO:
+		direction = facing_vector
+	var lean := signf(direction.x) * 0.045
+	var reach := action_motion_base_position + direction * 1.4
+	action_motion_tween.tween_property(visual, "position", reach, 0.14).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	action_motion_tween.parallel().tween_property(visual, "rotation", action_motion_base_rotation + lean, 0.14).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	action_motion_tween.tween_property(visual, "position", action_motion_base_position - direction * 0.6, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	action_motion_tween.parallel().tween_property(visual, "rotation", action_motion_base_rotation - lean * 0.5, 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	action_motion_tween.tween_property(visual, "position", action_motion_base_position, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	action_motion_tween.parallel().tween_property(visual, "rotation", action_motion_base_rotation, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+func stop_action_motion() -> void:
+	if action_motion_tween != null and action_motion_tween.is_valid():
+		action_motion_tween.kill()
+	action_motion_tween = null
+	var visual := get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
+	if action_motion_active and is_instance_valid(visual):
+		visual.position = action_motion_base_position
+		visual.rotation = action_motion_base_rotation
+	action_motion_active = false
+
+
+func get_rod_tip_world_position() -> Vector2:
+	if equipped_tool_id == "fishing_rod" and is_instance_valid(tool_visual):
+		return tool_visual.tip_world_position()
+	return global_position + Vector2(0, -10) + facing_vector * 8.0
 
 
 func _unlock_fishing_input() -> void:
@@ -505,9 +597,13 @@ func begin_fishing_pose() -> void:
 		visual.force_facing(
 			_facing_name()
 		)
+	if is_instance_valid(tool_visual):
+		tool_visual.set_facing(_facing_name())
+	start_action_motion("fishing")
 
 
 func end_fishing_pose() -> void:
+	stop_action_motion()
 	var visual = get_node_or_null(
 		"AnimatedSprite2D"
 	)
@@ -519,6 +615,8 @@ func end_fishing_pose() -> void:
 		)
 	):
 		visual.clear_forced_facing()
+	if is_instance_valid(tool_visual):
+		tool_visual.set_facing(_facing_name())
 
 
 func _facing_name() -> String:

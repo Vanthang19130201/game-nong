@@ -425,6 +425,8 @@ const MESSAGES: Dictionary = {
     "FEATURE_DAIRY":  "Xưởng sữa (sắp có)",
     "UI_BUY_ANIMAL_SHORT":  "Mua %s (%d xu)",
     "ERROR_NEED_TOOLS":  "Bạn cần có công cụ để khai thác. Công cụ mở ở cấp 6.",
+    "TOOL_SELECT_AXE":  "Hãy chọn Rìu ở ô 6 để chặt cây.",
+    "TOOL_SELECT_HAMMER":  "Hãy chọn Búa ở ô 7 để đập đá.",
     "TOOLS_UNLOCK_BODY":  "Bạn nhận được:\n\nRìu\nDùng để chặt cây lấy gỗ.\n\nBúa\nDùng để đập đá lấy đá.",
     "DEFAULT_HUD":  "Xu: 100 | Cấp độ: 1 | Kinh nghiệm: 0 / 100",
     "DEFAULT_STORAGE":  "Kho nông sản: 10 / 30 | Kho: 0 / 20",

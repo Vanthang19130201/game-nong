@@ -9,5 +9,7 @@ const MESSAGES: Dictionary = {
 	"LEVEL_UP_REWARD_COINS": "+%d Coins",
 	"LEVEL_UP_CLAIM": "Claim & Continue",
 	"LEVEL_UP_SAVE_ERROR": "Reward could not be saved. Please try again.",
-	"UI_ANIMALS_SHORT": "Animals"
+	"UI_ANIMALS_SHORT": "Animals",
+	"TOOL_SELECT_AXE": "Select the Axe in slot 6 to chop trees.",
+	"TOOL_SELECT_HAMMER": "Select the Hammer in slot 7 to mine rocks."
 }

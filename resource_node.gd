@@ -114,6 +114,8 @@ func harvest() -> bool:
 		return false
 	if not Inventory.can_use_tool(tool_id()):
 		return Inventory.fail(tr("ERROR_NEED_TOOLS"))
+	if not player.has_method("is_tool_selected") or not player.is_tool_selected(tool_id()):
+		return Inventory.fail(tr("TOOL_SELECT_AXE") if tool_id() == "axe" else tr("TOOL_SELECT_HAMMER"))
 	if state != "AVAILABLE" or is_instance_valid(player.active_resource):
 		return false
 	state = "GATHERING"
@@ -123,6 +125,10 @@ func harvest() -> bool:
 	progress.max_value = gather_duration
 	progress.value = 0.0
 	_update_display()
+	if player.has_method("play_tool_swing"):
+		player.play_tool_swing(tool_id(), global_position)
+	if player.has_method("start_action_motion"):
+		player.start_action_motion("gather", global_position)
 	return true
 
 
@@ -130,7 +136,7 @@ func _process(_delta: float) -> void:
 	if not zone_active or state != "GATHERING":
 		return
 	var hud = get_tree().get_first_node_in_group("farm_hud")
-	if not player_near or (hud != null and hud.blocks_world_input()):
+	if not player_near or not is_instance_valid(player) or (hud != null and hud.blocks_world_input()) or not player.is_tool_selected(tool_id()):
 		cancel_harvest()
 		return
 	progress.value = gather_duration - harvest_timer.time_left
@@ -138,6 +144,10 @@ func _process(_delta: float) -> void:
 
 func cancel_harvest() -> void:
 	harvest_timer.stop()
+	if is_instance_valid(player) and player.has_method("stop_tool_swing"):
+		player.stop_tool_swing()
+	if is_instance_valid(player) and player.has_method("stop_action_motion"):
+		player.stop_action_motion()
 	if is_instance_valid(player) and player.active_resource == self:
 		player.active_resource = null
 	if state == "GATHERING":
@@ -149,9 +159,13 @@ func _finish_harvest() -> void:
 	if not zone_active or state != "GATHERING":
 		return
 	var hud = get_tree().get_first_node_in_group("farm_hud")
-	if not player_near or not Inventory.can_use_tool(tool_id()) or (hud != null and hud.blocks_world_input()):
+	if not player_near or not is_instance_valid(player) or not Inventory.can_use_tool(tool_id()) or not player.is_tool_selected(tool_id()) or (hud != null and hud.blocks_world_input()):
 		cancel_harvest()
 		return
+	if is_instance_valid(player) and player.has_method("stop_tool_swing"):
+		player.stop_tool_swing()
+	if is_instance_valid(player) and player.has_method("stop_action_motion"):
+		player.stop_action_motion()
 	var amount: int = rng.randi_range(2, 3) if resource_type == "wood" else 2
 	if resource_type == "stone":
 		var rock: Dictionary = RockData.TYPES[rock_type]

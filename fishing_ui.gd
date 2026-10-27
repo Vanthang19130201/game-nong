@@ -44,6 +44,8 @@ var last_visual_state: int = -1
 
 var shown_fish_id: String = ""
 
+var panel_layout_mode: String = "waiting"
+
 
 func _ready() -> void:
 	reel_button.pressed.connect(
@@ -60,7 +62,9 @@ func _ready() -> void:
 
 	reaction_bar.custom_minimum_size.y = 18
 
-	reel_button.custom_minimum_size.y = 62
+	reel_button.custom_minimum_size.y = 42
+	close_button.custom_minimum_size.y = 32
+	get_viewport().size_changed.connect(_on_viewport_resized)
 
 	_build_transition_overlay()
 
@@ -218,7 +222,7 @@ func _build_catch_card() -> void:
 	catch_card.name = "CatchCard"
 
 	catch_card.custom_minimum_size = (
-		Vector2(300, 188)
+		Vector2(268, 172)
 	)
 
 	catch_card.mouse_filter = (
@@ -417,6 +421,7 @@ func show_session(
 	)
 
 	_show_fishing_controls()
+	call_deferred("_fit_panel_to_content")
 
 
 func clear_session() -> void:
@@ -758,7 +763,8 @@ func _show_catch(
 
 	reel_button.hide()
 
-	close_button.hide()
+	close_button.show()
+	close_button.text = tr("FISHING_CLOSE")
 
 	panel.add_theme_stylebox_override(
 		"panel",
@@ -876,7 +882,7 @@ func _apply_waiting_style() -> void:
 
 	info.add_theme_font_size_override(
 		"font_size",
-		18
+		16
 	)
 
 	info.add_theme_color_override(
@@ -890,7 +896,7 @@ func _apply_waiting_style() -> void:
 
 	hint.add_theme_font_size_override(
 		"font_size",
-		14
+		12
 	)
 
 	hint.add_theme_color_override(
@@ -904,7 +910,7 @@ func _apply_waiting_style() -> void:
 
 	reel_button.add_theme_font_size_override(
 		"font_size",
-		18
+		16
 	)
 
 	reel_button.add_theme_stylebox_override(
@@ -940,7 +946,7 @@ func _apply_bite_style() -> void:
 
 	info.add_theme_font_size_override(
 		"font_size",
-		28
+		20
 	)
 
 	info.add_theme_color_override(
@@ -954,7 +960,7 @@ func _apply_bite_style() -> void:
 
 	hint.add_theme_font_size_override(
 		"font_size",
-		17
+		14
 	)
 
 	hint.add_theme_color_override(
@@ -968,7 +974,7 @@ func _apply_bite_style() -> void:
 
 	reel_button.add_theme_font_size_override(
 		"font_size",
-		24
+		18
 	)
 
 	var bite_button := (
@@ -1034,25 +1040,44 @@ func _apply_failed_style() -> void:
 func _set_panel_layout(
 	mode: String
 ) -> void:
-	var desired_size := Vector2(420.0, 380.0)
-	if mode == "bite":
-		desired_size = Vector2(420.0, 360.0)
-	elif mode == "catch":
-		desired_size = Vector2(330.0, 280.0)
-
+	panel_layout_mode = mode
 	var viewport_size := get_viewport_rect().size
-	var panel_size := Vector2(
-		minf(desired_size.x, maxf(240.0, viewport_size.x - 24.0)),
-		minf(desired_size.y, maxf(220.0, viewport_size.y - 24.0))
-	)
-	panel.anchor_top = 0.5
-	panel.anchor_bottom = 0.5
-	panel.offset_left = -panel_size.x * 0.5
-	panel.offset_right = panel_size.x * 0.5
-	panel.offset_top = -panel_size.y * 0.5
-	panel.offset_bottom = panel_size.y * 0.5
-	panel.custom_minimum_size = panel_size
-	info.custom_minimum_size.x = maxf(0.0, panel_size.x - 32.0)
+	var width := minf(280.0, maxf(220.0, viewport_size.x - 36.0))
+	panel.anchor_left = 1.0
+	panel.anchor_top = 1.0
+	panel.anchor_right = 1.0
+	panel.anchor_bottom = 1.0
+	panel.offset_left = -width - 18.0
+	panel.offset_right = -18.0
+	panel.offset_bottom = -18.0
+	panel.offset_top = -260.0
+	panel.custom_minimum_size = Vector2(width, 0.0)
+	info.custom_minimum_size = Vector2(width - 32.0, 48.0 if mode == "waiting" else 40.0)
+	if mode == "bite":
+		info.add_theme_font_size_override("font_size", 20)
+		reel_button.add_theme_font_size_override("font_size", 17)
+	else:
+		info.add_theme_font_size_override("font_size", 16)
+		reel_button.add_theme_font_size_override("font_size", 16)
+	call_deferred("_fit_panel_to_content")
+
+
+func _fit_panel_to_content() -> void:
+	if not is_instance_valid(panel) or not panel.visible:
+		return
+	var viewport_size := get_viewport_rect().size
+	var width := minf(280.0, maxf(220.0, viewport_size.x - 36.0))
+	var natural_height := panel.get_combined_minimum_size().y
+	var height := minf(maxf(150.0, natural_height), maxf(160.0, viewport_size.y - 36.0))
+	panel.offset_left = -width - 18.0
+	panel.offset_right = -18.0
+	panel.offset_bottom = -18.0
+	panel.offset_top = -height - 18.0
+
+
+func _on_viewport_resized() -> void:
+	if panel.visible:
+		_set_panel_layout(panel_layout_mode)
 
 
 # ==================================================
@@ -1097,6 +1122,10 @@ func _waiting_panel_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 
 	style.bg_color = Color("f4e7c8")
+	style.content_margin_left = 12.0
+	style.content_margin_top = 12.0
+	style.content_margin_right = 12.0
+	style.content_margin_bottom = 12.0
 
 	style.border_color = Color("a96f43")
 
@@ -1111,6 +1140,10 @@ func _bite_panel_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 
 	style.bg_color = Color("443323")
+	style.content_margin_left = 12.0
+	style.content_margin_top = 12.0
+	style.content_margin_right = 12.0
+	style.content_margin_bottom = 12.0
 
 	style.border_color = Color("ffc44d")
 
@@ -1173,6 +1206,10 @@ func _catch_panel_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 
 	style.bg_color = Color("f6e8c8")
+	style.content_margin_left = 12.0
+	style.content_margin_top = 12.0
+	style.content_margin_right = 12.0
+	style.content_margin_bottom = 12.0
 
 	style.border_color = Color("bd814b")
 
