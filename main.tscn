@@ -19,6 +19,7 @@
 [ext_resource type="SpriteFrames" path="res://assets/characters/directional_frames.tres" id="93_frames"]
 [ext_resource type="Script" uid="uid://bftdjeeaw3cnf" path="res://building_visual.gd" id="94_building"]
 [ext_resource type="PackedScene" path="res://warehouse.tscn" id="95_warehouse"]
+[ext_resource type="PackedScene" path="res://market_stall.tscn" id="97_market_stall"]
 [ext_resource type="Script" uid="uid://bch0xhj4wimph" path="res://farm_camera.gd" id="96_camera"]
 
 [sub_resource type="RectangleShape2D" id="HouseInteractionShape"]
@@ -387,3 +388,6 @@ position = Vector2(2190, 980)
 [node name="Warehouse" parent="." unique_id=1215524133 instance=ExtResource("95_warehouse")]
 position = Vector2(1136, 375)
 scale = Vector2(0.8, 0.8)
+
+[node name="MarketStall" parent="." instance=ExtResource("97_market_stall")]
+position = Vector2(920, 650)

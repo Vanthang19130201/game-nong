@@ -6,6 +6,10 @@ var slots: Array[Dictionary] = []
 var output_slots: Array[Dictionary] = []
 var output_title: Label
 var elapsed: float = 0.0
+var queue_empty: Label
+var output_empty: Label
+var output_hint: Label
+var is_feed: bool = true
 
 func _ready() -> void:
 	add_theme_constant_override("separation",6)
@@ -13,6 +17,11 @@ func _ready() -> void:
 	title.text = tr("FEED_QUEUE_TITLE")
 	title.add_theme_font_size_override("font_size",14)
 	add_child(title)
+	queue_empty = Label.new()
+	queue_empty.text = tr("PRODUCTION_QUEUE_EMPTY")
+	queue_empty.add_theme_font_size_override("font_size",13)
+	queue_empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	add_child(queue_empty)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation",6)
 	add_child(row)
@@ -23,11 +32,21 @@ func _ready() -> void:
 	output_title = Label.new()
 	output_title.add_theme_font_size_override("font_size",14)
 	add_child(output_title)
+	output_empty = Label.new()
+	output_empty.text = tr("PRODUCTION_OUTPUT_EMPTY")
+	output_empty.add_theme_font_size_override("font_size",13)
+	output_empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	add_child(output_empty)
 	var output_row := HBoxContainer.new()
 	output_row.add_theme_constant_override("separation",6)
 	add_child(output_row)
 	for index in range(3):
 		output_slots.append(_make_slot(output_row,""))
+	output_hint = Label.new()
+	output_hint.text = tr("PRODUCTION_READY_IN_QUEUE")
+	output_hint.add_theme_font_size_override("font_size",12)
+	output_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	add_child(output_hint)
 	set_process(false)
 
 func _make_slot(parent: Control, title: String) -> Dictionary:
@@ -77,6 +96,7 @@ func _make_slot(parent: Control, title: String) -> Dictionary:
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		name_label.add_theme_font_size_override("font_size",12)
 		name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		content.add_child(name_label)
 	var status := Label.new()
 	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -90,7 +110,13 @@ func _make_slot(parent: Control, title: String) -> Dictionary:
 	progress.show_percentage = false
 	progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content.add_child(progress)
-	return {"card":card,"icon":icon,"name":name_label,"title":title,"status":status,"progress":progress,"cancel":cancel,"job":{}}
+	var amount := Label.new()
+	amount.text = "×1"
+	amount.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	amount.add_theme_font_size_override("font_size",12)
+	amount.visible = title.is_empty()
+	content.add_child(amount)
+	return {"card":card,"icon":icon,"name":name_label,"title":title,"status":status,"progress":progress,"cancel":cancel,"job":{},"amount":amount}
 
 func _cancel_slot(index: int) -> void:
 	if not is_instance_valid(station) or not station.player_near or station.collecting:
@@ -100,34 +126,50 @@ func _cancel_slot(index: int) -> void:
 	refresh(station)
 
 func refresh(value: Node) -> void:
-	station = value
-	visible = is_instance_valid(station) and station.station_id == "feed_mill"
-	set_process(visible and station.state == "PRODUCING")
-	if not visible:
+	if not is_instance_valid(value) or value.get("station_id") != "feed_mill":
+		hide()
 		return
+	refresh_entries(value.queue,value.outputs,value,true)
+
+func refresh_entries(queue: Array, outputs: Array, value: Node, feed: bool) -> void:
+	station = value
+	is_feed = feed
+	show()
+	queue_empty.visible = queue.is_empty()
+	output_empty.visible = outputs.is_empty()
+	output_hint.visible = not feed and not outputs.is_empty()
 	for index in range(3):
-		_display(slots[index],station.queue[index] if index < station.queue.size() else {})
-		_display(output_slots[index],station.outputs[index] if index < station.outputs.size() else {})
-	output_title.text = tr("FEED_OUTPUT_TITLE") % station.outputs.size()
+		_display(slots[index],queue[index] if index < queue.size() else {})
+		_display(output_slots[index],outputs[index] if index < outputs.size() else {})
+		output_slots[index]["card"].visible = index < outputs.size()
+	output_title.text = tr("PRODUCTION_OUTPUT") % outputs.size()
 
 func _display(view: Dictionary, entry: Dictionary) -> void:
 	view["job"] = entry
 	var cancel: Button = view["cancel"]
 	if cancel != null:
-		cancel.visible = not entry.is_empty() and entry.get("state","") in ["PRODUCING","QUEUED"]
-		cancel.disabled = station.collecting or not station.player_near
-	view["icon"].modulate.a = 0.0 if entry.is_empty() else 1.0
-	view["progress"].visible = entry.get("state","") == "PRODUCING"
+		cancel.visible = is_feed and not entry.is_empty() and entry.get("state","") in ["PRODUCING","QUEUED"]
+		cancel.disabled = not is_feed or station.collecting or not station.player_near
+	view["icon"].modulate.a = 0.25 if entry.is_empty() else 1.0
+	view["progress"].hide()
 	if entry.is_empty():
+		if view["icon"].item_id != "":
+			view["icon"].item_id = ""
 		view["name"].text = view["title"]
 		view["status"].text = tr("FEED_EMPTY")
 		view["card"].tooltip_text = ""
 		return
-	view["icon"].item_id = entry["item"]
-	var kind: String = tr("ITEM_CHICKEN") if entry["item"] == "chicken_feed" else tr("ITEM_COW")
+	if view["icon"].item_id != entry["item"]:
+		view["icon"].item_id = entry["item"]
+	var kind: String = Localization.display_name(entry["item"])
 	view["name"].text = kind if view["title"].is_empty() else view["title"] + " · " + kind
+	view["name"].autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	view["card"].tooltip_text = Localization.display_name(entry["item"])
 	var state: String = entry["state"]
+	if not is_feed:
+		var now: float = Time.get_unix_time_from_system()
+		state = "READY" if now >= entry["ready_at"] else ("PRODUCING" if now >= entry["started_at"] else "QUEUED")
+	view["progress"].visible = state == "PRODUCING"
 	var keys: Dictionary = {"PRODUCING":"FEED_WORKING","QUEUED":"STATE_QUEUED","READY":"FEED_FINISHED"}
 	view["status"].text = tr(keys.get(state,"FEED_EMPTY"))
 	if state == "PRODUCING":
@@ -136,11 +178,3 @@ func _display(view: Dictionary, entry: Dictionary) -> void:
 		view["status"].text += "\n%d:%02d" % [floori(seconds/60.0),seconds%60]
 		view["progress"].value = clampf(1.0-remaining/maxf(0.001,entry["ready_at"]-entry["started_at"]),0.0,1.0)
 
-func _process(delta: float) -> void:
-	if not is_visible_in_tree() or not is_instance_valid(station):
-		set_process(false)
-		return
-	elapsed += delta
-	if elapsed >= 0.2:
-		elapsed = 0.0
-		refresh(station)

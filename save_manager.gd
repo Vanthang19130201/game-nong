@@ -26,6 +26,7 @@ var INVENTORY_DEFAULTS: Dictionary = CropData.inventory_defaults().merged({
 	"coins": 100, "chicken_feed": 0, "cow_feed": 0, "egg": 0, "milk": 0, "wood": 0, "stone": 0,
 	"small_fish": 0, "river_fish": 0, "golden_fish": 0,
 	"bread": 0, "corn_bread": 0, "carrot_pie": 0,
+	"egg_cake": 0, "milk_cake": 0, "pancake": 0,
 	"cream": 0, "butter": 0, "cheese": 0, "cotton_thread": 0
 })
 

@@ -104,7 +104,7 @@ func run_checks() -> void:
 				if inv.FishingData.FISH.has(item):
 					check(order["requirements"][item] <= inv.FishingData.FISH[item]["order_max"], "fish orders respect rarity quantity cap")
 					saw_fish = true
-			check(order["coin_reward"] >= ceili(total*1.25) and order["coin_reward"] <= floori(total*1.5) and order["exp_reward"] > 0, "order premium/EXP")
+			check(order["coin_reward"] == ceili(total*orders.Data.TIERS[order["difficulty"]]["coins"]) and order["exp_reward"] > 0, "difficulty reward remains above direct sale with EXP")
 		check(saw_fish, "fish appear in level 10 orders")
 		orders.orders[0] = {"order_id":"order_999999", "requirements":{"river_fish":1}, "coin_reward":50,"exp_reward":5}
 		check(orders.complete_order("order_999999") and inv.river_fish == 0 and inv.coins == 1265, "fish order consumes fish")

@@ -15,7 +15,7 @@ const EGG_PRICE: int = 18
 const MILK_PRICE: int = 30
 const Progression = preload("res://progression_data.gd")
 var SILO_ITEMS: Array[String] = CropData.silo_items()
-const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "egg", "milk", "small_fish", "river_fish", "golden_fish", "bread", "corn_bread", "carrot_pie", "cream", "butter", "cheese", "cotton_thread"]
+const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "egg", "milk", "small_fish", "river_fish", "golden_fish", "bread", "corn_bread", "carrot_pie", "egg_cake", "milk_cake", "pancake", "cream", "butter", "cheese", "cotton_thread"]
 var owns_spinning_machine: bool = false
 var cotton_thread: int = 0
 var owns_dairy: bool = false
@@ -26,6 +26,9 @@ var owns_bakery: bool = false
 var bread: int = 0
 var corn_bread: int = 0
 var carrot_pie: int = 0
+var egg_cake: int = 0
+var milk_cake: int = 0
+var pancake: int = 0
 
 var small_fish: int = 0
 var river_fish: int = 0
@@ -36,6 +39,7 @@ var fishing_attempts_used: int = 0
 var fishing_cycle_started_at: float = 0.0
 # Transient: an active fishing session reserves one slot, never saved.
 var reserved_barn_slots: int = 0
+var selling_item: bool = false
 
 var wheat_seed: int = 10
 var wheat: int = 0
@@ -99,6 +103,55 @@ func sell_egg() -> bool:
 	egg -= 1
 	coins += EGG_PRICE
 	inventory_changed.emit()
+	return true
+
+func sell_price(item: String) -> int:
+	if CropData.CROPS.has(item.to_upper()):
+		return CropData.CROPS[item.to_upper()]["sell_price"]
+	if item == "egg":
+		return EGG_PRICE
+	if item == "milk":
+		return MILK_PRICE
+	if FishingData.FISH.has(item):
+		return FishingData.FISH[item]["sell_price"]
+	for recipes in [BakeryData.RECIPES,DairyData.RECIPES,SpinningData.RECIPES]:
+		if recipes.has(item):
+			# An order valuation alone does not establish a direct sale price.
+			return int(recipes[item].get("price",0))
+	return 0
+
+func sellable_items() -> Array[String]:
+	var items: Array[String] = []
+	for crop in CropData.CROPS:
+		if is_unlocked(crop):
+			items.append(crop.to_lower())
+	items.append_array(["egg","milk"])
+	if is_zone_unlocked("fishing"):
+		for fish in FishingData.FISH:
+			items.append(fish)
+	for recipes in [BakeryData.RECIPES,DairyData.RECIPES,SpinningData.RECIPES]:
+		for item in recipes:
+			if sell_price(item) > 0 and item not in items:
+				items.append(item)
+	return items.filter(func(item): return sell_price(item) > 0)
+
+func sell_item(item: String, amount: int = 1) -> bool:
+	if selling_item or amount < 1 or item not in sellable_items():
+		return false
+	var owned: int = get(item)
+	var price: int = sell_price(item)
+	if amount > owned:
+		return false
+	# Reject integer overflow before changing either side of the transaction.
+	@warning_ignore("integer_division")
+	var max_amount: int = (9223372036854775807-coins)/price
+	if amount > max_amount:
+		return false
+	selling_item = true
+	set(item,owned-amount)
+	coins += amount*price
+	inventory_changed.emit()
+	selling_item = false
 	return true
 
 

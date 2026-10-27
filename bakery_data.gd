@@ -2,9 +2,12 @@ extends RefCounted
 
 const QUEUE_LIMIT: int = 3
 const RECIPES: Dictionary = {
-	"bread": {"name": "Bánh mì", "level": 12, "time": 20.0, "price": 32, "requirements": {"wheat": 2}},
-	"corn_bread": {"name": "Bánh mì bắp", "level": 13, "time": 30.0, "price": 48, "requirements": {"wheat": 1, "corn": 1}},
-	"carrot_pie": {"name": "Bánh cà rốt", "level": 14, "time": 45.0, "price": 80, "requirements": {"wheat": 2, "carrot": 1}}
+	"bread": {"name": "Bánh mì", "level": 3, "time": 20.0, "price": 32, "requirements": {"wheat": 2}},
+	"corn_bread": {"name": "Bánh mì bắp", "level": 4, "time": 30.0, "price": 48, "requirements": {"wheat": 1, "corn": 1}},
+	"carrot_pie": {"name": "Bánh cà rốt", "level": 5, "time": 45.0, "price": 80, "requirements": {"wheat": 2, "carrot": 1}},
+	"egg_cake": {"name": "Bánh trứng", "level": 7, "time": 30.0, "price": 45, "requirements": {"wheat": 1, "egg": 1}},
+	"milk_cake": {"name": "Bánh sữa", "level": 10, "time": 40.0, "price": 60, "requirements": {"wheat": 1, "milk": 1}},
+	"pancake": {"name": "Bánh kếp", "level": 11, "time": 50.0, "price": 85, "requirements": {"wheat": 1, "egg": 1, "milk": 1}}
 }
 
 static func restore_queue(value: Variant) -> Array:

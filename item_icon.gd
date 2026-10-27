@@ -93,7 +93,7 @@ func _draw() -> void:
 	elif id == "stone":
 		_poly([Vector2(9,43),Vector2(18,20),Vector2(39,12),Vector2(55,35),Vector2(47,52),Vector2(21,55)],Color("99a4a0"))
 		_poly([Vector2(18,20),Vector2(39,12),Vector2(34,34)],Color("c5ccc0"))
-	elif id in ["bread","corn_bread","carrot_pie","butter","cheese"]:
+	elif id in ["bread","corn_bread","carrot_pie","egg_cake","milk_cake","pancake","butter","cheese"]:
 		draw_style_box(_rounded(Color("deb568")),Rect2(10,22,46,30))
 		for x in [21,32,43]:
 			draw_line(Vector2(x,27),Vector2(x-4,38),Color("b17b42"),3,true)

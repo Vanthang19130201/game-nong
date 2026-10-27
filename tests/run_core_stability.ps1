@@ -16,6 +16,8 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'core_stability_test.gd') -Desti
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'gameplay_regression_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'fishing_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'fish_market_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'market_stall_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'order_board_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'level_audit_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'localization_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'storage_ui_test.gd') -Destination $testRoot -Force
@@ -59,9 +61,11 @@ $previousPreference = $ErrorActionPreference
 $stages = @('core', 'position_write', 'position_read', 'legacy_write', 'legacy_read',
     'invalid_write', 'invalid_read', 'offline_write', 'offline_read',
     'backup_write', 'backup_read', 'defaults_write', 'defaults_read', 'duplicates',
-    'fishing_core', 'fishing_limits', 'fishing_write', 'fishing_read', 'market_core', 'market_read',
+    'fishing_core', 'fishing_limits', 'fishing_write', 'fishing_read', 'market_core', 'market_read', 'stall_core', 'stall_write', 'stall_read', 'stall_reset_read',
     'audit_core', 'audit_write', 'audit_read', 'audit_again', 'audit_close', 'localization', 'storage_ui', 'cozy_ui', 'plot_popup', 'ui_polish', 'art_core',
+    'orders_core', 'orders_write', 'orders_read', 'orders_expired_read', 'orders_legacy_write', 'orders_legacy_read',
     'bakery_core', 'bakery_write', 'bakery_read', 'bakery_again', 'bakery_reset_read',
+    'bakery_cakes', 'bakery_cakes_write', 'bakery_cakes_read', 'bakery_cakes_again', 'bakery_legacy_write', 'bakery_legacy_read',
     'crop_core', 'crop_write', 'crop_read', 'crop_again', 'warehouse_core', 'warehouse_write', 'warehouse_read', 'mouse_core',
     'edit_core', 'edit_write', 'edit_read', 'edit_legacy_write', 'edit_legacy_read', 'land_core', 'land_write', 'land_read', 'land_reset_read', 'land_legacy_write', 'land_legacy_read', 'camera_core',
     'soil_edit_core','soil_edit_write','soil_edit_read','soil_edit_offline_write','soil_edit_offline_read','soil_edit_reset_read','soil_edit_legacy_write','soil_edit_legacy_read','soil_edit_invalid_write','soil_edit_invalid_read',
@@ -83,6 +87,8 @@ foreach ($stage in $stages) {
     $ErrorActionPreference = 'Continue'
     $testScript = if ($stage.StartsWith('fishing_')) { 'fishing_test.gd' } else { 'core_stability_test.gd' }
     if ($stage.StartsWith('market_')) { $testScript = 'fish_market_test.gd' }
+    if ($stage.StartsWith('stall_')) { $testScript = 'market_stall_test.gd' }
+    if ($stage.StartsWith('orders_')) { $testScript = 'order_board_test.gd' }
     if ($stage.StartsWith('audit_')) { $testScript = 'level_audit_test.gd' }
     if ($stage.StartsWith('bakery_')) { $testScript = 'bakery_test.gd' }
     if ($stage.StartsWith('crop_')) { $testScript = 'crop_expansion_test.gd' }

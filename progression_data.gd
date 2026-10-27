@@ -6,7 +6,7 @@ static func _features() -> Dictionary:
 	var result: Dictionary = {
 	"Feed Mill": 4,
 	"Chicken Coop": 5, "Chicken / Axe / Hammer": 6, "Egg Orders": 7,
-	"Cow Shed": 8, "Cow": 9, "Milk": 10, "Bakery": 12, "Dairy": 15, "Spinning Machine": 17
+	"Cow Shed": 8, "Cow": 9, "Milk": 10, "Bakery": 3, "Dairy": 15, "Spinning Machine": 17
 	}
 	for crop in preload("res://crop_data.gd").CROPS.values():
 		result[crop["name"]] = crop["unlock_level"]
@@ -15,7 +15,7 @@ const BUILDINGS: Dictionary = {
 	"feed_mill": {"name": "Feed Mill", "level": 4, "price": 500},
 	"chicken_coop": {"name": "Chicken Coop", "level": 5, "price": 800},
 	"cow_shed": {"name": "Cow Shed", "level": 8, "price": 1500},
-	"bakery": {"name": "Bakery", "level": 12, "price": 3000},
+	"bakery": {"name": "Bakery", "level": 3, "price": 400},
 	"dairy": {"name": "Dairy", "level": 15, "price": 4500, "placement_required": true},
 	"spinning_machine": {"name":"Spinning Machine","level":17,"price":5000,"placement_required":true}
 }

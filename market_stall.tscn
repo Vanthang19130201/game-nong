@@ -1,0 +1,49 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://market_stall.gd" id="1"]
+[ext_resource type="Script" path="res://artwork_sprite.gd" id="2"]
+
+[sub_resource type="RectangleShape2D" id="Range"]
+size = Vector2(180, 170)
+[sub_resource type="RectangleShape2D" id="Body"]
+size = Vector2(128, 56)
+
+[node name="MarketStall" type="Area2D"]
+collision_layer = 0
+script = ExtResource("1")
+metadata/placement_rect = Rect2(-72, -48, 144, 88)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("Range")
+
+[node name="Body" type="StaticBody2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Body"]
+shape = SubResource("Body")
+
+[node name="Visuals" type="Node2D" parent="."]
+[node name="BuildingSprite" type="Sprite2D" parent="Visuals"]
+script = ExtResource("2")
+fallback_paths = Array[NodePath]([NodePath("../Placeholder")])
+
+[node name="Placeholder" type="Polygon2D" parent="Visuals"]
+polygon = PackedVector2Array(-64, 28, -64, -24, 64, -24, 64, 28)
+color = Color(0.60, 0.41, 0.23, 1)
+[node name="Awning" type="Polygon2D" parent="Visuals/Placeholder"]
+polygon = PackedVector2Array(-72, -24, -62, -48, 62, -48, 72, -24)
+color = Color(0.54, 0.67, 0.38, 1)
+[node name="Counter" type="Polygon2D" parent="Visuals/Placeholder"]
+polygon = PackedVector2Array(-68, -4, 68, -4, 68, 7, -68, 7)
+color = Color(0.87, 0.72, 0.46, 1)
+
+[node name="Prompt" type="Label" parent="Visuals"]
+offset_left = -110.0
+offset_top = -75.0
+offset_right = 110.0
+offset_bottom = -51.0
+horizontal_alignment = 1
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.96, 0.84, 1)
+theme_override_colors/font_outline_color = Color(0.22, 0.15, 0.1, 1)
+theme_override_constants/outline_size = 3
+text = "BUILDING_MARKET_STALL"

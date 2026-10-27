@@ -81,7 +81,7 @@ func audit_core() -> void:
 				check(inv.buy_animal(animal), "animal unlock purchase")
 		check(inv.can_use_tool("axe") == (level >= 6) and inv.can_use_tool("hammer") == (level >= 6), "tool level gate")
 		check(inv.is_zone_unlocked("fishing") == (level >= 10) and inv.has_fishing_rod == (level >= 10), "fishing level gate")
-		check(orders.item_available("egg") == (level >= 7), "egg order gate")
+		check(orders.item_available("egg") == (level >= 6), "egg orders unlock when egg production becomes possible")
 		check(orders.item_available("milk") == (level >= 10), "milk order gate")
 		check(orders.item_available("golden_fish") == (level >= 10), "fish order gate")
 		for recipe in inv.Progression.RECIPES:

@@ -163,6 +163,10 @@ func run_checks() -> void:
 			check(not dairy.state_changed.is_connected(hud.dairy_panel.refresh),"panel signal disconnected after close")
 			check(not dairy.enqueue("cream") and manager.dairy_queue.is_empty(),"missing milk never enqueues")
 			enqueue_all(dairy)
+			check(not orders.item_available("cream"),"Dairy orders also require a renewable milk source")
+			inv.owns_feed_mill = true
+			inv.owns_cow_shed = true
+			inv.cow_count = 1
 			for item in inv.DairyData.RECIPES:
 				check(orders.item_available(item),"owned unlocked Dairy recipe available to orders")
 			await move_producing(dairy)

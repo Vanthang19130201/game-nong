@@ -10,6 +10,7 @@ const UI_THEME: Theme = preload("res://assets/ui/ui_theme.tres")
 @onready var shop_build_tabs: TabContainer = $ShopBuildPanel/Margin/Content/Tabs
 var transaction_feedback: VBoxContainer
 var bakery_panel: PanelContainer
+var market_stall_panel: PanelContainer
 var dairy_panel: PanelContainer
 var spinning_machine_panel: PanelContainer
 var edit_farm: Node
@@ -54,6 +55,8 @@ var pending_sale_animal: Node2D
 @onready var collect_button: Button = $StationPanel/Margin/Content/ContentScroll/Body/CollectButton
 @onready var feed_queue: VBoxContainer = $StationPanel/Margin/Content/ContentScroll/Body/FeedQueue
 var station_layout: Node
+var feed_presentation: VBoxContainer
+@onready var station_title: Label = $StationPanel/Margin/Content/Title
 @onready var order_panel: PanelContainer = $OrderPanel
 @onready var order_cards: HBoxContainer = $OrderPanel/Margin/Content/Scroll/Orders
 @onready var order_message: Label = $OrderPanel/Margin/Content/Message
@@ -95,6 +98,11 @@ func _ready() -> void:
 	add_child(edit_farm)
 	get_viewport().size_changed.connect(_fit_order_panel)
 	get_viewport().size_changed.connect(_fit_native_popups)
+	market_stall_panel = PanelContainer.new()
+	market_stall_panel.name = "MarketStallPanel"
+	market_stall_panel.z_index = 29
+	market_stall_panel.set_script(preload("res://market_stall_panel.gd"))
+	add_child(market_stall_panel)
 	bakery_panel = PanelContainer.new()
 	bakery_panel.name = "BakeryPanel"
 	bakery_panel.z_index = 29
@@ -119,7 +127,7 @@ func _ready() -> void:
 		debug_panel.set_script(preload("res://dev_debug_panel.gd"))
 		add_child(debug_panel)
 		debug_panel.visibility_changed.connect(_on_main_panel_visibility_changed)
-	for panel in [land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel, reset_confirmation, animal_sale_confirmation, plot_purchase, tools_unlock_popup, fishing_ui.panel]:
+	for panel in [market_stall_panel, land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel, reset_confirmation, animal_sale_confirmation, plot_purchase, tools_unlock_popup, fishing_ui.panel]:
 		panel.visibility_changed.connect(_on_main_panel_visibility_changed)
 	crop_ids = CropData.CROPS.keys()
 	var content: VBoxContainer = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent
@@ -196,7 +204,9 @@ func _ready() -> void:
 	$StationPanel/Margin/Content/Footer/CloseButton.pressed.connect(close_station)
 	$OrderPanel/Margin/Content/Footer/CloseButton.pressed.connect(order_panel.hide)
 	OrderManager.orders_changed.connect(_refresh_orders)
+	OrderManager.order_completed.connect(_on_order_completed)
 	_setup_cozy_ui()
+	_setup_feed_presentation()
 	_apply_ui_theme(self)
 	_update_inventory()
 
@@ -463,7 +473,7 @@ func open_station(station: Node) -> void:
 		return
 	_close_game_panels()
 	active_station = station
-	station_layout.preferred_size = Vector2(520,650) if station.station_id == "feed_mill" else Vector2(480,560)
+	station_layout.preferred_size = Vector2(900,620) if station.station_id == "feed_mill" else Vector2(480,560)
 	active_station.state_changed.connect(_update_station_panel)
 	shop_button.text = tr("UI_SHOP_SHORT")
 	station_panel.show()
@@ -475,6 +485,8 @@ func close_station() -> void:
 	if is_instance_valid(active_station) and active_station.state_changed.is_connected(_update_station_panel):
 		active_station.state_changed.disconnect(_update_station_panel)
 	active_station = null
+	feed_presentation.bind_machine(null)
+	feed_presentation.hide()
 	feed_queue.hide()
 	station_panel.hide()
 
@@ -484,9 +496,14 @@ func _update_station_panel() -> void:
 		return
 	var id: String = active_station.station_id
 	var is_mill: bool = id == "feed_mill"
+	feed_presentation.visible = is_mill
+	station_info.visible = not is_mill
+	produce_button.visible = not is_mill
+	collect_button.visible = not is_mill
+	station_title.text = tr("BUILDING_FEED_MILL") if is_mill else Localization.display_name(Progression.BUILDINGS[id]["name"])
 	station_info.add_theme_font_size_override("font_size",14 if is_mill else 16)
 	$StationPanel/Margin/Content/ContentScroll/Body.add_theme_constant_override("separation",6 if is_mill else 12)
-	recipe_selector.visible = is_mill
+	recipe_selector.hide()
 	feed_queue.visible = is_mill
 	if is_mill:
 		var recipe: String = recipe_ids[maxi(0, recipe_selector.selected)]
@@ -501,6 +518,7 @@ func _update_station_panel() -> void:
 		produce_button.disabled = not active_station.can_produce(recipe) or not active_station.player_near
 		collect_button.disabled = active_station.outputs.is_empty() or active_station.collecting or not active_station.player_near
 		feed_queue.refresh(active_station)
+		feed_presentation.bind_machine(active_station)
 	else:
 		var product: Dictionary = Progression.PRODUCTS[id]
 		var animal: String = product["animal"]
@@ -510,7 +528,29 @@ func _update_station_panel() -> void:
 		collect_button.text = tr("UI_COLLECT_PREFIX") + Localization.display_name(product["item"])
 		produce_button.disabled = not active_station.can_produce() or not active_station.player_near
 	if not is_mill:
+		feed_presentation.bind_machine(null)
 		collect_button.disabled = active_station.state != "READY" or not active_station.player_near
+
+func _setup_feed_presentation() -> void:
+	feed_presentation = VBoxContainer.new()
+	feed_presentation.set_script(preload("res://production_ui.gd"))
+	feed_presentation.machine_kind = "feed_mill"
+	feed_presentation.recipe_data = Progression.RECIPES
+	feed_presentation.queue_view = feed_queue
+	$StationPanel/Margin/Content/ContentScroll/Body.add_child(feed_presentation)
+	feed_presentation.hide()
+	var header := HBoxContainer.new()
+	$StationPanel/Margin/Content.add_child(header)
+	$StationPanel/Margin/Content.move_child(header,0)
+	station_title.reparent(header,false)
+	station_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var close := Button.new()
+	close.text = "×"
+	close.tooltip_text = tr("UI_CLOSE")
+	close.focus_mode = Control.FOCUS_NONE
+	close.custom_minimum_size = Vector2(36,36)
+	close.pressed.connect(close_station)
+	header.add_child(close)
 
 func _produce() -> void:
 	if is_instance_valid(active_station) and active_station.player_near:
@@ -525,7 +565,7 @@ func _collect() -> void:
 
 
 func blocks_world_input() -> bool:
-	return animal_sale_confirmation.visible or land_panel.visible or edit_farm.active or bakery_panel.visible or dairy_panel.visible or spinning_machine_panel.visible or settings_panel.visible or shop_build_panel.visible or storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or station_panel.visible or order_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
+	return market_stall_panel.visible or animal_sale_confirmation.visible or land_panel.visible or edit_farm.active or bakery_panel.visible or dairy_panel.visible or spinning_machine_panel.visible or settings_panel.visible or shop_build_panel.visible or storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or station_panel.visible or order_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
 
 
 func _input(event: InputEvent) -> void:
@@ -586,6 +626,8 @@ func close_current_panel() -> void:
 		debug_panel.hide()
 	elif fish_market_panel.visible:
 		fish_market_panel.close()
+	elif market_stall_panel.visible:
+		market_stall_panel.close()
 	elif bakery_panel.visible:
 		bakery_panel.close()
 	elif dairy_panel.visible:
@@ -605,6 +647,7 @@ func close_current_panel() -> void:
 
 
 func _close_game_panels() -> void:
+	market_stall_panel.close()
 	animal_sale_confirmation.hide()
 	land_panel.close()
 	bakery_panel.close()
@@ -661,6 +704,12 @@ func open_fish_market(market: Node) -> void:
 	_close_game_panels()
 	fish_market_panel.open(market)
 
+func open_market_stall(stall: Node) -> void:
+	if blocks_world_input() or not is_instance_valid(stall) or not stall.can_interact():
+		return
+	_close_game_panels()
+	market_stall_panel.open(stall)
+
 
 func close_all_panels() -> void:
 	if edit_farm.active:
@@ -674,16 +723,19 @@ func close_all_panels() -> void:
 func _on_main_panel_visibility_changed() -> void:
 	clear_item_hint(item_hint_source)
 	# A HUD dropdown must not stack over an existing modal or fishing session.
-	crop_selector.disabled = _native_dialog_open() or fishing_ui.panel.visible or [land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel].any(func(panel): return panel.visible) or (is_instance_valid(debug_panel) and debug_panel.visible)
+	crop_selector.disabled = _native_dialog_open() or fishing_ui.panel.visible or [market_stall_panel, land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel].any(func(panel): return panel.visible) or (is_instance_valid(debug_panel) and debug_panel.visible)
 	if is_instance_valid(hotbar):
 		hotbar.visible = not crop_selector.disabled
 	$ModalBackdrop.visible = crop_selector.disabled and not edit_farm.active and not fishing_ui.panel.visible
 	# z_index controls drawing, not GUI picking. Keep the active panel after
 	# the backdrop and hotbar in tree order so its tabs/buttons receive clicks.
-	for panel in [land_panel,bakery_panel,dairy_panel,spinning_machine_panel,settings_panel,shop_build_panel,station_panel,house_panel,order_panel,fish_market_panel,storage_panel,debug_panel]:
+	for panel in [market_stall_panel,land_panel,bakery_panel,dairy_panel,spinning_machine_panel,settings_panel,shop_build_panel,station_panel,house_panel,order_panel,fish_market_panel,storage_panel,debug_panel]:
 		if is_instance_valid(panel) and panel.visible:
 			move_child(panel,get_child_count()-1)
 	transaction_feedback.set_popup_mode($ModalBackdrop.visible)
+	# Stall sales keep the existing small text above the player's screen position,
+	# visible even when the compact sale panel overlaps that position.
+	floating_feedback.z_index = order_panel.z_index+1 if order_panel.visible else (market_stall_panel.z_index+1 if market_stall_panel.visible else 17)
 	_show_tool_unlock_if_needed.call_deferred()
 
 
@@ -745,41 +797,30 @@ func _fit_order_panel() -> void:
 
 
 func _refresh_orders() -> void:
-	for child in order_cards.get_children():
-		order_cards.remove_child(child)
-		child.queue_free()
-	var items: Dictionary = OrderManager.item_info()
-	for order in OrderManager.orders:
-		var card := PanelContainer.new()
-		card.custom_minimum_size = Vector2(230, 250)
-		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var content := VBoxContainer.new()
-		content.add_theme_constant_override("separation", 12)
-		card.add_child(content)
-		var label := Label.new()
-		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		label.text = tr("ORDER_NUMBER") % order["order_id"].trim_prefix("order_") + "\n\n"
-		for item in order["requirements"]:
-			label.text += tr("ORDER_ITEM") % [Localization.display_name(items[item]["name"]), order["requirements"][item], Inventory.get(item)]
-		label.text += tr("ORDER_REWARD") % [order["coin_reward"], order["exp_reward"]]
-		content.add_child(label)
-		var complete := Button.new()
-		complete.name = "Complete"
-		complete.text = tr("ORDER_COMPLETE")
-		complete.focus_mode = Control.FOCUS_NONE
-		complete.pressed.connect(_complete_order.bind(order["order_id"]))
-		content.add_child(complete)
-		order_cards.add_child(card)
-	_fit_order_panel.call_deferred()
+	for index in range(OrderManager.orders.size()):
+		if order_cards.get_child_count() <= index:
+			var card := PanelContainer.new()
+			card.set_script(preload("res://order_card.gd"))
+			order_cards.add_child(card)
+			card.deliver_requested.connect(_complete_order)
+			card.cancel_requested.connect(_cancel_order)
+		order_cards.get_child(index).refresh(OrderManager.orders[index])
 
 
 func _complete_order(order_id: String) -> void:
 	if OrderManager.complete_order(order_id):
-		order_message.text = tr("ORDER_DONE")
+		order_message.text = ""
 	else:
 		order_message.text = tr("ERROR_ITEMS")
+
+func _cancel_order(order_id: String) -> void:
+	if OrderManager.cancel_order(order_id):
+		order_message.text = ""
+
+func _on_order_completed(_coins: int, experience: int) -> void:
+	# Coin changes already use the shared Inventory floating feedback.
+	if experience > 0:
+		show_floating_feedback(tr("ORDER_EXP_FEEDBACK") % experience)
 
 func _show_message(message: String) -> void:
 	save_status.text = message
