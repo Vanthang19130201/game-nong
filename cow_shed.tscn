@@ -63,7 +63,9 @@ script = ExtResource("94_building")
 building_kind = "cow_shed"
 
 [node name="BuildingSprite" type="Sprite2D" parent="Visuals"]
-z_index = -1
+# Keep the large shed artwork behind the Player; the interaction/body footprint
+# still determines collision and placement exactly as before.
+z_index = -2
 texture = ExtResource("95_shed")
 region_enabled = true
 region_rect = Rect2(0, 38, 1240, 1200)

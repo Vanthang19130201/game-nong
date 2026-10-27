@@ -5,6 +5,7 @@ const FarmData = preload("res://farm_data.gd")
 const SOIL_SCENE = preload("res://soil_plot.tscn")
 const DOG_SCENE = preload("res://dog.tscn")
 const LAND_SCENE = preload("res://land_zone.tscn")
+const FIELD_VISUAL_SCRIPT = preload("res://farm_field_visual.gd")
 const AnimalGroup = preload("res://animal_group.gd")
 const Placement = preload("res://building_placement.gd")
 const FishingWaterZone = preload("res://fishing_water_zone.gd")
@@ -20,6 +21,7 @@ var animal_groups: Dictionary = {}
 
 func _ready() -> void:
 	_create_farm_grid()
+	_create_field_visual()
 	_setup_fishing_waters()
 
 	for id in SaveManager.LandData.ZONES:
@@ -401,6 +403,18 @@ func _create_farm_grid() -> void:
 			)
 
 			add_child(plot)
+
+
+func _create_field_visual() -> void:
+	if get_node_or_null("FarmFieldVisual") != null:
+		return
+	var field_visual := Node2D.new()
+	field_visual.name = "FarmFieldVisual"
+	# Keep the shared dirt bed behind plot tiles and the Player.
+	field_visual.z_index = -2
+	field_visual.set_script(FIELD_VISUAL_SCRIPT)
+	add_child(field_visual)
+	field_visual.configure(SaveManager.plots)
 
 
 func _setup_fishing_waters() -> void:

@@ -11,6 +11,9 @@ var prompt: Label
 func _ready() -> void:
 	prompt = Label.new()
 	prompt.name = "InteractionPrompt"
+	# Keep nearby interaction text below the Player sprite while it follows the
+	# station in world space.
+	prompt.z_index = -2
 	prompt.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	prompt.add_theme_font_size_override("font_size", 12)

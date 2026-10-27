@@ -1,6 +1,7 @@
 extends Node2D
 
 const CropVisuals = preload("res://crop_visual_data.gd")
+const FarmData = preload("res://farm_data.gd")
 @export var soil_texture: Texture2D
 @export var soil_size: Vector2 = Vector2(64, 48)
 
@@ -22,18 +23,32 @@ func refresh() -> void:
 	if texture != null:
 		$SoilSprite.scale = soil_size / texture.get_size()
 	$SoilSprite.visible = unlocked
-	color.visible = not unlocked or texture == null
-	color.color = Color(0.3, 0.15, 0.06, 1) if unlocked else Color(0.35, 0.44, 0.25, 0.3)
-	$SoilSprite.modulate = Color(1.08,1.05,0.94) if plot.state == plot.PlotState.READY else Color.WHITE
+	color.visible = unlocked and texture == null
+	color.color = Color("A66D3F") if unlocked else Color("789457", 0.16)
+	# READY emphasis belongs around the crop, not across the complete soil tile.
+	$SoilSprite.modulate = Color.WHITE
 	# Keep the node/reference for old scenes, but never draw text across a plot.
 	label.text = ""
 	label.hide()
 	$LockedMarker.visible = not unlocked
+	var plot_number: int = FarmData.plot_number(plot.plot_id)
+	var next_plot: bool = plot_number == Inventory.unlocked_plot_count + 1
+	$LockedMarker.modulate = Color(1, 1, 1, 0.92 if next_plot else 0.28)
 	set_process(unlocked and plot.state == plot.PlotState.GROWING)
 	$GrowthTime.visible = unlocked and plot.state == plot.PlotState.GROWING
 	refresh_elapsed = 0.0
 	_refresh_crop()
 	_update_growth_time()
+	queue_redraw()
+
+
+func _draw() -> void:
+	if plot.is_unlocked():
+		return
+	if FarmData.plot_number(plot.plot_id) != Inventory.unlocked_plot_count + 1 or not plot.player_near:
+		return
+	draw_rect(Rect2(-31, -23, 62, 46), Color("E8B34F", 0.12), true)
+	draw_rect(Rect2(-31, -23, 62, 46), Color("E8B34F", 0.88), false, 2.0)
 
 func _process(delta: float) -> void:
 	refresh_elapsed += delta
@@ -51,6 +66,7 @@ func _update_growth_time() -> void:
 
 func _refresh_crop() -> void:
 	displayed_stage = CropVisuals.growth_stage(plot) if plot.is_unlocked() else 0
+	$CropAccent.set_crop_visual(displayed_stage, plot.state == plot.PlotState.READY)
 	$CropSprite.hide()
 	$FallbackCropVisual.hide()
 	if displayed_stage == 0:
@@ -69,6 +85,7 @@ func _refresh_crop() -> void:
 		$CropSprite.region_rect = rect
 		$CropSprite.scale = Vector2.ONE * minf(target_size.x / rect.size.x, target_size.y / rect.size.y)
 		$CropSprite.offset = Vector2(0, -rect.size.y / 2.0)
+		$CropSprite.modulate = Color(1.04, 1.02, 0.97) if plot.state == plot.PlotState.READY else Color.WHITE
 		$CropSprite.show()
 	else:
 		# Existing crops without stage art keep a small recognizable item visual.

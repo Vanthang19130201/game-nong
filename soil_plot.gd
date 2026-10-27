@@ -144,8 +144,10 @@ func _clear_crop() -> void:
 func _on_body_entered(body: Node2D) -> void:
 	if body.name == "Player":
 		player_near = true
+		_update_label()
 
 
 func _on_body_exited(body: Node2D) -> void:
 	if body.name == "Player":
 		player_near = false
+		_update_label()

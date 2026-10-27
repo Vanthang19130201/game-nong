@@ -21,7 +21,9 @@ content_margin_top = 5.0
 content_margin_bottom = 5.0
 
 [node name="ProductionStatus" type="PanelContainer"]
-z_index = 6
+# This world-space badge sits above its building by position, not by drawing
+# over the Player when they walk past it.
+z_index = -2
 custom_minimum_size = Vector2(174, 0)
 mouse_filter = 2
 theme = ExtResource("3_theme")

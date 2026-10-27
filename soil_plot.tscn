@@ -8,6 +8,7 @@
 [ext_resource type="Texture2D" path="res://assets/crops/soil/soil_plot.png" id="2_soil"]
 [ext_resource type="Texture2D" path="res://assets/ui/plot_locked.svg" id="3_lock"]
 [ext_resource type="Script" path="res://item_icon.gd" id="4_icon"]
+[ext_resource type="Script" path="res://soil_crop_accent.gd" id="5_accent"]
 
 [sub_resource type="RectangleShape2D" id="PlotShape"]
 size = Vector2(68, 52)
@@ -32,12 +33,13 @@ wait_time = 10.0
 one_shot = true
 
 [node name="SoilColor" type="ColorRect" parent="."]
+z_index = -1
 offset_left = -32.0
 offset_top = -24.0
 offset_right = 32.0
 offset_bottom = 24.0
 mouse_filter = 2
-color = Color(0.3, 0.15, 0.06, 1)
+color = Color(0.65, 0.43, 0.25, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("PlotShape")
@@ -45,10 +47,15 @@ shape = SubResource("PlotShape")
 script = ExtResource("91_visual")
 
 [node name="SoilSprite" type="Sprite2D" parent="Visuals"]
+z_index = -1
 scale = Vector2(0.05103668, 0.03827751)
 texture = ExtResource("2_soil")
 script = ExtResource("90_art")
 fallback_paths = Array[NodePath]([NodePath("../../SoilColor")])
+
+[node name="CropAccent" type="Node2D" parent="Visuals"]
+z_index = 1
+script = ExtResource("5_accent")
 
 [node name="CropSprite" type="Sprite2D" parent="Visuals"]
 z_index = 1

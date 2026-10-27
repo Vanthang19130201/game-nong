@@ -227,6 +227,10 @@ func place_move() -> bool:
 			SaveManager.building_positions[selected_id] = previous
 		Inventory.fail(tr("EDIT_SAVE_FAILED"))
 		return false
+	if is_plot:
+		var field_visual = hud.get_parent().get_node_or_null("FarmFieldVisual")
+		if field_visual != null:
+			field_visual.queue_redraw()
 	# The dog's home_point already references the same DogHouse node.
 	# Moving that node must not restart the dog's current walk or idle timer.
 	cancel_selection()
