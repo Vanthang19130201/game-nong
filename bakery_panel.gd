@@ -8,13 +8,9 @@ var recipes: Array = Inventory.BakeryData.RECIPES.keys()
 
 func _ready() -> void:
 	Inventory.inventory_changed.connect(refresh)
-	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 12)
-	add_child(content)
-	var title := Label.new()
-	title.text = tr("BUILDING_BAKERY")
-	title.theme_type_variation = &"Heading"
-	content.add_child(title)
+	var layout = preload("res://popup_layout.gd").new()
+	add_child(layout)
+	var content: VBoxContainer = layout.build(tr("BUILDING_BAKERY"))
 	selector = OptionButton.new()
 	selector.focus_mode = Control.FOCUS_NONE
 	for item in recipes:
@@ -37,20 +33,13 @@ func _ready() -> void:
 	collect.focus_mode = Control.FOCUS_NONE
 	collect.pressed.connect(_collect)
 	content.add_child(collect)
-	var close_button := Button.new()
-	close_button.text = tr("UI_CLOSE")
-	close_button.focus_mode = Control.FOCUS_NONE
-	close_button.pressed.connect(close)
-	content.add_child(close_button)
+	layout.close_button.pressed.connect(close)
 	hide()
 
 func open(bakery: Node) -> void:
 	close()
 	active_bakery = bakery
 	active_bakery.state_changed.connect(refresh)
-	var viewport_size: Vector2 = get_viewport_rect().size
-	size = Vector2(460, 460).min(viewport_size - Vector2(24, 32))
-	position = (viewport_size - size) / 2
 	show()
 	refresh()
 

@@ -1,0 +1,74 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://bdsvdr7jnopan"]
+
+[ext_resource type="Texture2D" uid="uid://cgmhxyebcoc0y" path="res://assets/animals/cow/cow.png" id="1"]
+
+[sub_resource type="AtlasTexture" id="Art"]
+atlas = ExtResource("1")
+region = Rect2(31, 17, 1207, 1214)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Art")
+}],
+"loop": 1,
+"name": &"idle_down",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Art")
+}],
+"loop": 1,
+"name": &"idle_left",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Art")
+}],
+"loop": 1,
+"name": &"idle_right",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Art")
+}],
+"loop": 1,
+"name": &"idle_up",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Art")
+}],
+"loop": 1,
+"name": &"walk_down",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Art")
+}],
+"loop": 1,
+"name": &"walk_left",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Art")
+}],
+"loop": 1,
+"name": &"walk_right",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Art")
+}],
+"loop": 1,
+"name": &"walk_up",
+"speed": 1.0
+}]

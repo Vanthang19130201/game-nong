@@ -13,54 +13,70 @@ script = ExtResource("1")
 
 [node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 20
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
 
 [node name="Content" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 
-[node name="Title" type="Label" parent="Margin/Content"]
+[node name="Header" type="CenterContainer" parent="Margin/Content"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Margin/Content/Header"]
 theme_type_variation = &"Heading"
 layout_mode = 2
 text = "STORAGE_TITLE"
 horizontal_alignment = 1
 
-[node name="Tabs" type="TabContainer" parent="Margin/Content"]
+[node name="TabBar" type="TabBar" parent="Margin/Content"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+tab_alignment = 1
+clip_tabs = true
+focus_mode = 0
+
+[node name="ContentScroll" type="ScrollContainer" parent="Margin/Content"]
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_vertical = 3
-tab_alignment = 1
-
-[node name="Produce" type="ScrollContainer" parent="Margin/Content/Tabs"]
-layout_mode = 2
+clip_contents = true
 horizontal_scroll_mode = 0
 
-[node name="Items" type="VBoxContainer" parent="Margin/Content/Tabs/Produce"]
+[node name="Items" type="VBoxContainer" parent="Margin/Content/ContentScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Produce" type="VBoxContainer" parent="Margin/Content/ContentScroll/Items"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 12
 
-[node name="Goods" type="ScrollContainer" parent="Margin/Content/Tabs"]
-layout_mode = 2
-horizontal_scroll_mode = 0
-
-[node name="Items" type="VBoxContainer" parent="Margin/Content/Tabs/Goods"]
+[node name="Goods" type="VBoxContainer" parent="Margin/Content/ContentScroll/Items"]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 12
 
-[node name="Materials" type="ScrollContainer" parent="Margin/Content/Tabs"]
-layout_mode = 2
-horizontal_scroll_mode = 0
-
-[node name="Items" type="VBoxContainer" parent="Margin/Content/Tabs/Materials"]
+[node name="Materials" type="VBoxContainer" parent="Margin/Content/ContentScroll/Items"]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 12
 
-[node name="CloseButton" type="Button" parent="Margin/Content"]
+[node name="ContentGap" type="Control" parent="Margin/Content"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Footer" type="CenterContainer" parent="Margin/Content"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="CloseButton" type="Button" parent="Margin/Content/Footer"]
 custom_minimum_size = Vector2(140, 44)
 layout_mode = 2
 size_flags_horizontal = 4

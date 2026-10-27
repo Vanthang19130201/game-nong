@@ -7,6 +7,8 @@
 [ext_resource type="PackedScene" path="res://fish_market_panel.tscn" id="3_market"]
 [ext_resource type="PackedScene" path="res://storage_panel.tscn" id="4_storage"]
 
+[sub_resource type="StyleBoxEmpty" id="CatalogInset"]
+
 [node name="HUD" type="CanvasLayer"]
 layer = 10
 script = ExtResource("1_hud")
@@ -30,15 +32,16 @@ mouse_filter = 2
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -92.0
-offset_top = 8.0
+offset_left = -60.0
+offset_top = 12.0
 offset_right = -12.0
-offset_bottom = 36.0
+offset_bottom = 56.0
 grow_horizontal = 0
 focus_mode = 0
 text = "≡"
 tooltip_text = "UI_MENU"
 theme_override_font_sizes/font_size = 24
+theme_type_variation = &"IconButton"
 
 [node name="ResetConfirmation" type="ConfirmationDialog" parent="."]
 theme = ExtResource("99_theme")
@@ -150,6 +153,14 @@ visible = false
 layout_mode = 2
 mouse_filter = 2
 
+[node name="ModalBackdrop" type="ColorRect" parent="."]
+visible = false
+z_index = 18
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.16, 0.12, 0.07, 0.30)
+
 [node name="ShopBuildPanel" type="PanelContainer" parent="."]
 visible = false
 z_index = 25
@@ -173,14 +184,20 @@ autowrap_mode = 2
 [node name="Tabs" type="TabContainer" parent="ShopBuildPanel/Margin/Content"]
 size_flags_vertical = 3
 tab_alignment = 1
+clip_tabs = true
 
-[node name="CloseButton" type="Button" parent="ShopBuildPanel/Margin/Content"]
+[node name="Footer" type="CenterContainer" parent="ShopBuildPanel/Margin/Content"]
+custom_minimum_size = Vector2(0, 72)
+size_flags_vertical = 0
+
+[node name="CloseButton" type="Button" parent="ShopBuildPanel/Margin/Content/Footer"]
 custom_minimum_size = Vector2(140, 40)
 size_flags_horizontal = 4
 focus_mode = 0
 text = "UI_CLOSE"
 [node name="ShopPanel" type="PanelContainer" parent="ShopBuildPanel/Margin/Content/Tabs"]
 layout_mode = 2
+theme_override_styles/panel = SubResource("CatalogInset")
 
 [node name="Margin" type="MarginContainer" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel"]
 layout_mode = 2
@@ -298,35 +315,54 @@ theme_override_constants/margin_bottom = 16
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Info" type="Label" parent="StationPanel/Margin/Content"]
+[node name="Title" type="Label" parent="StationPanel/Margin/Content"]
+theme_type_variation = &"Heading"
+text = "UI_PRODUCTION_PANEL"
+horizontal_alignment = 1
+
+[node name="ContentScroll" type="ScrollContainer" parent="StationPanel/Margin/Content"]
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+clip_contents = true
+
+[node name="Body" type="VBoxContainer" parent="StationPanel/Margin/Content/ContentScroll"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="Info" type="Label" parent="StationPanel/Margin/Content/ContentScroll/Body"]
 autowrap_mode = 2
 layout_mode = 2
 
-[node name="RecipeSelector" type="OptionButton" parent="StationPanel/Margin/Content"]
+[node name="RecipeSelector" type="OptionButton" parent="StationPanel/Margin/Content/ContentScroll/Body"]
 layout_mode = 2
 focus_mode = 0
 
-[node name="AnimalBuy" type="Button" parent="StationPanel/Margin/Content"]
+[node name="AnimalBuy" type="Button" parent="StationPanel/Margin/Content/ContentScroll/Body"]
 layout_mode = 2
 focus_mode = 0
 text = "UI_BUY_ANIMAL_LABEL"
 
-[node name="AnimalSell" type="Button" parent="StationPanel/Margin/Content"]
+[node name="AnimalSell" type="Button" parent="StationPanel/Margin/Content/ContentScroll/Body"]
 layout_mode = 2
 focus_mode = 0
 text = "UI_SELL_ANIMAL_LABEL"
 
-[node name="ProduceButton" type="Button" parent="StationPanel/Margin/Content"]
+[node name="ProduceButton" type="Button" parent="StationPanel/Margin/Content/ContentScroll/Body"]
 layout_mode = 2
 focus_mode = 0
 text = "UI_PRODUCE"
 
-[node name="CollectButton" type="Button" parent="StationPanel/Margin/Content"]
+[node name="CollectButton" type="Button" parent="StationPanel/Margin/Content/ContentScroll/Body"]
 layout_mode = 2
 focus_mode = 0
 text = "UI_COLLECT"
 
-[node name="CloseButton" type="Button" parent="StationPanel/Margin/Content"]
+[node name="Footer" type="CenterContainer" parent="StationPanel/Margin/Content"]
+custom_minimum_size = Vector2(0, 72)
+size_flags_vertical = 0
+
+[node name="CloseButton" type="Button" parent="StationPanel/Margin/Content/Footer"]
+custom_minimum_size = Vector2(140, 44)
 layout_mode = 2
 focus_mode = 0
 text = "UI_CLOSE"
@@ -371,13 +407,18 @@ custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
 autowrap_mode = 2
 
-[node name="CloseButton" type="Button" parent="OrderPanel/Margin/Content"]
-custom_minimum_size = Vector2(0, 44)
+[node name="Footer" type="CenterContainer" parent="OrderPanel/Margin/Content"]
+custom_minimum_size = Vector2(0, 72)
+size_flags_vertical = 0
+
+[node name="CloseButton" type="Button" parent="OrderPanel/Margin/Content/Footer"]
+custom_minimum_size = Vector2(140, 44)
 layout_mode = 2
 focus_mode = 0
 text = "UI_CLOSE"
 [node name="BuildPanel" type="PanelContainer" parent="ShopBuildPanel/Margin/Content/Tabs"]
 layout_mode = 2
+theme_override_styles/panel = SubResource("CatalogInset")
 
 [node name="Margin" type="MarginContainer" parent="ShopBuildPanel/Margin/Content/Tabs/BuildPanel"]
 layout_mode = 2
@@ -420,14 +461,15 @@ ok_button_text = "UI_OK"
 dialog_text = "TOOLS_UNLOCK_BODY"
 [node name="PlotPurchase" type="ConfirmationDialog" parent="."]
 theme = ExtResource("99_theme")
+theme_type_variation = &"PlotPurchaseDialog"
 title = "TITLE_NEW_PLOT"
-size = Vector2i(360, 160)
+size = Vector2i(380, 180)
 exclusive = true
 unresizable = true
 dialog_hide_on_ok = false
 ok_button_text = "UI_BUY"
 cancel_button_text = "UI_CANCEL"
-dialog_text = "DEFAULT_PLOT_PRICE"
+dialog_autowrap = true
 
 [node name="HousePanel" type="PanelContainer" parent="."]
 theme = ExtResource("99_theme")
@@ -458,20 +500,35 @@ theme_type_variation = &"Heading"
 layout_mode = 2
 text = "TITLE_HOUSE"
 
-[node name="Info" type="Label" parent="HousePanel/Margin/Content"]
+[node name="ContentScroll" type="ScrollContainer" parent="HousePanel/Margin/Content"]
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+clip_contents = true
+
+[node name="Body" type="VBoxContainer" parent="HousePanel/Margin/Content/ContentScroll"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="Info" type="Label" parent="HousePanel/Margin/Content/ContentScroll/Body"]
 autowrap_mode = 2
 layout_mode = 2
 text = "DEFAULT_HOUSE_LEVEL"
 
-[node name="Message" type="Label" parent="HousePanel/Margin/Content"]
+[node name="Message" type="Label" parent="HousePanel/Margin/Content/ContentScroll/Body"]
+autowrap_mode = 2
 layout_mode = 2
 
-[node name="UpgradeButton" type="Button" parent="HousePanel/Margin/Content"]
+[node name="UpgradeButton" type="Button" parent="HousePanel/Margin/Content/ContentScroll/Body"]
 layout_mode = 2
 focus_mode = 0
 text = "UI_UPGRADE_HOUSE"
 
-[node name="CloseButton" type="Button" parent="HousePanel/Margin/Content"]
+[node name="Footer" type="CenterContainer" parent="HousePanel/Margin/Content"]
+custom_minimum_size = Vector2(0, 72)
+size_flags_vertical = 0
+
+[node name="CloseButton" type="Button" parent="HousePanel/Margin/Content/Footer"]
+custom_minimum_size = Vector2(140, 44)
 layout_mode = 2
 focus_mode = 0
 text = "UI_CLOSE"
@@ -506,12 +563,25 @@ theme_type_variation = &"Heading"
 text = "UI_MENU"
 horizontal_alignment = 1
 
-[node name="ResetButton" type="Button" parent="SettingsPanel/Margin/Content"]
+[node name="ContentScroll" type="ScrollContainer" parent="SettingsPanel/Margin/Content"]
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+clip_contents = true
+
+[node name="Body" type="VBoxContainer" parent="SettingsPanel/Margin/Content/ContentScroll"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="ResetButton" type="Button" parent="SettingsPanel/Margin/Content/ContentScroll/Body"]
 custom_minimum_size = Vector2(0, 44)
 focus_mode = 0
 text = "RESET_FROM_START"
 
-[node name="CloseButton" type="Button" parent="SettingsPanel/Margin/Content"]
+[node name="Footer" type="CenterContainer" parent="SettingsPanel/Margin/Content"]
+custom_minimum_size = Vector2(0, 72)
+size_flags_vertical = 0
+
+[node name="CloseButton" type="Button" parent="SettingsPanel/Margin/Content/Footer"]
 custom_minimum_size = Vector2(140, 40)
 size_flags_horizontal = 4
 focus_mode = 0

@@ -210,8 +210,8 @@ func audit_write() -> void:
 	inv.normalize_exp()
 	inv.coins = 100000
 	check(not inv.buy_plot(20), "cannot skip plot purchase order")
-	inv.coins = 99
-	check(not inv.buy_plot(9) and inv.coins == 99, "insufficient plot funds unchanged")
+	inv.coins = 49
+	check(not inv.buy_plot(9) and inv.coins == 49, "insufficient plot funds unchanged")
 	inv.coins = 100000
 	for number in range(9,33):
 		var price: int = inv.FarmData.plot_price(number)

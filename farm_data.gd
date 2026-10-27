@@ -35,10 +35,10 @@ static func valid_saved_building_position(id: String, value: Variant) -> bool:
 	return valid_building_position(value) or (value is Vector2 and value == BUILDINGS[id]["position"])
 
 const PRICE_TIERS: Array[Dictionary] = [
-	{"last": 8, "price": 0}, {"last": 12, "price": 100},
-	{"last": 16, "price": 200}, {"last": 20, "price": 350},
-	{"last": 24, "price": 500}, {"last": 28, "price": 750},
-	{"last": 32, "price": 1000}
+	{"last": 8, "price": 0}, {"last": 12, "price": 50},
+	{"last": 16, "price": 100}, {"last": 20, "price": 175},
+	{"last": 24, "price": 250}, {"last": 28, "price": 375},
+	{"last": 32, "price": 500}
 ]
 
 static func plot_id(number: int) -> String:

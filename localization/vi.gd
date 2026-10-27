@@ -1,6 +1,7 @@
 extends RefCounted
 
 const MESSAGES: Dictionary = {
+    "UI_PRODUCTION_PANEL": "SẢN XUẤT",
     "ITEM_TOOLTIP": "%s\nSố lượng: %d",
     "HOTBAR_SELECTED": "%s",
     "HOTBAR_HINT": "1–8: Chọn ô · Cuộn: Đổi ô · Ctrl + cuộn: Zoom",
@@ -359,7 +360,6 @@ const MESSAGES: Dictionary = {
     "UI_BUY_ANIMAL_LABEL":  "Mua vật nuôi",
     "UI_SELL_ANIMAL_LABEL":  "Bán vật nuôi",
     "UI_COLLECT":  "Nhận",
-    "DEFAULT_PLOT_PRICE":  "Giá: 100 xu",
     "DEFAULT_HOUSE_LEVEL":  "Cấp hiện tại: 1",
     "DEFAULT_COW_STATUS":  "Chuồng bò\nBò: 0 / 3\nĐói"
 }

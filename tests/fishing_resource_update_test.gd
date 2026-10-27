@@ -57,10 +57,15 @@ func run_checks() -> void:
 			check(inv.buy_dog() and inv.coins == 0,"Dog still costs 300 Coins")
 			for id in ["tree_7","tree_8","rock_4"]:
 				var resource = manager.resources[id]
+				var original: Vector2 = resource.global_position
+				# Test locked-land behavior independently of editor map rearrangements.
+				resource.global_position = {"tree_7":Vector2(280,1552),"tree_8":Vector2(1480,2100),"rock_4":Vector2(880,1740)}[id]
 				var deadline: float = Time.get_unix_time_from_system()-10
 				resource.restore_save_data({"respawn_at":deadline,"rock_type":"large_rock"})
 				resource._respawn()
 				check(not resource.zone_active and not resource.harvest() and resource.respawn_timer.is_stopped() and resource.respawn_at == deadline,"locked resource cannot gather or respawn: " + id)
+				resource.global_position = original
+				resource._update_zone(true)
 			check(manager.reset_game(),"core cleanup")
 		"resource_update_write":
 			check(manager.reset_game(),"write fixture")

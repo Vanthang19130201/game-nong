@@ -1,28 +1,43 @@
 extends PanelContainer
 
-@onready var tabs: TabContainer = $Margin/Content/Tabs
+@onready var tabs: TabBar = $Margin/Content/TabBar
+@onready var content_scroll: ScrollContainer = $Margin/Content/ContentScroll
+@onready var pages: VBoxContainer = $Margin/Content/ContentScroll/Items
 var upgrade_rows: Dictionary = {}
 const Slot = preload("res://item_slot.gd")
 var item_cells: Dictionary = {}
 var grids: Array[GridContainer] = []
 var capacity_labels: Dictionary = {}
+var upgrade_grid: GridContainer
 
 func _ready() -> void:
+	for title in ["STORAGE_PRODUCE","STORAGE_GOODS","STORAGE_MATERIALS"]:
+		tabs.add_tab(tr(title))
+	tabs.tab_changed.connect(_show_tab)
 	_create_item_grids()
 	_create_upgrade_rows()
 	Inventory.inventory_changed.connect(refresh)
-	$Margin/Content/CloseButton.pressed.connect(hide)
+	$Margin/Content/Footer/CloseButton.pressed.connect(hide)
 	get_viewport().size_changed.connect(_fit_viewport)
-	tabs.get_tab_bar().custom_minimum_size.y = 48
 	refresh()
+	_show_tab(tabs.current_tab)
 	_fit_viewport.call_deferred()
 
 
 func _fit_viewport() -> void:
-	size = Vector2(780, 640).min(get_viewport_rect().size - Vector2(24, 32))
-	position = (get_viewport_rect().size - size) / 2.0
+	var desired: Vector2 = Vector2(780,640).min(get_viewport_rect().size-Vector2(24,32))
 	for grid in grids:
-		grid.columns = maxi(3,int((size.x-104)/76))
+		grid.columns = maxi(3,int((desired.x-104)/76))
+	upgrade_grid.columns = 2 if desired.x >= 700 else 1
+	size = desired
+	position = (get_viewport_rect().size - size) / 2.0
+	_refresh_upgrades()
+
+
+func _show_tab(index: int) -> void:
+	for i in range(pages.get_child_count()):
+		pages.get_child(i).visible = i == index
+	content_scroll.scroll_vertical = 0
 
 
 func refresh() -> void:
@@ -42,8 +57,8 @@ func refresh() -> void:
 
 
 func _create_item_grids() -> void:
-	var produce: VBoxContainer = $Margin/Content/Tabs/Produce/Items
-	var goods: VBoxContainer = $Margin/Content/Tabs/Goods/Items
+	var produce: VBoxContainer = $Margin/Content/ContentScroll/Items/Produce
+	var goods: VBoxContainer = $Margin/Content/ContentScroll/Items/Goods
 	for storage in ["silo","barn"]:
 		var label := Label.new()
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -57,7 +72,7 @@ func _create_item_grids() -> void:
 	_add_grid(produce,tr("STORAGE_SEEDS"),seeds)
 	_add_grid(produce,tr("STORAGE_CROPS"),crops)
 	_add_grid(goods,"",Inventory.BARN_ITEMS)
-	_add_grid($Margin/Content/Tabs/Materials/Items,"",["wood","stone"])
+	_add_grid($Margin/Content/ContentScroll/Items/Materials,"",["wood","stone"])
 
 
 func _add_grid(parent: VBoxContainer, heading: String, items: Array) -> void:
@@ -89,14 +104,17 @@ func _choose_seed(crop: String) -> void:
 
 
 func _create_upgrade_rows() -> void:
-	var upgrades := VBoxContainer.new()
+	var upgrades := GridContainer.new()
+	upgrade_grid = upgrades
 	upgrades.name = "StorageUpgrades"
-	upgrades.add_theme_constant_override("separation", 12)
+	upgrades.add_theme_constant_override("h_separation",24)
+	upgrades.add_theme_constant_override("v_separation",12)
 	var content: VBoxContainer = $Margin/Content
 	content.add_child(upgrades)
-	content.move_child(upgrades, $Margin/Content/CloseButton.get_index())
+	content.move_child(upgrades, $Margin/Content/ContentGap.get_index())
 	for storage in ["silo", "barn"]:
 		var row := HBoxContainer.new()
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_theme_constant_override("separation", 12)
 		var label := Label.new()
 		label.custom_minimum_size.x = 140
@@ -109,6 +127,8 @@ func _create_upgrade_rows() -> void:
 		button.custom_minimum_size = Vector2(116, 44)
 		button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		button.pressed.connect(_upgrade.bind(storage))
+		button.mouse_entered.connect(func(): get_parent().show_item_hint(button,button.get_meta("hint","")))
+		button.mouse_exited.connect(func(): get_parent().clear_item_hint(button))
 		row.add_child(button)
 		upgrades.add_child(row)
 		upgrade_rows[storage] = {"label": label, "button": button}
@@ -125,8 +145,13 @@ func _refresh_upgrades() -> void:
 		upgrade_rows[storage]["button"].disabled = cost.is_empty()
 		if cost.is_empty():
 			label.text += "\n" + tr("UI_MAX_LEVEL")
+			upgrade_rows[storage]["button"].set_meta("hint",tr("UI_MAX_LEVEL"))
 		else:
-			label.text += "\n" + tr("WAREHOUSE_UPGRADE_COST") % [Inventory.wood, cost["wood"], Inventory.stone, cost["stone"], Inventory.coins, cost["coins"]]
+			var details: String = tr("WAREHOUSE_UPGRADE_COST") % [Inventory.wood,cost["wood"],Inventory.stone,cost["stone"],Inventory.coins,cost["coins"]]
+			upgrade_rows[storage]["button"].set_meta("hint",details)
+			# Keep the item list and 80 px footer usable on narrow windows.
+			if size.x >= 700 and get_viewport_rect().size.y >= 540:
+				label.text += "\n"+details
 
 
 func _upgrade(storage: String) -> void:

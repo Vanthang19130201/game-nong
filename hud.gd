@@ -21,6 +21,9 @@ var sell_buttons: Dictionary = {}
 var product_sell_buttons: Dictionary = {}
 var shop_cards: Dictionary = {}
 var catalog_grids: Array[GridContainer] = []
+var catalog_cards: Array[PanelContainer] = []
+var item_hints: Array[Label] = []
+var item_hint_source: Control
 @onready var fishing_ui: Control = $FishingUI
 @onready var fish_market_panel: PanelContainer = $FishMarketPanel
 @onready var storage_panel: PanelContainer = $StoragePanel
@@ -37,15 +40,15 @@ var rod_upgrade: Button
 @onready var buy_button: Button = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/BuyButton
 @onready var sell_button: Button = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/SellButton
 @onready var message_label: Label = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/MessageLabel
-@onready var reset_button: Button = $SettingsPanel/Margin/Content/ResetButton
+@onready var reset_button: Button = $SettingsPanel/Margin/Content/ContentScroll/Body/ResetButton
 @onready var settings_panel: PanelContainer = $SettingsPanel
 @onready var reset_confirmation: ConfirmationDialog = $ResetConfirmation
 @onready var egg_sell_button: Button = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/EggSellButton
 @onready var dog_buy_button: Button = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/DogBuyButton
 @onready var station_panel: PanelContainer = $StationPanel
-@onready var station_info: Label = $StationPanel/Margin/Content/Info
-@onready var produce_button: Button = $StationPanel/Margin/Content/ProduceButton
-@onready var collect_button: Button = $StationPanel/Margin/Content/CollectButton
+@onready var station_info: Label = $StationPanel/Margin/Content/ContentScroll/Body/Info
+@onready var produce_button: Button = $StationPanel/Margin/Content/ContentScroll/Body/ProduceButton
+@onready var collect_button: Button = $StationPanel/Margin/Content/ContentScroll/Body/CollectButton
 @onready var order_panel: PanelContainer = $OrderPanel
 @onready var order_cards: HBoxContainer = $OrderPanel/Margin/Content/Scroll/Orders
 @onready var order_message: Label = $OrderPanel/Margin/Content/Message
@@ -55,9 +58,9 @@ var buy_buttons: Dictionary = {}
 var active_station: Node = null
 var active_house: Node = null
 @onready var house_panel: PanelContainer = $HousePanel
-@onready var house_info: Label = $HousePanel/Margin/Content/Info
-@onready var house_message: Label = $HousePanel/Margin/Content/Message
-@onready var house_upgrade_button: Button = $HousePanel/Margin/Content/UpgradeButton
+@onready var house_info: Label = $HousePanel/Margin/Content/ContentScroll/Body/Info
+@onready var house_message: Label = $HousePanel/Margin/Content/ContentScroll/Body/Message
+@onready var house_upgrade_button: Button = $HousePanel/Margin/Content/ContentScroll/Body/UpgradeButton
 var building_buttons: Dictionary = {}
 var animal_buttons: Dictionary = {}
 var recipe_ids: Array = []
@@ -72,9 +75,9 @@ var debug_panel: PanelContainer
 @onready var storage_label: Label = $Layout/StorageLabel
 @onready var build_panel: PanelContainer = $ShopBuildPanel/Margin/Content/Tabs/BuildPanel
 @onready var build_rows: VBoxContainer = $ShopBuildPanel/Margin/Content/Tabs/BuildPanel/Margin/Content/Scroll/Rows
-@onready var recipe_selector: OptionButton = $StationPanel/Margin/Content/RecipeSelector
-@onready var animal_buy: Button = $StationPanel/Margin/Content/AnimalBuy
-@onready var animal_sell: Button = $StationPanel/Margin/Content/AnimalSell
+@onready var recipe_selector: OptionButton = $StationPanel/Margin/Content/ContentScroll/Body/RecipeSelector
+@onready var animal_buy: Button = $StationPanel/Margin/Content/ContentScroll/Body/AnimalBuy
+@onready var animal_sell: Button = $StationPanel/Margin/Content/ContentScroll/Body/AnimalSell
 
 
 func _ready() -> void:
@@ -88,6 +91,7 @@ func _ready() -> void:
 	edit_farm.set_script(preload("res://farm_edit_mode.gd"))
 	add_child(edit_farm)
 	get_viewport().size_changed.connect(_fit_order_panel)
+	get_viewport().size_changed.connect(_fit_native_popups)
 	bakery_panel = PanelContainer.new()
 	bakery_panel.name = "BakeryPanel"
 	bakery_panel.z_index = 29
@@ -104,10 +108,11 @@ func _ready() -> void:
 	spinning_machine_panel.set_script(preload("res://spinning_machine_panel.gd"))
 	add_child(spinning_machine_panel)
 	$ResetControls/SettingsButton.pressed.connect(_toggle_settings)
-	$SettingsPanel/Margin/Content/CloseButton.pressed.connect(settings_panel.hide)
+	$SettingsPanel/Margin/Content/Footer/CloseButton.pressed.connect(settings_panel.hide)
 	_setup_shop_build()
 	if OS.is_debug_build():
 		debug_panel = PanelContainer.new()
+		debug_panel.z_index = 40
 		debug_panel.set_script(preload("res://dev_debug_panel.gd"))
 		add_child(debug_panel)
 		debug_panel.visibility_changed.connect(_on_main_panel_visibility_changed)
@@ -153,7 +158,7 @@ func _ready() -> void:
 	_create_tool_rows()
 	_create_rod_row()
 	house_upgrade_button.pressed.connect(_upgrade_house)
-	$HousePanel/Margin/Content/CloseButton.pressed.connect(close_house)
+	$HousePanel/Margin/Content/Footer/CloseButton.pressed.connect(close_house)
 	recipe_ids = Progression.RECIPES.keys()
 	for recipe in recipe_ids:
 		recipe_selector.add_item(Localization.display_name(Progression.RECIPES[recipe]["name"]))
@@ -175,13 +180,18 @@ func _ready() -> void:
 	reset_confirmation.visibility_changed.connect(_on_reset_visibility_changed)
 	plot_purchase.confirmed.connect(_confirm_plot_purchase)
 	plot_purchase.visibility_changed.connect(_on_plot_popup_visibility_changed)
+	plot_purchase.get_label().theme_type_variation = &"PlotPurchaseText"
+	plot_purchase.get_label().horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	plot_purchase.get_label().vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	plot_purchase.get_ok_button().theme_type_variation = &"PurchaseButton"
+	plot_purchase.get_cancel_button().theme_type_variation = &"PlotCancelButton"
 	crop_selector.item_selected.connect(_select_crop)
 	egg_sell_button.pressed.connect(_sell_egg)
 	dog_buy_button.pressed.connect(_buy_dog)
 	produce_button.pressed.connect(_produce)
 	collect_button.pressed.connect(_collect)
-	$StationPanel/Margin/Content/CloseButton.pressed.connect(close_station)
-	$OrderPanel/Margin/Content/CloseButton.pressed.connect(order_panel.hide)
+	$StationPanel/Margin/Content/Footer/CloseButton.pressed.connect(close_station)
+	$OrderPanel/Margin/Content/Footer/CloseButton.pressed.connect(order_panel.hide)
 	OrderManager.orders_changed.connect(_refresh_orders)
 	_setup_cozy_ui()
 	_apply_ui_theme(self)
@@ -196,7 +206,7 @@ func _setup_shop_build() -> void:
 	shop_build_tabs.set_tab_title(2,tr("DECOR_TAB"))
 	shop_build_tabs.set_tab_title(0, tr("SHOP_BUILD_SHOP_TAB"))
 	shop_build_tabs.set_tab_title(1, tr("SHOP_BUILD_BUILD_TAB"))
-	$ShopBuildPanel/Margin/Content/CloseButton.pressed.connect(_close_game_panels)
+	$ShopBuildPanel/Margin/Content/Footer/CloseButton.pressed.connect(_close_game_panels)
 	$ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/TitleLabel.hide()
 	$ShopBuildPanel/Margin/Content/Tabs/BuildPanel/Margin/Content/Title.hide()
 	$ShopBuildPanel/Margin/Content/Tabs/BuildPanel/Margin/Content/CloseButton.hide()
@@ -213,10 +223,13 @@ func _setup_shop_build() -> void:
 
 func _fit_shop_build() -> void:
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
-	shop_build_panel.size = Vector2(920, 600).min(viewport_size - Vector2(24, 32))
-	shop_build_panel.position = (viewport_size - shop_build_panel.size) / 2.0
+	var desired: Vector2 = Vector2(920, 600).min(viewport_size - Vector2(24, 32))
 	for grid in catalog_grids:
-		grid.columns = maxi(1,int((shop_build_panel.size.x-112)/214))
+		grid.columns = maxi(1,int((desired.x-112)/260))
+	for card in catalog_cards:
+		card.actions.columns = 1 if viewport_size.x < 700 else 2
+	shop_build_panel.size = desired
+	shop_build_panel.position = (viewport_size - shop_build_panel.size) / 2.0
 
 
 func _open_shop_build(tab: int) -> void:
@@ -440,8 +453,8 @@ func _update_station_panel() -> void:
 		station_info.text = tr("STATION_ANIMALS_INFO") % [Localization.display_name(Progression.BUILDINGS[id]["name"]), Localization.display_name(info["name"]), Inventory.get(animal + "_count"), Inventory.animal_capacity(animal), Localization.state(active_station.state), Localization.display_name(product["feed"]), Inventory.get(product["feed"]), product["time"], product["level"]]
 		produce_button.text = tr("UI_FEED_PREFIX") + Localization.display_name(info["name"])
 		collect_button.text = tr("UI_COLLECT_PREFIX") + Localization.display_name(product["item"])
-		animal_buy.text = tr("UI_BUY_ANIMAL") % [Localization.display_name(info["name"]), info["buy"]]
-		animal_sell.text = tr("UI_SELL_CROP") % [Localization.display_name(info["name"]), info["sell"]]
+		animal_buy.text = tr("UI_BUY_COMPACT") % info["buy"]
+		animal_sell.text = tr("UI_SELL_COMPACT") % info["sell"]
 		var busy: bool = Inventory.animal_trade_busy(animal)
 		animal_buy.disabled = busy or Inventory.player_level < info["level"] or Inventory.get(animal + "_count") >= Inventory.animal_capacity(animal)
 		animal_sell.disabled = busy or Inventory.get(animal + "_count") <= 0
@@ -603,8 +616,18 @@ func close_all_panels() -> void:
 
 
 func _on_main_panel_visibility_changed() -> void:
+	clear_item_hint(item_hint_source)
 	# A HUD dropdown must not stack over an existing modal or fishing session.
 	crop_selector.disabled = _native_dialog_open() or fishing_ui.panel.visible or [land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel].any(func(panel): return panel.visible) or (is_instance_valid(debug_panel) and debug_panel.visible)
+	if is_instance_valid(hotbar):
+		hotbar.visible = not crop_selector.disabled
+	$ModalBackdrop.visible = crop_selector.disabled and not edit_farm.active and not fishing_ui.panel.visible
+	# z_index controls drawing, not GUI picking. Keep the active panel after
+	# the backdrop and hotbar in tree order so its tabs/buttons receive clicks.
+	for panel in [land_panel,bakery_panel,dairy_panel,spinning_machine_panel,settings_panel,shop_build_panel,station_panel,house_panel,order_panel,fish_market_panel,storage_panel,debug_panel]:
+		if is_instance_valid(panel) and panel.visible:
+			move_child(panel,get_child_count()-1)
+	transaction_feedback.set_popup_mode($ModalBackdrop.visible)
 	_show_tool_unlock_if_needed.call_deferred()
 
 
@@ -923,7 +946,7 @@ func open_plot_purchase(number: int) -> void:
 	_close_game_panels()
 	pending_plot_number = number
 	plot_purchase.dialog_text = tr("PLOT_PRICE") % [number, FarmData.plot_price(number)]
-	plot_purchase.popup_centered()
+	plot_purchase.popup_centered_clamped(Vector2i(380,180),0.9)
 
 
 func _confirm_plot_purchase() -> void:
@@ -968,7 +991,8 @@ func _setup_cozy_ui() -> void:
 	hotbar.name = "Hotbar"
 	hotbar.set_script(preload("res://hotbar.gd"))
 	add_child(hotbar)
-	var menu: VBoxContainer = $SettingsPanel/Margin/Content
+	hotbar.visible = not storage_panel.visible
+	var menu: VBoxContainer = $SettingsPanel/Margin/Content/ContentScroll/Body
 	var shortcuts: Array = [
 		["UI_MENU_SHOP",_toggle_shop], ["UI_MENU_STORAGE",_toggle_storage],
 		["UI_MENU_ORDERS",open_orders]
@@ -979,10 +1003,15 @@ func _setup_cozy_ui() -> void:
 		button.focus_mode = Control.FOCUS_NONE
 		button.pressed.connect(shortcuts[i][1])
 		menu.add_child(button)
-		menu.move_child(button,i+1)
+		menu.move_child(button,i)
+	for entry in [[station_panel,Vector2(480,560)],[house_panel,Vector2(460,460)],[fish_market_panel,Vector2(500,560)]]:
+		var layout = preload("res://popup_layout.gd").new()
+		layout.preferred_size = entry[1]
+		entry[0].add_child(layout)
 	get_viewport().size_changed.connect(_fit_menu)
 	_setup_shop_cards()
 	_setup_build_cards()
+	_setup_item_hints()
 	_fit_menu.call_deferred()
 	_fit_shop_build.call_deferred()
 
@@ -992,9 +1021,17 @@ func _fit_menu() -> void:
 	settings_panel.position = (get_viewport().get_visible_rect().size-settings_panel.size)/2
 
 
+func _fit_native_popups() -> void:
+	for entry in [[plot_purchase,Vector2i(380,180)],[reset_confirmation,Vector2i(360,180)],[tools_unlock_popup,Vector2i(430,250)]]:
+		if entry[0].visible:
+			entry[0].popup_centered_clamped(entry[1],0.9)
+
+
 func _catalog(parent: Control, title: String) -> GridContainer:
 	var heading := Label.new()
 	heading.text = title
+	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heading.add_theme_font_size_override("font_size",18)
 	parent.add_child(heading)
 	var grid := GridContainer.new()
@@ -1012,6 +1049,7 @@ func _card(parent: GridContainer, id: String, title: String) -> PanelContainer:
 	card.set_script(ItemCard)
 	parent.add_child(card)
 	card.build(id,title)
+	catalog_cards.append(card)
 	return card
 
 
@@ -1085,6 +1123,8 @@ func _refresh_shop_cards() -> void:
 				elif Inventory.DairyData.RECIPES.has(id):
 					price = Inventory.DairyData.RECIPES[id]["price"]
 				product_sell_buttons[id].text = tr("UI_SELL_COMPACT") % price
+		if item_hint_source == card:
+			card._show_hint()
 
 
 func _use_card_label(card: PanelContainer, label: Label) -> void:
@@ -1122,3 +1162,37 @@ func _setup_build_cards() -> void:
 	var dog_house = _card(upgrades,"dog_house",Localization.display_name("dog_house"))
 	dog_house.stats.hide()
 	dog_house.add_action(dog_house_button)
+
+
+func _setup_item_hints() -> void:
+	for panel in [storage_panel,shop_build_panel]:
+		var content: VBoxContainer = panel.get_node("Margin/Content")
+		var hint := Label.new()
+		hint.name = "ItemHint"
+		hint.custom_minimum_size.y = 22
+		hint.clip_text = true
+		hint.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		hint.add_theme_font_size_override("font_size",14)
+		hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		content.add_child(hint)
+		content.move_child(hint,content.get_node("Footer").get_index())
+		item_hints.append(hint)
+
+
+func has_item_hint_area() -> bool:
+	return storage_panel.visible or shop_build_panel.visible
+
+
+func show_item_hint(source: Control, message: String) -> void:
+	item_hint_source = source
+	for hint in item_hints:
+		hint.text = message.replace("\n"," · ") if hint.is_visible_in_tree() else ""
+
+
+func clear_item_hint(source: Control) -> void:
+	if source != item_hint_source:
+		return
+	item_hint_source = null
+	for hint in item_hints:
+		hint.text = ""

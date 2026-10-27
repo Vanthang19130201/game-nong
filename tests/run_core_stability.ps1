@@ -33,6 +33,10 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'spinning_machine_test.gd') -Des
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'rock_types_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'fishing_resource_update_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'cozy_ui_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'plot_purchase_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'ui_polish_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'visual_asset_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'animal_wander_test.gd') -Destination $testRoot -Force
 $projectPath = Join-Path $testRoot 'project.godot'
 Add-Content -LiteralPath $projectPath -Value "`n[debug]`nfile_logging/enable_file_logging=false"
 # Reuse the project's existing imports; no editor/settings writes are needed.
@@ -50,7 +54,7 @@ $stages = @('core', 'position_write', 'position_read', 'legacy_write', 'legacy_r
     'invalid_write', 'invalid_read', 'offline_write', 'offline_read',
     'backup_write', 'backup_read', 'defaults_write', 'defaults_read', 'duplicates',
     'fishing_core', 'fishing_limits', 'fishing_write', 'fishing_read', 'market_core', 'market_read',
-    'audit_core', 'audit_write', 'audit_read', 'audit_again', 'audit_close', 'localization', 'storage_ui', 'cozy_ui',
+    'audit_core', 'audit_write', 'audit_read', 'audit_again', 'audit_close', 'localization', 'storage_ui', 'cozy_ui', 'plot_popup', 'ui_polish', 'art_core',
     'bakery_core', 'bakery_write', 'bakery_read', 'bakery_again', 'bakery_reset_read',
     'crop_core', 'crop_write', 'crop_read', 'crop_again', 'warehouse_core', 'warehouse_write', 'warehouse_read', 'mouse_core',
     'edit_core', 'edit_write', 'edit_read', 'edit_legacy_write', 'edit_legacy_read', 'land_core', 'land_write', 'land_read', 'land_reset_read', 'land_legacy_write', 'land_legacy_read', 'camera_core',
@@ -59,7 +63,8 @@ $stages = @('core', 'position_write', 'position_read', 'legacy_write', 'legacy_r
     'dairy_core','dairy_write','dairy_read','dairy_again','dairy_reset_read','dairy_legacy_write','dairy_legacy_read',
     'spinning_core','spinning_write','spinning_read','spinning_again','spinning_reset_read','spinning_legacy_write','spinning_legacy_read',
     'rock_core','rock_write','rock_read','rock_respawn_write','rock_respawn_read','rock_legacy_write','rock_legacy_read','rock_reset_read',
-    'resource_update_core','resource_update_write','resource_update_read','resource_update_legacy_write','resource_update_legacy_read')
+    'resource_update_core','resource_update_write','resource_update_read','resource_update_legacy_write','resource_update_legacy_read',
+    'animals_core','animals_write','animals_read','animals_again','animals_reset_read')
 foreach ($stage in $stages) {
     $log = Join-Path $testRoot "$stage.log"
     $ErrorActionPreference = 'Continue'
@@ -82,6 +87,10 @@ foreach ($stage in $stages) {
     if ($stage -eq 'localization') { $testScript = 'localization_test.gd' }
     if ($stage -eq 'storage_ui') { $testScript = 'storage_ui_test.gd' }
     if ($stage -eq 'cozy_ui') { $testScript = 'cozy_ui_test.gd' }
+    if ($stage -eq 'plot_popup') { $testScript = 'plot_purchase_test.gd' }
+    if ($stage -eq 'ui_polish') { $testScript = 'ui_polish_test.gd' }
+    if ($stage -eq 'art_core') { $testScript = 'visual_asset_test.gd' }
+    if ($stage.StartsWith('animals_')) { $testScript = 'animal_wander_test.gd' }
     & $Godot --headless --path $testRoot --script $testScript --quit-after 1800 -- $stage *> $log
     $ErrorActionPreference = $previousPreference
     $output = Get-Content -LiteralPath $log -Raw

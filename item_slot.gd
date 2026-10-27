@@ -37,6 +37,23 @@ func _init() -> void:
 	key_label.add_theme_font_size_override("font_size",11)
 	key_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(key_label)
+	mouse_entered.connect(_show_hint)
+	mouse_exited.connect(_hide_hint)
+
+func _get_tooltip(_at_position: Vector2) -> String:
+	var hud = get_tree().get_first_node_in_group("farm_hud")
+	# The reserved hint row keeps item details away from other action buttons.
+	return "" if hud != null and hud.has_item_hint_area() else tooltip_text
+
+func _show_hint() -> void:
+	var hud = get_tree().get_first_node_in_group("farm_hud")
+	if hud != null:
+		hud.show_item_hint(self,tooltip_text)
+
+func _hide_hint() -> void:
+	var hud = get_tree().get_first_node_in_group("farm_hud")
+	if hud != null:
+		hud.clear_item_hint(self)
 
 func display(id: String, count: int, locked: bool = false, hint: String = "") -> void:
 	item_id = id
@@ -48,6 +65,10 @@ func display(id: String, count: int, locked: bool = false, hint: String = "") ->
 	if not hint.is_empty():
 		tooltip_text += "\n"+hint
 	disabled = locked
+	if is_inside_tree():
+		var hud = get_tree().get_first_node_in_group("farm_hud")
+		if hud != null and hud.item_hint_source == self:
+			_show_hint()
 
 func highlight(selected: bool) -> void:
 	theme_type_variation = &"SelectedSlot" if selected else &"ItemSlot"

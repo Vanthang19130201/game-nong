@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://jvmplrfrhfuf"
-path="res://.godot/imported/Tree2.png-5a3b7ff558f34ad1936d05efec58b60c.ctex"
+uid="uid://c66myeiyy0n22"
+path="res://.godot/imported/cow_shed.png-37ff6692a259464fd3aab57d122d39e2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/environment/tree/Tree2.png"
-dest_files=["res://.godot/imported/Tree2.png-5a3b7ff558f34ad1936d05efec58b60c.ctex"]
+source_file="res://assets/buildings/cow_shed/cow_shed.png"
+dest_files=["res://.godot/imported/cow_shed.png-37ff6692a259464fd3aab57d122d39e2.ctex"]
 
 [params]
 

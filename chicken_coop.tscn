@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" path="res://building_visual.gd" id="94_building"]
 
-[ext_resource type="Script" path="res://character_visual.gd" id="92_anim"]
-[ext_resource type="SpriteFrames" path="res://assets/characters/directional_frames.tres" id="93_frames"]
+[ext_resource type="Script" path="res://animal_group.gd" id="92_animals"]
+[ext_resource type="Texture2D" path="res://assets/buildings/chicken_coop/chicken_coop.png" id="95_coop"]
 
 [ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
 
@@ -15,6 +15,7 @@ size = Vector2(144, 100)
 [node name="ChickenCoop" type="Area2D"]
 script = ExtResource("1")
 station_id = "chicken_coop"
+metadata/placement_rect = Rect2(-64, -36, 128, 72)
 
 [node name="Visual" type="ColorRect" parent="."]
 offset_left = -64.0
@@ -46,11 +47,15 @@ building_kind = "chicken_coop"
 
 [node name="BuildingSprite" type="Sprite2D" parent="Visuals"]
 z_index = -1
+texture = ExtResource("95_coop")
+region_enabled = true
+region_rect = Rect2(56, 29, 1180, 1225)
+scale = Vector2(0.11755102, 0.11755102)
+position = Vector2(0, -36)
 script = ExtResource("90_art")
 fallback_paths = Array[NodePath]([NodePath("../../Visual"), NodePath("../../StatusLabel")])
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Visuals"]
-sprite_frames = ExtResource("93_frames")
-animation = &"idle_down"
-script = ExtResource("92_anim")
-position = Vector2(0, 65)
+[node name="Animals" type="Node2D" parent="Visuals"]
+script = ExtResource("92_animals")
+animal_type = "chicken"
+wander_radius = 150.0

@@ -252,7 +252,7 @@ func check_core() -> void:
 	check(plot.state == 1 and inv.wheat_seed == 9, "one E one seed")
 	await key(KEY_E)
 	check(inv.wheat_seed == 9, "growing plot does not consume seed twice")
-	inv.coins = 100
+	inv.coins = inv.FarmData.plot_price(9)
 	player.position = manager.plots["soil_09"].position
 	await create_timer(0.1).timeout
 	await key(KEY_E)

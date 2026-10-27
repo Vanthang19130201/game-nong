@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" path="res://building_visual.gd" id="94_building"]
 
-[ext_resource type="Script" path="res://character_visual.gd" id="92_anim"]
-[ext_resource type="SpriteFrames" path="res://assets/characters/directional_frames.tres" id="93_frames"]
+[ext_resource type="Script" path="res://animal_group.gd" id="92_animals"]
+[ext_resource type="Texture2D" path="res://assets/buildings/cow_shed/cow_shed.png" id="95_shed"]
 
 [ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
 
@@ -16,6 +16,7 @@ size = Vector2(196, 132)
 z_index = 2
 script = ExtResource("1")
 station_id = "cow_shed"
+metadata/placement_rect = Rect2(-98, -86, 196, 138)
 
 [node name="Visual" type="ColorRect" parent="."]
 offset_left = -88.0
@@ -52,11 +53,15 @@ building_kind = "cow_shed"
 
 [node name="BuildingSprite" type="Sprite2D" parent="Visuals"]
 z_index = -1
+texture = ExtResource("95_shed")
+region_enabled = true
+region_rect = Rect2(0, 38, 1240, 1200)
+scale = Vector2(0.15, 0.15)
+position = Vector2(0, -38)
 script = ExtResource("90_art")
 fallback_paths = Array[NodePath]([NodePath("../../Visual"), NodePath("../../StatusLabel"), NodePath("../../Roof")])
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Visuals"]
-sprite_frames = ExtResource("93_frames")
-animation = &"idle_down"
-script = ExtResource("92_anim")
-position = Vector2(0, 65)
+[node name="Animals" type="Node2D" parent="Visuals"]
+script = ExtResource("92_animals")
+animal_type = "cow"
+wander_radius = 170.0

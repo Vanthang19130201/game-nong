@@ -68,7 +68,7 @@ func run_checks() -> void:
 	check(not panel.visible, "Tab toggles closed")
 	hud.get_node("Layout/Actions/StorageButton").pressed.emit()
 	check(panel.visible, "touch button opens")
-	panel.get_node("Margin/Content/CloseButton").pressed.emit()
+	panel.get_node("Margin/Content/Footer/CloseButton").pressed.emit()
 	check(not panel.visible, "touch Close button")
 	hud._toggle_shop()
 	hud._toggle_storage()
@@ -181,7 +181,7 @@ func run_checks() -> void:
 	await create_timer(0.1).timeout
 	panel._fit_viewport()
 	check(panel.position.x >= 0 and panel.position.x+panel.size.x <= panel.get_viewport_rect().size.x+1, "mobile width fit")
-	check(panel.tabs.get_tab_bar().custom_minimum_size.y >= 48, "touch-sized tabs")
+	check(panel.tabs.custom_minimum_size.y >= 48, "touch-sized tabs")
 	# Order cards may scroll, while the panel and Close button stay on screen.
 	for viewport_size in [Vector2i(1152,648), Vector2i(800,450), Vector2i(360,640)]:
 		root.content_scale_size = viewport_size
@@ -193,7 +193,7 @@ func run_checks() -> void:
 		hud._fit_order_panel()
 		var screen_rect := Rect2(Vector2.ZERO, hud.order_panel.get_viewport_rect().size)
 		check(screen_rect.encloses(hud.order_panel.get_rect()), "Order panel fits viewport " + str(viewport_size))
-		check(screen_rect.encloses(hud.get_node("OrderPanel/Margin/Content/CloseButton").get_global_rect()), "Order Close button stays on screen")
+		check(screen_rect.encloses(hud.get_node("OrderPanel/Margin/Content/Footer/CloseButton").get_global_rect()), "Order Close button stays on screen")
 		if viewport_size.x == 360:
 			check(hud.order_cards.get_parent().get_h_scroll_bar().visible, "narrow Order panel scrolls cards")
 		await key(KEY_ESCAPE)

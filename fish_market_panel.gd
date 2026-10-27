@@ -8,6 +8,9 @@ func _ready() -> void:
 		var row := VBoxContainer.new()
 		var label := Label.new()
 		var buttons := HBoxContainer.new()
+		buttons.add_theme_constant_override("separation",8)
+		row.add_theme_constant_override("separation",8)
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		var sell_one := Button.new()
 		var sell_all := Button.new()
 		sell_one.text = tr("UI_SELL_ONE")
@@ -20,9 +23,9 @@ func _ready() -> void:
 		buttons.add_child(sell_one)
 		buttons.add_child(sell_all)
 		row.add_child(buttons)
-		$Margin/Content/Rows.add_child(row)
+		$Margin/Content/ContentScroll/Rows.add_child(row)
 		rows[fish] = {"label": label, "one": sell_one, "all": sell_all}
-	$Margin/Content/Close.pressed.connect(close)
+	$Margin/Content/Footer/Close.pressed.connect(close)
 	Inventory.inventory_changed.connect(refresh)
 	hide()
 

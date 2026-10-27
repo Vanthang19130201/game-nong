@@ -99,7 +99,7 @@ func run_checks() -> void:
 			push_click(player.get_canvas_transform()*plot.position,true)
 			push_click(player.get_canvas_transform()*plot.position,false)
 			check(plot.state == 0 and inv.wheat_seed == seeds, "modal blocks world click")
-			var close_button = hud.get_node("ShopBuildPanel/Margin/Content/CloseButton")
+			var close_button = hud.get_node("ShopBuildPanel/Margin/Content/Footer/CloseButton")
 			var ui_point: Vector2 = close_button.get_global_rect().get_center()
 			plot.position = player.get_canvas_transform().affine_inverse()*ui_point
 			await process_frame

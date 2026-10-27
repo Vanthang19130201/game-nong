@@ -6,6 +6,7 @@ const MAX_TOASTS := 4
 
 # Keep the latest message available for UI checks.
 var text: String = ""
+var popup_mode: bool = false
 
 
 func _ready() -> void:
@@ -26,6 +27,18 @@ func _fit_width() -> void:
 	var half_width: float = minf(180, (get_viewport_rect().size.x - 24) / 2)
 	offset_left = -half_width
 	offset_right = half_width
+	if popup_mode:
+		offset_left = -half_width*2-16
+		offset_right = -16
+
+
+func set_popup_mode(enabled: bool) -> void:
+	popup_mode = enabled
+	set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT if enabled else Control.PRESET_CENTER_BOTTOM)
+	grow_vertical = Control.GROW_DIRECTION_END if enabled else Control.GROW_DIRECTION_BEGIN
+	offset_top = 112 if enabled else -128
+	offset_bottom = offset_top
+	_fit_width()
 
 
 func show_message(message: String) -> void:

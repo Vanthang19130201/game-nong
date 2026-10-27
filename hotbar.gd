@@ -11,6 +11,7 @@ var caption: Label
 
 func _ready() -> void:
 	z_index = 12
+	tooltip_text = tr("HOTBAR_HINT")
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation",5)
 	add_child(content)
@@ -48,6 +49,8 @@ func refresh() -> void:
 	# Seeds chosen from the inventory use an existing seed slot, including new crops.
 	if not items.has(selected_seed):
 		items[0] = selected_seed
+	if SaveManager.resetting:
+		selected_slot = items.find(selected_seed)
 	if items[selected_slot].ends_with("_seed") and items[selected_slot] != selected_seed:
 		selected_slot = items.find(selected_seed)
 	for i in range(SLOT_COUNT):

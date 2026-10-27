@@ -44,6 +44,9 @@ static func can_place(source: Node2D, position: Vector2, require_owned_land: boo
 static func bounds(source: Node2D) -> Rect2:
 	if source.has_method("get_placement_rect"):
 		return source.get_placement_rect()
+	# Artwork may overhang. Authored footprints keep placement unchanged.
+	if source.has_meta("placement_rect"):
+		return source.global_transform * source.get_meta("placement_rect")
 	var graphics: Array = []
 	_collect_graphics(source, graphics)
 	var result := Rect2(source.global_position - Vector2(32,32), Vector2(64,64))
@@ -76,6 +79,11 @@ static func create_preview(source: Node2D) -> Node2D:
 			sprite.texture = graphic.texture
 			sprite.centered = graphic.centered
 			sprite.offset = graphic.offset
+			sprite.region_enabled = graphic.region_enabled
+			sprite.region_rect = graphic.region_rect
+			sprite.region_filter_clip_enabled = graphic.region_filter_clip_enabled
+			sprite.flip_h = graphic.flip_h
+			sprite.flip_v = graphic.flip_v
 			copy = sprite
 		else:
 			var polygon := Polygon2D.new()

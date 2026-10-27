@@ -23,6 +23,7 @@ func _ready() -> void:
 	info = Label.new()
 	info.position = Vector2(16,150)
 	info.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_theme_color_override("font_color",Color("fff4d7"))
 	info.add_theme_color_override("font_outline_color", Color.BLACK)
 	info.add_theme_constant_override("outline_size", 4)
 	hud.add_child(info)

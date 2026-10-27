@@ -33,11 +33,22 @@ theme_type_variation = &"Heading"
 layout_mode = 2
 text = "TITLE_FISH_MARKET"
 
-[node name="Rows" type="VBoxContainer" parent="Margin/Content"]
+[node name="ContentScroll" type="ScrollContainer" parent="Margin/Content"]
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+clip_contents = true
+
+[node name="Rows" type="VBoxContainer" parent="Margin/Content/ContentScroll"]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 18
 
-[node name="Close" type="Button" parent="Margin/Content"]
+[node name="Footer" type="CenterContainer" parent="Margin/Content"]
+custom_minimum_size = Vector2(0, 72)
+size_flags_vertical = 0
+
+[node name="Close" type="Button" parent="Margin/Content/Footer"]
+custom_minimum_size = Vector2(140, 44)
 layout_mode = 2
 focus_mode = 0
 text = "UI_CLOSE"
