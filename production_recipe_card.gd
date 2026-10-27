@@ -10,8 +10,10 @@ var lock_label: Label
 var add_button: Button
 
 func _ready() -> void:
+	theme_type_variation = &"CardPanel"
+	custom_minimum_size.y = 196
 	content = VBoxContainer.new()
-	content.add_theme_constant_override("separation",6)
+	content.add_theme_constant_override("separation",8)
 	add_child(content)
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation",8)
@@ -21,6 +23,7 @@ func _ready() -> void:
 	title.text = Localization.display_name(item_id)
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_size_override("font_size",17)
 	header.add_child(title)
 	for ingredient in recipe["requirements"]:
 		var row := HBoxContainer.new()
@@ -30,21 +33,22 @@ func _ready() -> void:
 		var label := Label.new()
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		label.add_theme_font_size_override("font_size",13)
+		label.add_theme_font_size_override("font_size",14)
 		row.add_child(label)
 		ingredient_labels[ingredient] = label
 	var duration := Label.new()
 	duration.text = tr("PRODUCTION_DURATION") % recipe["time"]
-	duration.add_theme_font_size_override("font_size",13)
+	duration.theme_type_variation = &"MutedLabel"
 	content.add_child(duration)
 	lock_label = Label.new()
 	lock_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lock_label.add_theme_font_size_override("font_size",13)
+	lock_label.theme_type_variation = &"MutedLabel"
 	content.add_child(lock_label)
 	add_button = Button.new()
 	add_button.text = tr("FEED_ENQUEUE")
+	add_button.theme_type_variation = &"PrimaryButton"
+	add_button.custom_minimum_size.y = 38
 	add_button.focus_mode = Control.FOCUS_NONE
-	add_button.add_theme_font_size_override("font_size",13)
 	add_button.pressed.connect(func(): enqueue_requested.emit(item_id))
 	content.add_child(add_button)
 

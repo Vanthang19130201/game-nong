@@ -28,6 +28,7 @@
 [ext_resource type="Texture2D" uid="uid://baqy30w1e2cpl" path="res://assets/characters/fallback.svg" id="102_fallback"]
 [ext_resource type="PackedScene" path="res://fishing_rest_deck.tscn" id="103_fishing_deck"]
 [ext_resource type="Script" path="res://building_ground_visual.gd" id="104_ground"]
+[ext_resource type="Script" path="res://world_lighting.gd" id="105_world_lighting"]
 
 [sub_resource type="RectangleShape2D" id="HouseInteractionShape"]
 size = Vector2(260, 220)
@@ -46,6 +47,9 @@ size = Vector2(140, 1490)
 
 [node name="Main" type="Node2D" unique_id=1741138209]
 script = ExtResource("5_farm")
+
+[node name="WorldLighting" type="CanvasModulate" parent="."]
+script = ExtResource("105_world_lighting")
 
 [node name="Ground" type="ColorRect" parent="." unique_id=2031795690]
 z_index = -10

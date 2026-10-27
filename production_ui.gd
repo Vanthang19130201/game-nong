@@ -8,6 +8,8 @@ var machine: Node
 var queue_view: VBoxContainer
 var cards: Dictionary = {}
 var recipe_grid: GridContainer
+var recipe_column: VBoxContainer
+var status_column: VBoxContainer
 var columns: BoxContainer
 var recipe_scroll: ScrollContainer
 var collect_button: Button
@@ -20,17 +22,18 @@ func _ready() -> void:
 	columns.add_theme_constant_override("separation",12)
 	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(columns)
-	var recipes := VBoxContainer.new()
-	recipes.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	columns.add_child(recipes)
+	recipe_column = VBoxContainer.new()
+	recipe_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	columns.add_child(recipe_column)
 	var heading := Label.new()
 	heading.text = tr("PRODUCTION_RECIPES")
-	recipes.add_child(heading)
+	heading.theme_type_variation = &"SectionTitle"
+	recipe_column.add_child(heading)
 	recipe_scroll = ScrollContainer.new()
 	recipe_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	recipe_scroll.custom_minimum_size.y = 340
 	recipe_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	recipes.add_child(recipe_scroll)
+	recipe_column.add_child(recipe_scroll)
 	recipe_grid = GridContainer.new()
 	recipe_grid.columns = 2
 	recipe_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -46,33 +49,38 @@ func _ready() -> void:
 		recipe_grid.add_child(card)
 		card.enqueue_requested.connect(enqueue)
 		cards[item] = card
-	var status := VBoxContainer.new()
-	status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	status.custom_minimum_size.x = 300
-	status.add_theme_constant_override("separation",8)
-	columns.add_child(status)
+	status_column = VBoxContainer.new()
+	status_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	status_column.custom_minimum_size.x = 300
+	status_column.add_theme_constant_override("separation",8)
+	columns.add_child(status_column)
 	if queue_view == null:
 		queue_view = VBoxContainer.new()
 		queue_view.set_script(QueueView)
-		status.add_child(queue_view)
+		status_column.add_child(queue_view)
 	else:
-		queue_view.reparent(status,false)
+		queue_view.reparent(status_column,false)
 	collect_button = Button.new()
 	collect_button.text = tr("FEED_COLLECT_ALL") if machine_kind == "feed_mill" else tr("UI_COLLECT")
 	collect_button.focus_mode = Control.FOCUS_NONE
 	collect_button.pressed.connect(collect)
-	status.add_child(collect_button)
+	collect_button.theme_type_variation = &"PrimaryButton"
+	status_column.add_child(collect_button)
 	clock = Timer.new()
 	clock.wait_time = 0.25
 	clock.timeout.connect(_tick)
 	add_child(clock)
 	visibility_changed.connect(_sync_clock)
 	resized.connect(_fit_columns)
+	recipe_column.resized.connect(_fit_columns)
 	_fit_columns.call_deferred()
 
 func _fit_columns() -> void:
 	columns.vertical = size.x < 680
-	recipe_grid.columns = 1 if size.x < 800 else 2
+	# The queue uses about 300 px beside the recipes. Choose two cards only
+	# when each card still has enough room for its ingredient labels.
+	var available_recipe_width: float = recipe_column.size.x
+	recipe_grid.columns = 2 if available_recipe_width >= 640.0 else 1
 	recipe_scroll.custom_minimum_size.y = 220 if columns.vertical else 340
 
 func bind_machine(value: Node) -> void:
