@@ -1,6 +1,13 @@
 extends RefCounted
 
 const MESSAGES: Dictionary = {
+    "WORLD_ANIMALS_NEED_FEED": "Cần thức ăn",
+    "WORLD_PRODUCTION_TIMER": "Còn %d giây",
+    "WORLD_PRODUCT_READY": "%s sẵn sàng",
+    "ANIMAL_SALE_TITLE": "Bán vật nuôi",
+    "ANIMAL_SALE_QUESTION": "Bạn muốn bán 1 %s để nhận %d xu?",
+    "ANIMAL_SALE_CONFIRM": "Xác nhận bán",
+    "ANIMAL_SELL_HINT": "Bán %s · %d xu",
     "UI_PRODUCTION_PANEL": "SẢN XUẤT",
     "ITEM_TOOLTIP": "%s\nSố lượng: %d",
     "HOTBAR_SELECTED": "%s",

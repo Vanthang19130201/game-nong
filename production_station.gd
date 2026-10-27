@@ -157,9 +157,6 @@ func _update_ownership() -> void:
 
 func _update_display() -> void:
 	$Visuals.refresh()
-	var animal_sprite = $Visuals.get_node_or_null("AnimatedSprite2D")
-	if animal_sprite != null:
-		animal_sprite.presentation_enabled = chicken_count > 0 if station_id == "chicken_coop" else cow_count > 0
 	state_changed.emit()
 
 

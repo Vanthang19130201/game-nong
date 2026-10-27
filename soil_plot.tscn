@@ -6,6 +6,8 @@
 
 [ext_resource type="Script" path="res://soil_plot.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/crops/soil/soil_plot.png" id="2_soil"]
+[ext_resource type="Texture2D" path="res://assets/ui/plot_locked.svg" id="3_lock"]
+[ext_resource type="Script" path="res://item_icon.gd" id="4_icon"]
 
 [sub_resource type="RectangleShape2D" id="PlotShape"]
 size = Vector2(68, 52)
@@ -14,6 +16,7 @@ size = Vector2(68, 52)
 script = ExtResource("1")
 
 [node name="PlantLabel" type="Label" parent="."]
+visible = false
 z_index = 1
 offset_left = -32.0
 offset_top = -24.0
@@ -49,5 +52,30 @@ fallback_paths = Array[NodePath]([NodePath("../../SoilColor")])
 
 [node name="CropSprite" type="Sprite2D" parent="Visuals"]
 z_index = 1
-script = ExtResource("90_art")
-fallback_paths = Array[NodePath]([NodePath("../../PlantLabel")])
+texture_filter = 1
+position = Vector2(0, 12)
+
+[node name="FallbackCropVisual" type="Control" parent="Visuals"]
+visible = false
+z_index = 1
+mouse_filter = 2
+script = ExtResource("4_icon")
+
+[node name="LockedMarker" type="Sprite2D" parent="Visuals"]
+z_index = 1
+texture = ExtResource("3_lock")
+
+[node name="GrowthTime" type="Label" parent="Visuals"]
+visible = false
+z_index = 2
+offset_left = -27.0
+offset_top = -35.0
+offset_right = 27.0
+offset_bottom = -21.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(1, 0.96, 0.82, 1)
+theme_override_colors/font_outline_color = Color(0.22, 0.14, 0.08, 1)
+theme_override_constants/outline_size = 2
+horizontal_alignment = 1
+vertical_alignment = 1

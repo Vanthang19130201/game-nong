@@ -37,6 +37,9 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'plot_purchase_test.gd') -Destin
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'ui_polish_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'visual_asset_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'animal_wander_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'animal_entity_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'station_status_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'crop_visual_test.gd') -Destination $testRoot -Force
 $projectPath = Join-Path $testRoot 'project.godot'
 Add-Content -LiteralPath $projectPath -Value "`n[debug]`nfile_logging/enable_file_logging=false"
 # Reuse the project's existing imports; no editor/settings writes are needed.
@@ -64,7 +67,10 @@ $stages = @('core', 'position_write', 'position_read', 'legacy_write', 'legacy_r
     'spinning_core','spinning_write','spinning_read','spinning_again','spinning_reset_read','spinning_legacy_write','spinning_legacy_read',
     'rock_core','rock_write','rock_read','rock_respawn_write','rock_respawn_read','rock_legacy_write','rock_legacy_read','rock_reset_read',
     'resource_update_core','resource_update_write','resource_update_read','resource_update_legacy_write','resource_update_legacy_read',
-    'animals_core','animals_write','animals_read','animals_again','animals_reset_read')
+    'animals_core','animals_write','animals_read','animals_again','animals_reset_read',
+    'animal_entity_core','animal_entity_write','animal_entity_read',
+    'station_status_core','station_status_write','station_status_read',
+    'crop_visual_core','crop_visual_write','crop_visual_read')
 foreach ($stage in $stages) {
     $log = Join-Path $testRoot "$stage.log"
     $ErrorActionPreference = 'Continue'
@@ -91,6 +97,9 @@ foreach ($stage in $stages) {
     if ($stage -eq 'ui_polish') { $testScript = 'ui_polish_test.gd' }
     if ($stage -eq 'art_core') { $testScript = 'visual_asset_test.gd' }
     if ($stage.StartsWith('animals_')) { $testScript = 'animal_wander_test.gd' }
+    if ($stage.StartsWith('animal_entity_')) { $testScript = 'animal_entity_test.gd' }
+    if ($stage.StartsWith('station_status_')) { $testScript = 'station_status_test.gd' }
+    if ($stage.StartsWith('crop_visual_')) { $testScript = 'crop_visual_test.gd' }
     & $Godot --headless --path $testRoot --script $testScript --quit-after 1800 -- $stage *> $log
     $ErrorActionPreference = $previousPreference
     $output = Get-Content -LiteralPath $log -Raw

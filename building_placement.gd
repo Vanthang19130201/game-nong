@@ -34,6 +34,9 @@ static func can_place(source: Node2D, position: Vector2, require_owned_land: boo
 	for obstacle in obstacles:
 		if not is_instance_valid(obstacle) or obstacle == source or not obstacle.is_visible_in_tree():
 			continue
+		# Roaming animals are interactable entities, not fixed placement obstacles.
+		if obstacle.is_in_group("farm_animals"):
+			continue
 		if is_plot and obstacle.is_in_group("farm_decorations") and not SaveManager.DecorationData.TYPES[obstacle.decoration_id]["solid"]:
 			continue
 		var padding: float = 0.0 if is_plot or source.is_in_group("farm_decorations") or source.get("decoration_id") != null or obstacle.is_in_group("farm_decorations") else 4.0

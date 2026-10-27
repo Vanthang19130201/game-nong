@@ -53,6 +53,16 @@ dialog_text = "RESET_CONFIRM"
 ok_button_text = "RESET_DELETE_PROGRESS"
 cancel_button_text = "UI_CANCEL"
 
+[node name="AnimalSaleConfirmation" type="ConfirmationDialog" parent="."]
+theme = ExtResource("99_theme")
+title = "ANIMAL_SALE_TITLE"
+size = Vector2i(380, 180)
+exclusive = true
+unresizable = true
+dialog_hide_on_ok = false
+ok_button_text = "ANIMAL_SALE_CONFIRM"
+cancel_button_text = "UI_CANCEL"
+
 [node name="StatsBackdrop" type="PanelContainer" parent="."]
 theme = ExtResource("99_theme")
 offset_left = 12.0
@@ -336,16 +346,6 @@ layout_mode = 2
 [node name="RecipeSelector" type="OptionButton" parent="StationPanel/Margin/Content/ContentScroll/Body"]
 layout_mode = 2
 focus_mode = 0
-
-[node name="AnimalBuy" type="Button" parent="StationPanel/Margin/Content/ContentScroll/Body"]
-layout_mode = 2
-focus_mode = 0
-text = "UI_BUY_ANIMAL_LABEL"
-
-[node name="AnimalSell" type="Button" parent="StationPanel/Margin/Content/ContentScroll/Body"]
-layout_mode = 2
-focus_mode = 0
-text = "UI_SELL_ANIMAL_LABEL"
 
 [node name="ProduceButton" type="Button" parent="StationPanel/Margin/Content/ContentScroll/Body"]
 layout_mode = 2

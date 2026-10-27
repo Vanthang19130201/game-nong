@@ -5,9 +5,11 @@ const FarmData = preload("res://farm_data.gd")
 const SOIL_SCENE = preload("res://soil_plot.tscn")
 const DOG_SCENE = preload("res://dog.tscn")
 const LAND_SCENE = preload("res://land_zone.tscn")
+const AnimalGroup = preload("res://animal_group.gd")
 const Placement = preload("res://building_placement.gd")
 var dog: CharacterBody2D
 var decoration_manager: Node
+var animal_groups: Dictionary = {}
 
 @onready var dog_home: Node2D = $DogHomePoint
 @onready var dog_house: Node2D = get_node_or_null("DogHouse")
@@ -27,6 +29,8 @@ func _ready() -> void:
 	decoration_manager.set_script(preload("res://decoration_manager.gd"))
 	add_child(decoration_manager)
 	_place_resources()
+	Inventory.inventory_changed.connect(_update_animals)
+	_update_animals()
 	Inventory.inventory_changed.connect(_update_pets)
 	_update_pets()
 
@@ -113,6 +117,27 @@ func _update_buildings() -> void:
 		if id == "dog_house":
 			dog_house = building
 	_restore_owned_land_positions()
+
+
+func _update_animals() -> void:
+	# Only counts are saved. World entities are reconstructed around their home.
+	for kind in Inventory.Progression.ANIMALS:
+		var id: String = Inventory.Progression.ANIMALS[kind]["building"]
+		var home = SaveManager.buildings.get(id)
+		if not is_instance_valid(home):
+			continue
+		var group = animal_groups.get(kind)
+		if not is_instance_valid(group):
+			group = Node2D.new()
+			group.set_script(AnimalGroup)
+			group.name = "Chickens" if kind == "chicken" else "Cows"
+			group.animal_type = kind
+			group.wander_radius = 150.0 if kind == "chicken" else 170.0
+			group.home = home
+			animal_groups[kind] = group
+			add_child(group)
+		group.home = home
+		group.sync_count()
 
 
 func _update_pets() -> void:

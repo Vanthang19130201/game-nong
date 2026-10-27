@@ -23,7 +23,7 @@ func check_building(id: String, bounds: Rect2, shape_size: Vector2, floor_y: flo
 	check(farm.Placement.bounds(building) == building.global_transform*bounds,"original placement footprint "+id)
 	check(building.get_node("CollisionShape2D").shape.size == shape_size and building.scale == Vector2.ONE,"original collision and root scale "+id)
 	check(not building.get_node("Visual").visible,"placeholder hidden "+id)
-	var group = building.get_node("Visuals/Animals")
+	var group = farm.animal_groups[animal_id]
 	check(group.animals().size() == inv.get(animal_id+"_count"),"animal instances match inventory "+animal_id)
 	var animal: AnimatedSprite2D = group.animals()[0].get_node("AnimatedSprite2D")
 	check(animal.is_visible_in_tree() and is_equal_approx(animal.scale.x,animal.scale.y),"owned animal shown without stretching "+animal_id)
@@ -72,7 +72,7 @@ func run_checks() -> void:
 	check(inv.buy_building("chicken_coop") and inv.buy_building("cow_shed"),"existing purchase flow")
 	await create_timer(0.1).timeout
 	for id in ["chicken_coop","cow_shed"]:
-		check(manager.buildings[id].get_node("Visuals/Animals").animals().is_empty(),"no animal image at zero animals")
+		check(farm.animal_groups["chicken" if id == "chicken_coop" else "cow"].animals().is_empty(),"no animal image at zero animals")
 	check(inv.buy_animal("chicken") and inv.buy_animal("cow"),"existing animal logic")
 	inv.chicken_feed = 1
 	inv.cow_feed = 1

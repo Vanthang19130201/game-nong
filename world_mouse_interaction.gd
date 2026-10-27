@@ -81,6 +81,8 @@ func _contains_point(node: Node, world_position: Vector2) -> bool:
 	return false
 
 func _display_name(target: Node) -> String:
+	if target.is_in_group("farm_animals"):
+		return tr("ANIMAL_SELL_HINT") % [Localization.display_name(target.animal_type), Inventory.Progression.ANIMALS[target.animal_type]["sell"]]
 	if target.name == "SpinningMachine":
 		return tr("BUILDING_SPINNING_MACHINE")
 	if target.name == "Dairy":

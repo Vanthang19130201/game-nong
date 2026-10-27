@@ -88,7 +88,8 @@ func run_checks() -> void:
 		var price: int = expected[number-1]
 		inv.coins = price
 		inv.inventory_changed.emit()
-		check(manager.plots[inv.FarmData.plot_id(number)].get_node("PlantLabel").text == tr("PLOT_LOCKED") % price,"world locked label uses same price")
+		var plot = manager.plots[inv.FarmData.plot_id(number)]
+		check(plot.get_node("Visuals/LockedMarker").visible and not plot.get_node("Visuals/SoilSprite").visible and plot.get_node("PlantLabel").text.is_empty(),"locked plot uses a small marker without world price text")
 		await open_plot(number)
 		if number == 9 and "--capture" in OS.get_cmdline_user_args():
 			await create_timer(1.55).timeout

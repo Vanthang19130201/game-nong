@@ -2,12 +2,12 @@
 
 [ext_resource type="Script" path="res://building_visual.gd" id="94_building"]
 
-[ext_resource type="Script" path="res://animal_group.gd" id="92_animals"]
 [ext_resource type="Texture2D" path="res://assets/buildings/chicken_coop/chicken_coop.png" id="95_coop"]
 
 [ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
 
 [ext_resource type="Script" path="res://production_station.gd" id="1"]
+[ext_resource type="PackedScene" path="res://station_status.tscn" id="96_status"]
 
 [sub_resource type="RectangleShape2D" id="AreaShape"]
 size = Vector2(144, 100)
@@ -55,7 +55,4 @@ position = Vector2(0, -36)
 script = ExtResource("90_art")
 fallback_paths = Array[NodePath]([NodePath("../../Visual"), NodePath("../../StatusLabel")])
 
-[node name="Animals" type="Node2D" parent="Visuals"]
-script = ExtResource("92_animals")
-animal_type = "chicken"
-wander_radius = 150.0
+[node name="ProductionStatus" parent="Visuals" instance=ExtResource("96_status")]

@@ -1,0 +1,60 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://station_status.gd" id="1_status"]
+[ext_resource type="Script" path="res://item_icon.gd" id="2_icon"]
+[ext_resource type="Theme" path="res://assets/ui/ui_theme.tres" id="3_theme"]
+
+[sub_resource type="StyleBoxFlat" id="Bubble"]
+bg_color = Color(0.97, 0.92, 0.81, 0.96)
+border_color = Color(0.58, 0.41, 0.25, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 8.0
+content_margin_right = 8.0
+content_margin_top = 5.0
+content_margin_bottom = 5.0
+
+[node name="ProductionStatus" type="PanelContainer"]
+z_index = 6
+custom_minimum_size = Vector2(174, 0)
+mouse_filter = 2
+theme = ExtResource("3_theme")
+theme_override_styles/panel = SubResource("Bubble")
+script = ExtResource("1_status")
+
+[node name="Content" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="Row" type="HBoxContainer" parent="Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Icon" type="Control" parent="Content/Row"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("2_icon")
+
+[node name="Label" type="Label" parent="Content/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+
+[node name="Progress" type="ProgressBar" parent="Content"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+mouse_filter = 2
+max_value = 1.0
+step = 0.001
+show_percentage = false

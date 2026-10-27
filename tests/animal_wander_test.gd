@@ -16,7 +16,7 @@ func check(value: bool, message: String) -> void:
 		assert(value, message)
 
 func group_for(id: String) -> Node:
-	return manager.buildings[id].get_node("Visuals/Animals")
+	return farm.animal_groups["chicken" if id == "chicken_coop" else "cow"]
 
 func verify_groups(count: int) -> void:
 	for id in DESTINATIONS:
@@ -25,8 +25,8 @@ func verify_groups(count: int) -> void:
 		for animal in group.animals():
 			check(animal.is_visible_in_tree(), "each owned animal is visible " + id)
 			check(group.is_position_valid(animal.position, animal.body_radius), "animal on valid nearby ground " + id)
-			check(animal.find_children("*", "CollisionObject2D", true, false).is_empty(), "visuals never block player or placement")
-			check(not animal.is_in_group("farm_interactables") and not animal.is_in_group("placement_obstacles"), "no extra gameplay interactions or obstacles")
+			check(animal.collision_layer == 0 and animal.collision_mask == 0 and not animal.monitoring, "animals never physically block player")
+			check(animal.is_in_group("farm_interactables") and not animal.is_in_group("placement_obstacles"), "animal entities use the central dispatcher")
 
 func prepare() -> void:
 	check(manager.reset_game(), "reset isolated fixture")

@@ -15,15 +15,14 @@ var home: Node2D
 var hud: Node
 
 func _ready() -> void:
-	home = get_parent().get_parent()
+	global_position = home.global_position
+	z_index = home.z_index
 	y_sort_enabled = true
 	refresh_timer = Timer.new()
 	refresh_timer.wait_time = 0.5
 	refresh_timer.timeout.connect(_refresh_area)
 	add_child(refresh_timer)
-	Inventory.inventory_changed.connect(sync_count)
-	# Parent buildings restore their position and ownership during _ready().
-	sync_count.call_deferred()
+	# farm.gd owns spawning and count synchronization, not the station scene.
 
 func animals() -> Array[Node]:
 	var result: Array[Node] = []
@@ -37,9 +36,16 @@ func sync_count() -> void:
 	var count: int = Inventory.get(animal_type + "_count") if Inventory.owns_building(station_id) else 0
 	var current: Array[Node] = animals()
 	while current.size() > count:
-		var animal: Node = current.pop_back()
+		var animal: Node = current.back()
+		for candidate in current:
+			if candidate.sale_pending:
+				animal = candidate
+				break
+		current.erase(animal)
+		animal.retire()
 		remove_child(animal)
 		animal.queue_free()
+	global_position = home.global_position
 	_cache_obstacles()
 	while current.size() < count:
 		var animal = AnimalScene.instantiate()
@@ -56,12 +62,15 @@ func sync_count() -> void:
 	last_home = global_position
 
 func _process(_delta: float) -> void:
+	if not is_instance_valid(home):
+		return
 	if not is_instance_valid(hud):
 		hud = get_tree().get_first_node_in_group("farm_hud")
 	var is_editing: bool = hud != null and hud.edit_farm != null and hud.edit_farm.active
-	var moved: bool = not global_position.is_equal_approx(last_home)
+	var moved: bool = not home.global_position.is_equal_approx(last_home)
 	if moved or editing != is_editing:
 		editing = is_editing
+		global_position = home.global_position
 		last_home = global_position
 		_refresh_area()
 		for animal in animals():
@@ -76,6 +85,8 @@ func _cache_obstacles() -> void:
 	for node in nodes:
 		if not is_instance_valid(node) or not node is Node2D:
 			continue
+		if node.is_in_group("farm_animals"):
+			continue
 		if node != home and not node.is_visible_in_tree():
 			continue
 		if node.is_in_group("farm_decorations"):
@@ -89,6 +100,8 @@ func _cache_obstacles() -> void:
 	ground_y = to_local(Vector2(global_position.x, home_rect.end.y)).y
 
 func _refresh_area() -> void:
+	if not is_instance_valid(home):
+		return
 	_cache_obstacles()
 	for animal in animals():
 		if not animal.visible or not is_position_valid(animal.position, animal.body_radius):

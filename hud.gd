@@ -43,6 +43,8 @@ var rod_upgrade: Button
 @onready var reset_button: Button = $SettingsPanel/Margin/Content/ContentScroll/Body/ResetButton
 @onready var settings_panel: PanelContainer = $SettingsPanel
 @onready var reset_confirmation: ConfirmationDialog = $ResetConfirmation
+@onready var animal_sale_confirmation: ConfirmationDialog = $AnimalSaleConfirmation
+var pending_sale_animal: Node2D
 @onready var egg_sell_button: Button = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/EggSellButton
 @onready var dog_buy_button: Button = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/DogBuyButton
 @onready var station_panel: PanelContainer = $StationPanel
@@ -76,8 +78,6 @@ var debug_panel: PanelContainer
 @onready var build_panel: PanelContainer = $ShopBuildPanel/Margin/Content/Tabs/BuildPanel
 @onready var build_rows: VBoxContainer = $ShopBuildPanel/Margin/Content/Tabs/BuildPanel/Margin/Content/Scroll/Rows
 @onready var recipe_selector: OptionButton = $StationPanel/Margin/Content/ContentScroll/Body/RecipeSelector
-@onready var animal_buy: Button = $StationPanel/Margin/Content/ContentScroll/Body/AnimalBuy
-@onready var animal_sell: Button = $StationPanel/Margin/Content/ContentScroll/Body/AnimalSell
 
 
 func _ready() -> void:
@@ -116,7 +116,7 @@ func _ready() -> void:
 		debug_panel.set_script(preload("res://dev_debug_panel.gd"))
 		add_child(debug_panel)
 		debug_panel.visibility_changed.connect(_on_main_panel_visibility_changed)
-	for panel in [land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel, reset_confirmation, plot_purchase, tools_unlock_popup, fishing_ui.panel]:
+	for panel in [land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel, reset_confirmation, animal_sale_confirmation, plot_purchase, tools_unlock_popup, fishing_ui.panel]:
 		panel.visibility_changed.connect(_on_main_panel_visibility_changed)
 	crop_ids = CropData.CROPS.keys()
 	var content: VBoxContainer = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent
@@ -171,12 +171,12 @@ func _ready() -> void:
 	$ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/MilkSellButton.pressed.connect(_sell_milk)
 	$ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/DiscardChickenFeed.pressed.connect(_discard_feed.bind("chicken_feed"))
 	$ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/DiscardCowFeed.pressed.connect(_discard_feed.bind("cow_feed"))
-	animal_buy.pressed.connect(_buy_station_animal)
-	animal_sell.pressed.connect(_sell_station_animal)
 	Inventory.inventory_changed.connect(_update_inventory)
 	shop_button.pressed.connect(_toggle_shop)
 	reset_button.pressed.connect(_show_reset_confirmation)
 	reset_confirmation.confirmed.connect(_reset_game)
+	animal_sale_confirmation.confirmed.connect(_confirm_animal_sale)
+	animal_sale_confirmation.visibility_changed.connect(_on_animal_sale_visibility_changed)
 	reset_confirmation.visibility_changed.connect(_on_reset_visibility_changed)
 	plot_purchase.confirmed.connect(_confirm_plot_purchase)
 	plot_purchase.visibility_changed.connect(_on_plot_popup_visibility_changed)
@@ -345,6 +345,45 @@ func _toggle_settings() -> void:
 	_fit_menu()
 
 
+func open_animal_sale(animal: Node2D) -> void:
+	if blocks_world_input() or not is_instance_valid(animal) or not animal.can_interact():
+		return
+	if Inventory.animal_trade_busy(animal.animal_type):
+		Inventory.fail(tr("ERROR_BUSY_ANIMALS"))
+		return
+	_close_game_panels()
+	pending_sale_animal = animal
+	# Keep the selected animal nearby while the player decides.
+	animal.rest()
+	animal.idle_timer.stop()
+	animal.tree_exiting.connect(animal_sale_confirmation.hide)
+	animal_sale_confirmation.dialog_text = tr("ANIMAL_SALE_QUESTION") % [Localization.display_name(animal.animal_type), Progression.ANIMALS[animal.animal_type]["sell"]]
+	animal_sale_confirmation.get_ok_button().disabled = false
+	animal_sale_confirmation.popup_centered_clamped(Vector2i(380,180),0.9)
+	animal_sale_confirmation.get_cancel_button().grab_focus()
+
+
+func _confirm_animal_sale() -> void:
+	if not animal_sale_confirmation.visible or not is_instance_valid(pending_sale_animal):
+		return
+	animal_sale_confirmation.get_ok_button().disabled = true
+	# Inventory rechecks busy state and resources at the actual confirmation.
+	pending_sale_animal.sell_confirmed()
+	animal_sale_confirmation.hide()
+
+
+func _on_animal_sale_visibility_changed() -> void:
+	if animal_sale_confirmation.visible:
+		return
+	var animal: Node2D = pending_sale_animal
+	pending_sale_animal = null
+	if is_instance_valid(animal):
+		if animal.tree_exiting.is_connected(animal_sale_confirmation.hide):
+			animal.tree_exiting.disconnect(animal_sale_confirmation.hide)
+		if animal.is_inside_tree() and not animal.sale_pending:
+			animal.rest()
+
+
 func _show_reset_confirmation() -> void:
 	close_all_panels()
 	reset_confirmation.popup_centered()
@@ -430,8 +469,6 @@ func _update_station_panel() -> void:
 	var id: String = active_station.station_id
 	var is_mill: bool = id == "feed_mill"
 	recipe_selector.visible = is_mill
-	animal_buy.visible = not is_mill
-	animal_sell.visible = not is_mill
 	if is_mill:
 		var recipe: String = recipe_ids[maxi(0, recipe_selector.selected)]
 		var info: Dictionary = Progression.RECIPES[recipe]
@@ -453,11 +490,6 @@ func _update_station_panel() -> void:
 		station_info.text = tr("STATION_ANIMALS_INFO") % [Localization.display_name(Progression.BUILDINGS[id]["name"]), Localization.display_name(info["name"]), Inventory.get(animal + "_count"), Inventory.animal_capacity(animal), Localization.state(active_station.state), Localization.display_name(product["feed"]), Inventory.get(product["feed"]), product["time"], product["level"]]
 		produce_button.text = tr("UI_FEED_PREFIX") + Localization.display_name(info["name"])
 		collect_button.text = tr("UI_COLLECT_PREFIX") + Localization.display_name(product["item"])
-		animal_buy.text = tr("UI_BUY_COMPACT") % info["buy"]
-		animal_sell.text = tr("UI_SELL_COMPACT") % info["sell"]
-		var busy: bool = Inventory.animal_trade_busy(animal)
-		animal_buy.disabled = busy or Inventory.player_level < info["level"] or Inventory.get(animal + "_count") >= Inventory.animal_capacity(animal)
-		animal_sell.disabled = busy or Inventory.get(animal + "_count") <= 0
 		produce_button.disabled = not active_station.can_produce() or not active_station.player_near
 	collect_button.disabled = active_station.state != "READY" or not active_station.player_near
 
@@ -472,7 +504,7 @@ func _collect() -> void:
 
 
 func blocks_world_input() -> bool:
-	return land_panel.visible or edit_farm.active or bakery_panel.visible or dairy_panel.visible or spinning_machine_panel.visible or settings_panel.visible or shop_build_panel.visible or storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or station_panel.visible or order_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
+	return animal_sale_confirmation.visible or land_panel.visible or edit_farm.active or bakery_panel.visible or dairy_panel.visible or spinning_machine_panel.visible or settings_panel.visible or shop_build_panel.visible or storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or station_panel.visible or order_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
 
 
 func _input(event: InputEvent) -> void:
@@ -511,7 +543,9 @@ func _input(event: InputEvent) -> void:
 
 func close_current_panel() -> void:
 	# Native popup windows sit above the panels. Panel priority matches z_index.
-	if reset_confirmation.visible:
+	if animal_sale_confirmation.visible:
+		animal_sale_confirmation.hide()
+	elif reset_confirmation.visible:
 		reset_confirmation.hide()
 	elif plot_purchase.visible:
 		plot_purchase.hide()
@@ -550,6 +584,7 @@ func close_current_panel() -> void:
 
 
 func _close_game_panels() -> void:
+	animal_sale_confirmation.hide()
 	land_panel.close()
 	bakery_panel.close()
 	dairy_panel.close()
@@ -573,7 +608,7 @@ func _close_game_panels() -> void:
 
 
 func _native_dialog_open() -> bool:
-	return edit_farm.active or reset_confirmation.visible or plot_purchase.visible or tools_unlock_popup.visible
+	return animal_sale_confirmation.visible or edit_farm.active or reset_confirmation.visible or plot_purchase.visible or tools_unlock_popup.visible
 
 
 func open_land_purchase(id: String) -> void:
@@ -779,15 +814,11 @@ func _create_build_rows() -> void:
 		row.add_child(label)
 		var buttons := HBoxContainer.new()
 		var buy := Button.new()
-		var sell := Button.new()
 		buy.focus_mode = Control.FOCUS_NONE
-		sell.focus_mode = Control.FOCUS_NONE
 		buy.pressed.connect(_buy_animal.bind(animal))
-		sell.pressed.connect(_sell_animal.bind(animal))
 		buttons.add_child(buy)
-		buttons.add_child(sell)
 		row.add_child(buttons)
-		animal_buttons[animal] = {"label": label, "buy": buy, "sell": sell}
+		animal_buttons[animal] = {"label": label, "buy": buy}
 		build_rows.add_child(row)
 
 
@@ -831,8 +862,6 @@ func _update_build_rows() -> void:
 			row["label"].text += tr("UI_COLLECT_BEFORE_TRADE")
 		row["buy"].disabled = locked or busy or count >= Inventory.animal_capacity(animal)
 		row["buy"].text = tr("UI_LOCKED_LEVEL") % info["level"] if locked else tr("UI_BUY_COMPACT") % info["buy"]
-		row["sell"].disabled = busy or count <= 0
-		row["sell"].text = tr("UI_SELL_COMPACT") % info["sell"]
 
 
 	for id in upgrade_rows:
@@ -865,19 +894,6 @@ func _buy_building(id: String) -> void:
 func _buy_animal(animal: String) -> void:
 	_trade(Inventory.buy_animal.bind(animal), animal, 1)
 
-
-func _sell_animal(animal: String) -> void:
-	_trade(Inventory.sell_animal.bind(animal), animal, -1)
-
-
-func _buy_station_animal() -> void:
-	if is_instance_valid(active_station) and Progression.PRODUCTS.has(active_station.station_id):
-		_buy_animal(Progression.PRODUCTS[active_station.station_id]["animal"])
-
-
-func _sell_station_animal() -> void:
-	if is_instance_valid(active_station) and Progression.PRODUCTS.has(active_station.station_id):
-		_sell_animal(Progression.PRODUCTS[active_station.station_id]["animal"])
 
 func _upgrade_structure(id: String) -> void:
 	Inventory.upgrade_structure(id)
@@ -1022,7 +1038,7 @@ func _fit_menu() -> void:
 
 
 func _fit_native_popups() -> void:
-	for entry in [[plot_purchase,Vector2i(380,180)],[reset_confirmation,Vector2i(360,180)],[tools_unlock_popup,Vector2i(430,250)]]:
+	for entry in [[animal_sale_confirmation,Vector2i(380,180)],[plot_purchase,Vector2i(380,180)],[reset_confirmation,Vector2i(360,180)],[tools_unlock_popup,Vector2i(430,250)]]:
 		if entry[0].visible:
 			entry[0].popup_centered_clamped(entry[1],0.9)
 
@@ -1153,7 +1169,6 @@ func _setup_build_cards() -> void:
 		var card = _card(animals,id,Localization.display_name(id))
 		_use_card_label(card,animal_buttons[id]["label"])
 		card.add_action(animal_buttons[id]["buy"])
-		card.add_action(animal_buttons[id]["sell"])
 	var upgrades: GridContainer = _catalog(build_rows,tr("UI_FARM_UPGRADES"))
 	for id in upgrade_rows:
 		var card = _card(upgrades,id,Localization.display_name(id))
