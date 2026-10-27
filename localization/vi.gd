@@ -1,6 +1,14 @@
 extends RefCounted
 
 const MESSAGES: Dictionary = {
+    "CHARACTER_GAME_TITLE": "Nông trại nhỏ",
+    "CHARACTER_NEW_GAME": "Chơi mới",
+    "CHARACTER_CONTINUE": "Tiếp tục",
+    "CHARACTER_SELECT_TITLE": "Chọn người bạn đồng hành",
+    "CHARACTER_COSMETIC_ONLY": "Bốn diện mạo · Cùng một trải nghiệm nông trại",
+    "CHARACTER_NEW_GAME_NOTE": "Xác nhận sẽ bắt đầu nông trại mới và thay thế tiến trình đã lưu.",
+    "CHARACTER_CONFIRM": "Xác nhận & bắt đầu",
+    "CHARACTER_SELECTED": "Đã chọn",
     "ANIMAL_NEED_CHICKEN_FEED": "Cần thức ăn cho gà",
     "ANIMAL_NEED_COW_FEED": "Cần thức ăn cho bò",
     "ANIMAL_FEED_PROMPT": "[E] Cho ăn",

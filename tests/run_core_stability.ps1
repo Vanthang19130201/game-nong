@@ -41,6 +41,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'visual_asset_test.gd') -Destina
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'building_artwork_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'farm_world_presence_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'collision_animal_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'character_selection_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'animal_wander_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'animal_entity_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'station_status_test.gd') -Destination $testRoot -Force
@@ -61,7 +62,7 @@ Copy-Item -LiteralPath $importSource -Destination $cacheRoot -Recurse -Force
 $uidCache = Join-Path $projectRoot '.godot/uid_cache.bin'
 if (Test-Path -LiteralPath $uidCache) { Copy-Item -LiteralPath $uidCache -Destination $cacheRoot -Force }
 $previousPreference = $ErrorActionPreference
-$stages = @('collision_core', 'animal_context', 'fixes_write', 'fixes_read', 'fixes_hungry_read', 'core', 'position_write', 'position_read', 'legacy_write', 'legacy_read',
+$stages = @('character_core', 'character_missing', 'character_write', 'character_read', 'character_legacy_write', 'character_legacy_read', 'character_invalid_write', 'character_invalid_read', 'collision_core', 'animal_context', 'fixes_write', 'fixes_read', 'fixes_hungry_read', 'core', 'position_write', 'position_read', 'legacy_write', 'legacy_read',
     'invalid_write', 'invalid_read', 'offline_write', 'offline_read',
     'backup_write', 'backup_read', 'defaults_write', 'defaults_read', 'duplicates',
     'fishing_core', 'fishing_limits', 'fishing_write', 'fishing_read', 'market_core', 'market_read', 'stall_core', 'stall_write', 'stall_read', 'stall_reset_read',
@@ -90,6 +91,7 @@ foreach ($stage in $stages) {
     $ErrorActionPreference = 'Continue'
     $testScript = if ($stage.StartsWith('fishing_')) { 'fishing_test.gd' } else { 'core_stability_test.gd' }
     if ($stage -in @('collision_core','animal_context','fixes_write','fixes_read','fixes_hungry_read')) { $testScript = 'collision_animal_test.gd' }
+    if ($stage.StartsWith('character_')) { $testScript = 'character_selection_test.gd' }
     if ($stage.StartsWith('market_')) { $testScript = 'fish_market_test.gd' }
     if ($stage.StartsWith('stall_')) { $testScript = 'market_stall_test.gd' }
     if ($stage.StartsWith('orders_')) { $testScript = 'order_board_test.gd' }

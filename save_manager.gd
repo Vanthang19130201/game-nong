@@ -1,5 +1,27 @@
 extends Node
 
+signal selected_character_changed
+const CharacterData = preload("res://character_data.gd")
+var selected_character_id: String = CharacterData.DEFAULT_ID
+var has_existing_game: bool = false
+var character_selection_pending: bool = false
+
+func set_selected_character(id: String, persist: bool = true) -> bool:
+	var validated := CharacterData.valid_id(id)
+	if selected_character_id != validated:
+		selected_character_id = validated
+		selected_character_changed.emit()
+	return save_game() if persist else true
+
+func start_new_game(character_id: String) -> bool:
+	if not reset_game():
+		return false
+	character_selection_pending = false
+	if not set_selected_character(character_id):
+		return false
+	has_existing_game = true
+	return true
+
 const FarmData = preload("res://farm_data.gd")
 const CropData = preload("res://crop_data.gd")
 const Progression = preload("res://progression_data.gd")
@@ -150,6 +172,8 @@ func save_game() -> bool:
 	data.set_value("buildings","owns_spinning_machine",Inventory.owns_spinning_machine)
 	data.set_value("spinning_machine","spinning_machine_queue",spinning_machine_queue)
 	data.set_value("game", "version", 11)
+	data.set_value("game", "character_selection_pending", character_selection_pending)
+	data.set_value("player", "selected_character_id", selected_character_id)
 	data.set_value("fishing", "fishing_attempts_used", Inventory.fishing_attempts_used)
 	data.set_value("fishing", "fishing_cycle_started_at", Inventory.fishing_cycle_started_at)
 	data.set_value("fishing", "has_fishing_rod", Inventory.has_fishing_rod)
@@ -230,6 +254,7 @@ func reset_game() -> bool:
 				return false
 
 	resetting = true
+	set_selected_character(CharacterData.DEFAULT_ID, false)
 	GameClock.restore({})
 	placed_decorations.clear()
 	next_decoration_id = 1
@@ -297,6 +322,9 @@ func reset_game() -> bool:
 
 func _load_game() -> void:
 	var data: ConfigFile = _read_snapshot()
+	character_selection_pending = not data.has_section("inventory") or data.get_value("game", "character_selection_pending", false) == true
+	has_existing_game = data.has_section("inventory") and not character_selection_pending
+	set_selected_character(CharacterData.valid_id(data.get_value("player", "selected_character_id", CharacterData.DEFAULT_ID)), false)
 	GameClock.restore({"day":data.get_value("calendar","day",1), "minutes":data.get_value("calendar","minutes",360.0), "season":data.get_value("calendar","season","spring")})
 	placed_decorations = DecorationData.restore(data.get_value("decorations","placed",[]))
 	next_decoration_id = _read_int(data,"decorations","next_id",1,1)

@@ -160,9 +160,10 @@ func check_fishing() -> void:
 	# Walk away cancels cleanly; movement is intentionally available while fishing.
 	check(spot.start_session(player), "start departure test")
 	check(not hud.blocks_world_input(), "fishing allows movement to cancel")
-	Input.action_press("move_right")
+	# Leave along the clear bank; the Fish Market now physically blocks the east.
+	Input.action_press("move_down")
 	await create_timer(0.8).timeout
-	Input.action_release("move_right")
+	Input.action_release("move_down")
 	check(spot.state == spot.State.IDLE and hud.fishing_ui.active_spot == null and inv.reserved_barn_slots == 0 and fish_count() == 3, "walking away cancels without reward")
 	player.position = spot.position
 	await create_timer(0.1).timeout
