@@ -1,6 +1,7 @@
 extends Control
 
 var active_spot: Node = null
+const TreasureData = preload("res://treasure_data.gd")
 
 @onready var hud: Node = get_parent()
 
@@ -750,9 +751,8 @@ func _show_catch(
 	if fish_id.is_empty():
 		return
 
-	if not Inventory.FishingData.FISH.has(
-		fish_id
-	):
+	var fish_data: Dictionary = Inventory.FishingData.FISH.get(fish_id, TreasureData.ITEMS.get(fish_id, {}))
+	if fish_data.is_empty():
 		return
 
 	info.hide()
@@ -777,11 +777,6 @@ func _show_catch(
 
 	catch_card.show()
 
-	var fish_data: Dictionary = (
-		Inventory.FishingData
-		.FISH[fish_id]
-	)
-
 	catch_icon.set(
 		"item_id",
 		fish_id
@@ -789,7 +784,7 @@ func _show_catch(
 
 	catch_title.text = (
 		Localization.display_name(
-			fish_data["name"]
+			fish_id
 		)
 	)
 
@@ -819,12 +814,7 @@ func _show_catch(
 			Inventory.get(
 				fish_id
 			),
-			int(
-				fish_data.get(
-					"sell_price",
-					0
-				)
-			)
+			Inventory.sell_price(fish_id)
 		]
 	)
 

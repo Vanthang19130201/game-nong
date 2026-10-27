@@ -37,7 +37,8 @@ func run_checks() -> void:
 			for i in range(7):
 				check(inv.CropData.grow_seconds(inv.CropData.CROPS.keys()[i]) == times[i], "production crop times")
 				check(inv.CropData.CROPS.values()[i]["category"] == categories[i], "crop categories")
-			check(farm.get_node("HUD").crop_selector.item_count == 7 and inv.SILO_ITEMS.size() == 14, "seven crop UI and storage")
+			check(farm.get_node("HUD").crop_selector.item_count == 7 and inv.SILO_ITEMS.size() == 17, "seven crop UI and storage include rare variants")
+			check("golden_wheat" in inv.SILO_ITEMS and "golden_corn" in inv.SILO_ITEMS and "giant_carrot" in inv.SILO_ITEMS, "rare crops use Silo storage")
 			check(inv.CropData.CROPS["FLAX"]["id"] == "flax" and tr("ITEM_FLAX") == "Cây lanh", "Flax ID and Vietnamese name")
 			check(inv.flax_seed == 0 and inv.flax == 0, "default Flax inventory")
 			inv.coins = 10000

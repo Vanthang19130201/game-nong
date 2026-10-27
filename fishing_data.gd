@@ -17,5 +17,6 @@ const ROD_LEVELS: Dictionary = {
 const FISH: Dictionary = {
 	"small_fish": {"name": "Small Fish", "weight": 60, "rarity": "common", "difficulty": "easy", "sell_price": 25, "order_exp": 5, "order_max": 3},
 	"river_fish": {"name": "River Fish", "weight": 30, "rarity": "uncommon", "difficulty": "medium", "sell_price": 40, "order_exp": 5, "order_max": 2},
-	"golden_fish": {"name": "Golden Fish", "weight": 10, "rarity": "rare", "difficulty": "hard", "sell_price": 100, "order_exp": 5, "order_max": 1}
+	"golden_fish": {"name": "Golden Fish", "weight": 10, "rarity": "rare", "difficulty": "hard", "sell_price": 100, "order_exp": 5, "order_max": 1},
+	"moon_fish": {"name": "Moon Fish", "weight": 4, "rarity": "rare", "difficulty": "hard", "sell_price": 140, "order_exp": 8, "order_max": 1, "time_start": 20.0, "time_end": 5.0, "weather": ["cloudy", "rain"]}
 }

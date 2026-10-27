@@ -1,10 +1,10 @@
 extends PanelContainer
 
-# Weather is presentation data until the farm has a real weather system.
-@export var weather_name_key: String = "WEATHER_SUNNY"
+const WeatherData = preload("res://weather_data.gd")
 
 func _ready() -> void:
 	GameClock.changed.connect(refresh)
+	WeatherManager.changed.connect(_on_weather_changed)
 	get_viewport().size_changed.connect(_fit)
 	refresh()
 	_fit.call_deferred()
@@ -13,7 +13,12 @@ func refresh() -> void:
 	$Content/Date/Day.text = tr("CALENDAR_DAY") % GameClock.day
 	$Content/Date/Season.text = tr("SEASON_" + GameClock.season.to_upper())
 	$Content/Time/Hour.text = "%02d:%02d" % [floori(GameClock.minutes / 60.0), int(GameClock.minutes) % 60]
-	$Content/Time/Weather.text = tr(weather_name_key)
+	var weather: Dictionary = WeatherData.WEATHER.get(WeatherManager.current_weather, WeatherData.WEATHER["sunny"])
+	$Content/Time/Weather.text = tr(weather["name_key"])
+	$Content/Time/WeatherIcon.texture = load(weather["icon"])
+
+func _on_weather_changed(_weather_id: String) -> void:
+	refresh()
 
 func _fit() -> void:
 	size = Vector2(204,88)

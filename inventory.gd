@@ -12,14 +12,23 @@ const FishingData = preload("res://fishing_data.gd")
 const BakeryData = preload("res://bakery_data.gd")
 const DairyData = preload("res://dairy_data.gd")
 const SpinningData = preload("res://spinning_machine_data.gd")
+const TreasureData = preload("res://treasure_data.gd")
 const DOG_PRICE: int = 300
 const EGG_PRICE: int = 18
 const MILK_PRICE: int = 30
 const Progression = preload("res://progression_data.gd")
 var SILO_ITEMS: Array[String] = CropData.silo_items()
-const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "egg", "milk", "small_fish", "river_fish", "golden_fish", "bread", "corn_bread", "carrot_pie", "egg_cake", "milk_cake", "pancake", "cream", "butter", "cheese", "cotton_thread"]
+const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "egg", "milk", "small_fish", "river_fish", "golden_fish", "moon_fish", "bread", "corn_bread", "carrot_pie", "egg_cake", "milk_cake", "pancake", "cream", "butter", "cheese", "cotton_thread", "old_bottle", "old_boot", "coin_pouch", "small_chest", "lost_lure", "ancient_coin", "map_fragment"]
 var owns_spinning_machine: bool = false
 var cotton_thread: int = 0
+var old_bottle: int = 0
+var old_boot: int = 0
+var coin_pouch: int = 0
+var small_chest: int = 0
+var lost_lure: int = 0
+var ancient_coin: int = 0
+var map_fragment: int = 0
+var moon_fish: int = 0
 var owns_dairy: bool = false
 var cream: int = 0
 var butter: int = 0
@@ -57,6 +66,9 @@ var cotton_seed: int = 0
 var cotton: int = 0
 var flax_seed: int = 0
 var flax: int = 0
+var golden_wheat: int = 0
+var golden_corn: int = 0
+var giant_carrot: int = 0
 var coins: int = 100
 var player_exp: int = 0
 var player_level: int = 1
@@ -111,12 +123,16 @@ func sell_egg() -> bool:
 func sell_price(item: String) -> int:
 	if CropData.CROPS.has(item.to_upper()):
 		return CropData.CROPS[item.to_upper()]["sell_price"]
+	if CropData.RARE_VARIANTS.has(item):
+		return int(CropData.RARE_VARIANTS[item]["sell_price"])
 	if item == "egg":
 		return EGG_PRICE
 	if item == "milk":
 		return MILK_PRICE
 	if FishingData.FISH.has(item):
 		return FishingData.FISH[item]["sell_price"]
+	if TreasureData.ITEMS.has(item):
+		return int(TreasureData.ITEMS[item].get("sell_price", 0))
 	for recipes in [BakeryData.RECIPES,DairyData.RECIPES,SpinningData.RECIPES]:
 		if recipes.has(item):
 			# An order valuation alone does not establish a direct sale price.
@@ -128,10 +144,15 @@ func sellable_items() -> Array[String]:
 	for crop in CropData.CROPS:
 		if is_unlocked(crop):
 			items.append(crop.to_lower())
+	for rare_id in CropData.RARE_VARIANTS:
+		items.append(rare_id)
 	items.append_array(["egg","milk"])
 	if is_zone_unlocked("fishing"):
 		for fish in FishingData.FISH:
 			items.append(fish)
+		for treasure in TreasureData.ITEMS:
+			if int(TreasureData.ITEMS[treasure].get("sell_price", 0)) > 0:
+				items.append(treasure)
 	for recipes in [BakeryData.RECIPES,DairyData.RECIPES,SpinningData.RECIPES]:
 		for item in recipes:
 			if sell_price(item) > 0 and item not in items:
@@ -232,15 +253,17 @@ func use_seed(crop: String) -> bool:
 	return true
 
 
-func collect_crop(crop: String) -> bool:
+func collect_crop(crop: String, output_item: String = "") -> bool:
 	if not CropData.CROPS.has(crop):
 		return false
-	if not can_add_item(crop.to_lower(), 1):
+	var output := crop.to_lower() if output_item.is_empty() else output_item
+	if not can_add_item(output, 1):
 		return fail(tr("ERROR_SILO_CROP"))
 	if not can_add_exp(CropData.CROPS[crop]["harvest_exp"]):
 		return false
-	set(crop.to_lower(), crop_count(crop) + 1)
+	set(output, get(output) + 1)
 	add_exp(CropData.CROPS[crop]["harvest_exp"], false)
+	DiscoveryManager.discover_item(output)
 	inventory_changed.emit()
 	return true
 
@@ -367,6 +390,7 @@ func add_item(item: String, amount: int = 1, notify: bool = true) -> bool:
 	if not can_add_item(item, amount):
 		return fail(tr("ERROR_STORAGE"))
 	set(item, get(item) + amount)
+	DiscoveryManager.discover_item(item)
 	if notify:
 		inventory_changed.emit()
 	return true

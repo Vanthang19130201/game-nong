@@ -3,6 +3,7 @@ extends Area2D
 const Data = preload(
 	"res://fishing_data.gd"
 )
+const TreasureData = preload("res://treasure_data.gd")
 
 enum State {
 	IDLE,
@@ -434,9 +435,13 @@ func reel() -> void:
 func _catch_fish() -> void:
 	state = State.SUCCESS
 
-	var fish: String = (
-		_roll_fish()
+	var treasure_bonus: float = 0.02 if FarmEventManager.is_active("fishing_day") else 0.0
+	var treasure: String = TreasureData.roll(
+		rng,
+		WeatherManager.fish_bonus(),
+		treasure_bonus
 	)
+	var fish: String = treasure if not treasure.is_empty() else _roll_fish()
 
 	_release_slot()
 
@@ -455,12 +460,7 @@ func _catch_fish() -> void:
 		"CAUGHT"
 	)
 
-	feedback = (
-		"Bạn đã câu được %s!"
-		% Localization.display_name(
-			Data.FISH[fish]["name"]
-		)
-	)
+	feedback = tr("FISHING_CAUGHT") % Localization.display_name(fish)
 
 	deadline = (
 		now()
@@ -474,27 +474,48 @@ func _catch_fish() -> void:
 
 
 func _roll_fish() -> String:
+	var available: Array[String] = []
+	var weights: Array[int] = []
 	var total: int = 0
-
-	for fish_info in Data.FISH.values():
-		total += fish_info[
-			"weight"
-		]
+	for fish_id in Data.FISH:
+		var info: Dictionary = Data.FISH[fish_id]
+		if not _fish_is_available(info):
+			continue
+		var weight: int = int(info["weight"])
+		if fish_id == "golden_fish" and WeatherManager.is_raining():
+			weight += 2
+		available.append(fish_id)
+		weights.append(weight)
+		total += weight
+	if total <= 0:
+		return "small_fish"
 
 	var roll: int = rng.randi_range(
 		1,
 		total
 	)
 
-	for fish in Data.FISH:
-		roll -= Data.FISH[
-			fish
-		]["weight"]
+	for index in range(available.size()):
+		roll -= weights[index]
 
 		if roll <= 0:
-			return fish
+			return available[index]
 
 	return "small_fish"
+
+
+func _fish_is_available(info: Dictionary) -> bool:
+	var weather_list: Variant = info.get("weather", [])
+	if weather_list is Array and not weather_list.is_empty() and WeatherManager.current_weather not in weather_list:
+		return false
+	if info.has("time_start") and info.has("time_end"):
+		var hour := GameClock.minutes / 60.0
+		var start := float(info["time_start"])
+		var finish := float(info["time_end"])
+		if start > finish:
+			return hour >= start or hour < finish
+		return hour >= start and hour < finish
+	return true
 
 
 # ==================================================

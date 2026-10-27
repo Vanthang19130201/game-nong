@@ -21,7 +21,11 @@ const GREEN := Color("67974e")
 const COLORS: Dictionary = {
 	"wheat":Color("e9b84d"), "corn":Color("efc64e"), "carrot":Color("e68b45"),
 	"soybean":Color("91ad55"), "sugarcane":Color("88b36b"), "cotton":Color("f8f1dc"),
-	"flax":Color("8b97cb"), "golden_fish":Color("e4b746"), "river_fish":Color("779bba")
+	"flax":Color("8b97cb"), "golden_fish":Color("e4b746"), "river_fish":Color("779bba"),
+	"golden_wheat":Color("e6bd45"), "golden_corn":Color("f1c839"), "giant_carrot":Color("e77c38"),
+	"old_bottle":Color("73a29a"), "old_boot":Color("78624f"), "coin_pouch":Color("d2a344"),
+	"small_chest":Color("b7793d"), "lost_lure":Color("b95f4c"), "ancient_coin":Color("e5be52"),
+	"map_fragment":Color("d8c59b"), "moon_fish":Color("8e83b1")
 }
 
 func _ready() -> void:
@@ -57,6 +61,18 @@ func _draw() -> void:
 		_poly([Vector2(20,23),Vector2(45,29),Vector2(23,57)],color)
 		for dx in [-10,0,10]:
 			draw_line(Vector2(33,26),Vector2(33+dx,10),GREEN,5,true)
+	elif id in ["golden_wheat", "golden_corn", "giant_carrot"]:
+		var crop_color: Color = COLORS[id]
+		if id == "giant_carrot":
+			_poly([Vector2(12,20),Vector2(52,27),Vector2(22,61)],crop_color)
+			for dx in [-13,0,13]:
+				draw_line(Vector2(31,24),Vector2(31+dx,5),GREEN,6,true)
+		else:
+			draw_line(Vector2(31,56),Vector2(34,12),GREEN,4,true)
+			for p in [Vector2(22,23),Vector2(40,18),Vector2(28,36),Vector2(42,32)]:
+				draw_circle(p,6,crop_color)
+		draw_circle(Vector2(50,13),3,Color("fff2c4"))
+		draw_line(Vector2(47,13),Vector2(53,13),Color("fff2c4"),1.5,true)
 	elif id == "corn":
 		draw_style_box(_rounded(color),Rect2(23,10,21,40))
 		for y in range(18,45,8):
@@ -114,6 +130,33 @@ func _draw() -> void:
 		draw_style_box(_rounded(Color("deb568")),Rect2(10,22,46,30))
 		for x in [21,32,43]:
 			draw_line(Vector2(x,27),Vector2(x-4,38),Color("b17b42"),3,true)
+	elif id in ["old_bottle", "old_boot", "coin_pouch", "small_chest", "lost_lure", "ancient_coin", "map_fragment"]:
+		if id == "old_bottle":
+			draw_style_box(_rounded(Color("71a49c")), Rect2(24, 20, 17, 35))
+			draw_rect(Rect2(28, 13, 9, 9), Color("9b7146"))
+			draw_rect(Rect2(27, 32, 11, 4), Color("d7ead0"))
+		elif id == "old_boot":
+			_poly([Vector2(22,13),Vector2(37,13),Vector2(37,38),Vector2(51,43),Vector2(51,51),Vector2(17,51),Vector2(14,43),Vector2(22,38)],Color("79624e"))
+		elif id == "coin_pouch":
+			draw_circle(Vector2(32,38),18,Color("c28c49"))
+			draw_arc(Vector2(32,22),10,0,PI,12,INK,3,true)
+			draw_circle(Vector2(32,40),6,Color("e6c45b"))
+		elif id == "small_chest":
+			draw_style_box(_rounded(Color("a46b3c")),Rect2(10,22,44,31))
+			draw_rect(Rect2(10,29,44,4),Color("e0b76b"))
+			draw_rect(Rect2(29,31,7,11),Color("efcf75"))
+		elif id == "lost_lure":
+			draw_circle(Vector2(31,29),9,Color("d56e54"))
+			draw_line(Vector2(31,38),Vector2(36,47),INK,2,true)
+			draw_arc(Vector2(37,48),5,0,PI,12,INK,2,true)
+		elif id == "ancient_coin":
+			draw_circle(Vector2(32,32),22,Color("d5ad49"))
+			draw_circle(Vector2(32,32),15,Color("f0d47b"))
+			draw_arc(Vector2(32,32),10,0,TAU,20,Color("a98238"),2,true)
+		else:
+			_poly([Vector2(13,12),Vector2(43,12),Vector2(52,22),Vector2(52,52),Vector2(13,52)],Color("e1d0a7"))
+			draw_line(Vector2(21,25),Vector2(43,25),Color("897454"),2,true)
+			draw_line(Vector2(21,33),Vector2(39,33),Color("897454"),2,true)
 	elif id in ["chicken_feed","cow_feed","cotton_thread"]:
 		draw_style_box(_rounded(Color("b88757")),Rect2(15,19,34,36))
 		draw_circle(Vector2(32,36),11,Color("e9cb8d"))

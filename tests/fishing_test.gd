@@ -99,12 +99,18 @@ func run_checks() -> void:
 		check(manager.reset_game(), "reset isolated fixture")
 		inv.tools_unlock_notified = true
 		inv.player_level = 9
+		inv.last_rewarded_level = 9
 		player.position = Vector2(1980, 1190)
 		player.facing_vector = Vector2.RIGHT
 		await create_timer(0.1).timeout
 		check(not spot.can_interact(), "spot locked before level 10")
 		inv.add_exp(900)
 		check(inv.player_level == 10 and inv.has_fishing_rod and inv.fishing_rod_level == 1, "level 10 grants base rod")
+		# Level rewards intentionally block world input until claimed; acknowledge the new level before testing fishing.
+		await process_frame
+		if hud.level_up_popup.visible:
+			hud.level_up_popup._claim_current()
+			await process_frame
 		hud.hotbar.select_slot(7)
 		player.facing_vector = Vector2.LEFT
 		var river_target: Dictionary = player._find_fishing_target()

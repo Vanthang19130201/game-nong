@@ -41,6 +41,12 @@ const CROPS: Dictionary = {
 	}
 }
 
+const RARE_VARIANTS: Dictionary = {
+	"golden_wheat": {"base_crop":"WHEAT", "name":"Golden Wheat", "chance":0.015, "sell_price":30, "rarity":"rare"},
+	"golden_corn": {"base_crop":"CORN", "name":"Golden Corn", "chance":0.025, "sell_price":66, "rarity":"rare"},
+	"giant_carrot": {"base_crop":"CARROT", "name":"Giant Carrot", "chance":0.02, "sell_price":100, "rarity":"rare"}
+}
+
 static func grow_seconds(crop: String) -> float:
 	var time_scale: float = crop_time_scale if is_finite(crop_time_scale) and crop_time_scale > 0.0 else 1.0
 	return CROPS[crop]["grow_time"] * time_scale
@@ -50,6 +56,8 @@ static func inventory_defaults() -> Dictionary:
 	for crop in CROPS:
 		result[crop.to_lower()] = 0
 		result[crop.to_lower() + "_seed"] = CROPS[crop].get("starting_seeds", 0)
+	for id in RARE_VARIANTS:
+		result[id] = 0
 	return result
 
 static func silo_items() -> Array[String]:
@@ -57,4 +65,13 @@ static func silo_items() -> Array[String]:
 	for crop in CROPS:
 		result.append(crop.to_lower() + "_seed")
 		result.append(crop.to_lower())
+	for id in RARE_VARIANTS:
+		result.append(id)
 	return result
+
+static func roll_rare_variant(crop: String) -> String:
+	for id in RARE_VARIANTS:
+		var info: Dictionary = RARE_VARIANTS[id]
+		if info["base_crop"] == crop and randf() < float(info["chance"]):
+			return id
+	return ""

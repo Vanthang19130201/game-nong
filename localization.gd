@@ -65,7 +65,27 @@ const NAME_KEYS: Dictionary = {
 	"egg orders": "FEATURE_EGG_ORDERS",
 	"bakery (future)": "FEATURE_BAKERY",
 	"dairy (future)": "FEATURE_DAIRY",
-	"player exp": "UI_EXP"
+	"player exp": "UI_EXP",
+	"golden wheat": "ITEM_GOLDEN_WHEAT",
+	"golden corn": "ITEM_GOLDEN_CORN",
+	"giant carrot": "ITEM_GIANT_CARROT",
+	"moon fish": "ITEM_MOON_FISH",
+	"old bottle": "ITEM_OLD_BOTTLE",
+	"old boot": "ITEM_OLD_BOOT",
+	"coin pouch": "ITEM_COIN_POUCH",
+	"small chest": "ITEM_SMALL_CHEST",
+	"lost lure": "ITEM_LOST_LURE",
+	"ancient coin": "ITEM_ANCIENT_COIN",
+	"map fragment": "ITEM_MAP_FRAGMENT",
+	"mushroom": "ITEM_MUSHROOM",
+	"butterfly day": "EVENT_BUTTERFLY",
+	"fishing day": "EVENT_FISHING",
+	"fallen branch": "EVENT_BRANCH",
+	"mushroom growth": "EVENT_MUSHROOM",
+	"lost crate": "EVENT_CRATE",
+	"firefly night": "EVENT_FIREFLY",
+	"old well": "ITEM_OLD_WELL",
+	"ancient tree": "ITEM_ANCIENT_TREE"
 }
 
 func _enter_tree() -> void:

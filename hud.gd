@@ -13,6 +13,7 @@ var bakery_panel: PanelContainer
 var market_stall_panel: PanelContainer
 var dairy_panel: PanelContainer
 var spinning_machine_panel: PanelContainer
+var collection_book: PanelContainer
 var edit_farm: Node
 var land_panel: PanelContainer
 var decoration_panel: ScrollContainer
@@ -95,6 +96,14 @@ var dog_status_label: Label
 
 func _ready() -> void:
 	add_to_group("farm_hud")
+	collection_book = PanelContainer.new()
+	collection_book.name = "CollectionBook"
+	collection_book.set_script(preload("res://collection_book.gd"))
+	add_child(collection_book)
+	var weather_visual := Control.new()
+	weather_visual.name = "WeatherVisual"
+	weather_visual.set_script(preload("res://weather_visual.gd"))
+	add_child(weather_visual)
 	land_panel = PanelContainer.new()
 	land_panel.name = "LandPurchasePanel"
 	land_panel.set_script(preload("res://land_purchase_panel.gd"))
@@ -134,8 +143,9 @@ func _ready() -> void:
 		debug_panel.set_script(preload("res://dev_debug_panel.gd"))
 		add_child(debug_panel)
 		debug_panel.visibility_changed.connect(_on_main_panel_visibility_changed)
-	for panel in [market_stall_panel, land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel, reset_confirmation, animal_sale_confirmation, plot_purchase, tools_unlock_popup, fishing_ui.panel, level_up_popup]:
+	for panel in [collection_book, market_stall_panel, land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel, reset_confirmation, animal_sale_confirmation, plot_purchase, tools_unlock_popup, fishing_ui.panel, level_up_popup]:
 		panel.visibility_changed.connect(_on_main_panel_visibility_changed)
+	DiscoveryManager.discovery_found.connect(_on_discovery_found)
 	crop_ids = CropData.CROPS.keys()
 	var content: VBoxContainer = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent
 	for item in Inventory.DairyData.RECIPES:
@@ -271,6 +281,17 @@ func show_transaction_feedback(text: String) -> void:
 
 func show_floating_feedback(text: String) -> void:
 	floating_feedback.show_floating_feedback(text)
+
+
+func _on_discovery_found(_category_id: String, item_id: String) -> void:
+	show_floating_feedback(tr("DISCOVERY_TOAST") % Localization.display_name(item_id))
+
+
+func open_collection_book() -> void:
+	if blocks_world_input() and not settings_panel.visible:
+		return
+	_close_game_panels()
+	collection_book.open()
 
 
 func show_inventory_change(item_id: String, amount: int) -> void:
@@ -642,7 +663,7 @@ func _collect() -> void:
 
 
 func blocks_world_input() -> bool:
-	return level_up_popup.visible or market_stall_panel.visible or animal_sale_confirmation.visible or land_panel.visible or edit_farm.active or bakery_panel.visible or dairy_panel.visible or spinning_machine_panel.visible or settings_panel.visible or shop_build_panel.visible or storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or station_panel.visible or order_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
+	return level_up_popup.visible or collection_book.visible or market_stall_panel.visible or animal_sale_confirmation.visible or land_panel.visible or edit_farm.active or bakery_panel.visible or dairy_panel.visible or spinning_machine_panel.visible or settings_panel.visible or shop_build_panel.visible or storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or station_panel.visible or order_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
 
 
 func _input(event: InputEvent) -> void:
@@ -696,6 +717,8 @@ func close_current_panel() -> void:
 	# Native popup windows sit above the panels. Panel priority matches z_index.
 	if level_up_popup.visible:
 		return
+	elif collection_book.visible:
+		collection_book.close()
 	elif animal_sale_confirmation.visible:
 		animal_sale_confirmation.hide()
 	elif reset_confirmation.visible:
@@ -739,6 +762,7 @@ func close_current_panel() -> void:
 
 
 func _close_game_panels() -> void:
+	collection_book.close()
 	market_stall_panel.close()
 	animal_sale_confirmation.hide()
 	land_panel.close()
@@ -764,7 +788,7 @@ func _close_game_panels() -> void:
 
 
 func _native_dialog_open() -> bool:
-	return level_up_popup.visible or animal_sale_confirmation.visible or edit_farm.active or reset_confirmation.visible or plot_purchase.visible or tools_unlock_popup.visible
+	return level_up_popup.visible or collection_book.visible or animal_sale_confirmation.visible or edit_farm.active or reset_confirmation.visible or plot_purchase.visible or tools_unlock_popup.visible
 
 
 func open_land_purchase(id: String) -> void:
@@ -815,13 +839,13 @@ func close_all_panels() -> void:
 func _on_main_panel_visibility_changed() -> void:
 	clear_item_hint(item_hint_source)
 	# A HUD dropdown must not stack over an existing modal or fishing session.
-	crop_selector.disabled = _native_dialog_open() or fishing_ui.panel.visible or [market_stall_panel, land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel].any(func(panel): return panel.visible) or (is_instance_valid(debug_panel) and debug_panel.visible)
+	crop_selector.disabled = _native_dialog_open() or fishing_ui.panel.visible or [collection_book, market_stall_panel, land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel].any(func(panel): return panel.visible) or (is_instance_valid(debug_panel) and debug_panel.visible)
 	if is_instance_valid(hotbar):
 		hotbar.visible = not crop_selector.disabled
 	$ModalBackdrop.visible = crop_selector.disabled and not edit_farm.active and not fishing_ui.panel.visible and not level_up_popup.visible
 	# z_index controls drawing, not GUI picking. Keep the active panel after
 	# the backdrop and hotbar in tree order so its tabs/buttons receive clicks.
-	for panel in [market_stall_panel,land_panel,bakery_panel,dairy_panel,spinning_machine_panel,settings_panel,shop_build_panel,station_panel,house_panel,order_panel,fish_market_panel,storage_panel,debug_panel,level_up_popup]:
+	for panel in [collection_book,market_stall_panel,land_panel,bakery_panel,dairy_panel,spinning_machine_panel,settings_panel,shop_build_panel,station_panel,house_panel,order_panel,fish_market_panel,storage_panel,debug_panel,level_up_popup]:
 		if is_instance_valid(panel) and panel.visible:
 			move_child(panel,get_child_count()-1)
 	transaction_feedback.set_popup_mode($ModalBackdrop.visible)
@@ -1161,7 +1185,7 @@ func _setup_cozy_ui() -> void:
 	var menu: VBoxContainer = $SettingsPanel/Margin/Content/ContentScroll/Body
 	var shortcuts: Array = [
 		["UI_MENU_SHOP",_toggle_shop], ["UI_MENU_STORAGE",_toggle_storage],
-		["UI_MENU_ORDERS",open_orders]
+		["UI_MENU_ORDERS",open_orders], ["COLLECTION_TITLE",open_collection_book]
 	]
 	for i in range(shortcuts.size()):
 		var button := Button.new()

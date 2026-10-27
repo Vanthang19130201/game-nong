@@ -41,6 +41,15 @@ func _ready() -> void:
 	add_child(decoration_manager)
 
 	_place_resources()
+	var dig_manager := Node.new()
+	dig_manager.name = "DigSpotManager"
+	dig_manager.set_script(preload("res://dig_spot_manager.gd"))
+	add_child(dig_manager)
+	dig_manager.setup(self)
+	var event_visual := Node2D.new()
+	event_visual.name = "FarmEventVisual"
+	event_visual.set_script(preload("res://farm_event_visual.gd"))
+	add_child(event_visual)
 
 	Inventory.inventory_changed.connect(_update_animals)
 	_update_animals()

@@ -123,13 +123,15 @@ func _on_grow_timer_timeout() -> void:
 func harvest() -> void:
 	if not is_unlocked() or state != PlotState.READY:
 		return
-	if not Inventory.can_add_item(crop_type.to_lower(), 1):
+	var harvested_crop: String = crop_type
+	var rare_variant: String = CropData.roll_rare_variant(harvested_crop)
+	var output_item := rare_variant if not rare_variant.is_empty() and Inventory.can_add_item(rare_variant, 1) else harvested_crop.to_lower()
+	if not Inventory.can_add_item(output_item, 1):
 		Inventory.fail(tr("ERROR_SILO_CROP"))
 		return
-	var harvested_crop: String = crop_type
 	_clear_crop()
 	_update_label()
-	if Inventory.collect_crop(harvested_crop):
+	if Inventory.collect_crop(harvested_crop, output_item):
 		get_tree().call_group("farm_hud", "show_harvest_feedback", harvested_crop)
 
 

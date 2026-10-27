@@ -71,10 +71,13 @@ var autosave_timer: Timer
 var bakery_queue: Array = []
 var dairy_queue: Array = []
 var spinning_machine_queue: Array = []
+var saved_dig_spots: Array = []
+var saved_dig_spots_day_key: int = -1
 var PLOT_IDS: Array[String] = FarmData.plot_ids()
 var INVENTORY_DEFAULTS: Dictionary = CropData.inventory_defaults().merged({
 	"coins": 100, "chicken_feed": 0, "cow_feed": 0, "egg": 0, "milk": 0, "wood": 0, "stone": 0,
-	"small_fish": 0, "river_fish": 0, "golden_fish": 0,
+	"small_fish": 0, "river_fish": 0, "golden_fish": 0, "moon_fish": 0,
+	"old_bottle": 0, "old_boot": 0, "coin_pouch": 0, "small_chest": 0, "lost_lure": 0, "ancient_coin": 0, "map_fragment": 0,
 	"bread": 0, "corn_bread": 0, "carrot_pie": 0,
 	"egg_cake": 0, "milk_cake": 0, "pancake": 0,
 	"cream": 0, "butter": 0, "cheese": 0, "cotton_thread": 0
@@ -199,7 +202,12 @@ func save_game() -> bool:
 	data.set_value("dairy", "dairy_queue", dairy_queue)
 	data.set_value("buildings","owns_spinning_machine",Inventory.owns_spinning_machine)
 	data.set_value("spinning_machine","spinning_machine_queue",spinning_machine_queue)
-	data.set_value("game", "version", 13)
+	data.set_value("game", "version", 15)
+	data.set_value("discovery", "state", DiscoveryManager.get_save_data())
+	data.set_value("weather", "state", WeatherManager.get_save_data())
+	data.set_value("farm_event", "state", FarmEventManager.get_save_data())
+	data.set_value("dig_spots", "active", saved_dig_spots)
+	data.set_value("dig_spots", "day_key", saved_dig_spots_day_key)
 	data.set_value("game", "character_selection_pending", character_selection_pending)
 	data.set_value("player", "selected_character_id", selected_character_id)
 	data.set_value("player", "player_name", player_name)
@@ -288,6 +296,14 @@ func reset_game() -> bool:
 	player_name_changed.emit()
 	set_selected_character(CharacterData.DEFAULT_ID, false)
 	GameClock.restore({})
+	saved_dig_spots.clear()
+	saved_dig_spots_day_key = -1
+	DiscoveryManager.reset()
+	WeatherManager.reset()
+	FarmEventManager.reset()
+	var dig_manager := get_tree().get_first_node_in_group("dig_spot_manager")
+	if is_instance_valid(dig_manager):
+		dig_manager.reset_for_new_game()
 	placed_decorations.clear()
 	next_decoration_id = 1
 	unlocked_land_zones = ["farm_core"]
@@ -364,7 +380,14 @@ func _load_game() -> void:
 	if player_name.is_empty() and has_existing_game:
 		# Legacy saves created before player names existed still load safely.
 		player_name = "Farmer"
-	GameClock.restore({"day":data.get_value("calendar","day",1), "minutes":data.get_value("calendar","minutes",360.0), "season":data.get_value("calendar","season","spring")})
+	GameClock.restore({"day":data.get_value("calendar","day",1), "minutes":data.get_value("calendar","minutes",360.0), "season":data.get_value("calendar","season","spring"), "absolute_day":data.get_value("calendar","absolute_day",-1)})
+	DiscoveryManager.restore(data.get_value("discovery", "state", {}))
+	WeatherManager.restore(data.get_value("weather", "state", {}))
+	FarmEventManager.restore(data.get_value("farm_event", "state", {}))
+	var dig_data: Variant = data.get_value("dig_spots", "active", [])
+	saved_dig_spots = dig_data.duplicate(true) if dig_data is Array else []
+	var dig_day: Variant = data.get_value("dig_spots", "day_key", -1)
+	saved_dig_spots_day_key = int(dig_day) if dig_day is int else -1
 	placed_decorations = DecorationData.restore(data.get_value("decorations","placed",[]))
 	next_decoration_id = _read_int(data,"decorations","next_id",1,1)
 	for record in placed_decorations:

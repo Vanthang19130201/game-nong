@@ -21,6 +21,9 @@ Localization="*res://localization.gd"
 Inventory="*res://inventory.gd"
 OrderManager="*res://order_manager.gd"
 GameClock="*res://game_clock.gd"
+DiscoveryManager="*res://discovery_manager.gd"
+WeatherManager="*res://weather_manager.gd"
+FarmEventManager="*res://farm_event_manager.gd"
 SaveManager="*res://save_manager.gd"
 
 [display]
