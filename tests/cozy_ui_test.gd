@@ -137,16 +137,37 @@ func run_checks() -> void:
 	await key(KEY_ESCAPE)
 	check(not hud.shop_build_panel.visible,"ESC closes popup")
 	await click(hud.get_node("ResetControls/SettingsButton").get_global_rect().get_center())
-	check(hud.settings_panel.visible and hud.settings_panel.get_node("Margin/Content/ContentScroll/Body").get_child_count() == 4,"compact menu keeps Shop, Inventory, Orders and Reset accessible")
+	check(hud.settings_panel.visible and hud.settings_panel.get_node("Margin/Content/ContentScroll/Body").get_child_count() == 5,"compact menu keeps Shop, Inventory, Orders, Collection and Reset accessible")
 	await key(KEY_ESCAPE)
 	var player = farm.get_node("Player")
 	var spot = farm.get_node("FishingSpot")
 	inv.fishing_unlocked = true
 	inv.has_fishing_rod = true
 	inv.fishing_rod_level = 1
-	player.position = spot.position
-	player.facing_vector = Vector2.RIGHT
 	hud.hotbar.select_slot(7)
+	var legal_cast := false
+	for zone in get_nodes_in_group("fishing_water_zones"):
+		for direction in [Vector2.RIGHT,Vector2.LEFT,Vector2.UP,Vector2.DOWN]:
+			for x in range(-260,261,20):
+				for y in range(-260,261,20):
+					var candidate: Vector2 = zone.global_position+Vector2(x,y)
+					if zone.contains_world_point(candidate):
+						continue
+					for cast_distance in player.FISH_CAST_DISTANCES:
+						if zone.contains_world_point(candidate+direction*cast_distance):
+							player.position = candidate
+							player.facing_vector = direction
+							legal_cast = true
+							break
+					if legal_cast:
+						break
+				if legal_cast:
+					break
+			if legal_cast:
+				break
+		if legal_cast:
+			break
+	check(legal_cast,"fishing test starts from a valid shore position")
 	await create_timer(0.15).timeout
 	await key(KEY_E)
 	check(spot.state == spot.State.WAITING_FOR_BITE,"E still starts fishing")

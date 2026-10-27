@@ -73,6 +73,7 @@ var dairy_queue: Array = []
 var spinning_machine_queue: Array = []
 var saved_dig_spots: Array = []
 var saved_dig_spots_day_key: int = -1
+var hidden_treasure_claimed: bool = false
 var PLOT_IDS: Array[String] = FarmData.plot_ids()
 var INVENTORY_DEFAULTS: Dictionary = CropData.inventory_defaults().merged({
 	"coins": 100, "chicken_feed": 0, "cow_feed": 0, "egg": 0, "milk": 0, "wood": 0, "stone": 0,
@@ -202,12 +203,13 @@ func save_game() -> bool:
 	data.set_value("dairy", "dairy_queue", dairy_queue)
 	data.set_value("buildings","owns_spinning_machine",Inventory.owns_spinning_machine)
 	data.set_value("spinning_machine","spinning_machine_queue",spinning_machine_queue)
-	data.set_value("game", "version", 15)
+	data.set_value("game", "version", 16)
 	data.set_value("discovery", "state", DiscoveryManager.get_save_data())
 	data.set_value("weather", "state", WeatherManager.get_save_data())
 	data.set_value("farm_event", "state", FarmEventManager.get_save_data())
 	data.set_value("dig_spots", "active", saved_dig_spots)
 	data.set_value("dig_spots", "day_key", saved_dig_spots_day_key)
+	data.set_value("dig_spots", "hidden_treasure_claimed", hidden_treasure_claimed)
 	data.set_value("game", "character_selection_pending", character_selection_pending)
 	data.set_value("player", "selected_character_id", selected_character_id)
 	data.set_value("player", "player_name", player_name)
@@ -298,6 +300,7 @@ func reset_game() -> bool:
 	GameClock.restore({})
 	saved_dig_spots.clear()
 	saved_dig_spots_day_key = -1
+	hidden_treasure_claimed = false
 	DiscoveryManager.reset()
 	WeatherManager.reset()
 	FarmEventManager.reset()
@@ -366,6 +369,7 @@ func reset_game() -> bool:
 	var hud = get_tree().get_first_node_in_group("farm_hud")
 	if hud != null:
 		hud.close_all_panels()
+	FarmEventManager.refresh_for_new_game()
 	resetting = false
 	return save_game()
 
@@ -388,6 +392,7 @@ func _load_game() -> void:
 	saved_dig_spots = dig_data.duplicate(true) if dig_data is Array else []
 	var dig_day: Variant = data.get_value("dig_spots", "day_key", -1)
 	saved_dig_spots_day_key = int(dig_day) if dig_day is int else -1
+	hidden_treasure_claimed = data.get_value("dig_spots", "hidden_treasure_claimed", false) == true
 	placed_decorations = DecorationData.restore(data.get_value("decorations","placed",[]))
 	next_decoration_id = _read_int(data,"decorations","next_id",1,1)
 	for record in placed_decorations:
@@ -474,7 +479,7 @@ func _load_game() -> void:
 	Inventory.selected_crop = "WHEAT"
 	var owned = data.get_value("player", "has_dog", false)
 	Inventory.has_dog = owned if owned is bool else false
-	if selected is String and Inventory.is_unlocked(selected):
+	if selected == "MYSTERY" or (selected is String and Inventory.is_unlocked(selected)):
 		Inventory.selected_crop = selected
 	for id in PLOT_IDS:
 		saved_plots[id] = _read_plot(data, id)

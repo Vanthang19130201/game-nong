@@ -18,7 +18,8 @@ const ITEMS: Dictionary = {
 	"production_items": ["bread","corn_bread","carrot_pie","egg_cake","milk_cake","pancake","cream","butter","cheese","cotton_thread"],
 	"rare_finds": ["golden_wheat","giant_carrot","golden_corn"],
 	"treasures": ["old_bottle","old_boot","coin_pouch","small_chest","lost_lure","ancient_coin","map_fragment"],
-	"nature": ["mushroom","old_well","ancient_tree"],
+	# Only entries with a real discovery path are listed here.
+	"nature": ["mushroom", "bird", "rabbit", "butterfly", "firefly"],
 	"special_events": ["butterfly_day","fishing_day","fallen_branch","mushroom_growth","lost_crate","firefly_night"]
 }
 
@@ -28,7 +29,7 @@ const ITEM_CATEGORIES: Dictionary = {
 	"egg":"animal_products", "milk":"animal_products", "chicken_feed":"animal_products", "cow_feed":"animal_products",
 	"golden_wheat":"rare_finds", "giant_carrot":"rare_finds", "golden_corn":"rare_finds",
 	"old_bottle":"treasures", "old_boot":"treasures", "coin_pouch":"treasures", "small_chest":"treasures", "lost_lure":"treasures", "ancient_coin":"treasures", "map_fragment":"treasures",
-	"mushroom":"nature"
+	"mushroom":"nature", "bird":"nature", "rabbit":"nature", "butterfly":"nature", "firefly":"nature"
 }
 
 const DESCRIPTIONS: Dictionary = {
@@ -39,7 +40,11 @@ const DESCRIPTIONS: Dictionary = {
 	"golden_wheat": "COLLECTION_DESC_RARE_CROP",
 	"golden_corn": "COLLECTION_DESC_RARE_CROP",
 	"giant_carrot": "COLLECTION_DESC_RARE_CROP",
-	"mushroom": "COLLECTION_DESC_MUSHROOM"
+	"mushroom": "COLLECTION_DESC_MUSHROOM",
+	"bird": "COLLECTION_DESC_BIRD",
+	"rabbit": "COLLECTION_DESC_RABBIT",
+	"butterfly": "COLLECTION_DESC_BUTTERFLY",
+	"firefly": "COLLECTION_DESC_FIREFLY"
 }
 
 static func category_for_item(item_id: String) -> String:

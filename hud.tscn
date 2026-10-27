@@ -15,6 +15,7 @@
 [sub_resource type="StyleBoxEmpty" id="CatalogInset"]
 
 [node name="HUD" type="CanvasLayer"]
+layer = 2
 layer = 10
 script = ExtResource("1_hud")
 

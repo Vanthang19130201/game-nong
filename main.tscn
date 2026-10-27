@@ -29,6 +29,7 @@
 [ext_resource type="PackedScene" path="res://fishing_rest_deck.tscn" id="103_fishing_deck"]
 [ext_resource type="Script" path="res://building_ground_visual.gd" id="104_ground"]
 [ext_resource type="Script" path="res://world_lighting.gd" id="105_world_lighting"]
+[ext_resource type="Script" path="res://weather_visual.gd" id="106_weather_visual"]
 
 [sub_resource type="RectangleShape2D" id="HouseInteractionShape"]
 size = Vector2(260, 220)
@@ -50,6 +51,18 @@ script = ExtResource("5_farm")
 
 [node name="WorldLighting" type="CanvasModulate" parent="."]
 script = ExtResource("105_world_lighting")
+
+[node name="WorldWeatherLayer" type="CanvasLayer" parent="."]
+layer = 1
+
+[node name="WeatherVisual" type="Control" parent="WorldWeatherLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("106_weather_visual")
 
 [node name="Ground" type="ColorRect" parent="." unique_id=2031795690]
 z_index = -10

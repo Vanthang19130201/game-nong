@@ -2,6 +2,7 @@ extends Area2D
 
 var spot_id: String = ""
 var reward: Dictionary = {}
+var is_hidden_treasure: bool = false
 var player: Node2D
 var prompt: Label
 
@@ -42,11 +43,20 @@ func get_interaction_position() -> Vector2:
 	return global_position
 
 func _draw() -> void:
+	if is_hidden_treasure:
+		for point in [Vector2(-15, 5), Vector2(14, 7), Vector2(0, 12)]:
+			draw_colored_polygon(PackedVector2Array([point+Vector2(-5,2), point+Vector2(-2,-4), point+Vector2(4,-2), point+Vector2(6,3)]), Color("9b9480"))
+		draw_colored_polygon(PackedVector2Array([Vector2(-28,12), Vector2(-21,-1), Vector2(-10,-5), Vector2(3,-2), Vector2(16,-6), Vector2(28,3), Vector2(23,15), Vector2(9,18), Vector2(-13,17)]), Color("745a3e", 0.58))
+		draw_arc(Vector2.ZERO, 17, PI + 0.35, TAU - 0.35, 18, Color("b79563", 0.76), 3.0, true)
+		draw_arc(Vector2(1, 1), 10, PI + 0.25, TAU - 0.25, 14, Color("69513a", 0.65), 2.0, true)
+		return
 	var soil := PackedVector2Array()
 	for index in range(20):
 		var angle := TAU * float(index) / 20.0
 		soil.append(Vector2(cos(angle) * 22.0, 8.0 + sin(angle) * 12.0))
 	draw_colored_polygon(soil, Color("866744", 0.32))
-	draw_arc(Vector2.ZERO, 15, PI + 0.3, TAU - 0.3, 20, Color("b7935e", 0.72), 4.0, true)
-	draw_line(Vector2(-4, -4), Vector2(4, 4), Color("6d4439", 0.85), 2.0, true)
-	draw_line(Vector2(4, -4), Vector2(-4, 4), Color("6d4439", 0.85), 2.0, true)
+	draw_arc(Vector2.ZERO, 13, PI + 0.45, TAU - 0.45, 18, Color("b7935e", 0.62), 2.0, true)
+	draw_line(Vector2(-9, 5), Vector2(-3, 2), Color("68523b", 0.55), 1.5, true)
+	draw_line(Vector2(4, 7), Vector2(9, 4), Color("68523b", 0.5), 1.5, true)
+	draw_circle(Vector2(-17, 7), 2.2, Color("9a7951", 0.72))
+	draw_circle(Vector2(18, 4), 1.8, Color("b28b5a", 0.72))

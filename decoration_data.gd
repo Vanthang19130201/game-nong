@@ -4,7 +4,13 @@ const TYPES: Dictionary = {
 	"wood_fence": {"name_key": "DECOR_WOOD_FENCE", "grid_size": Vector2i.ONE, "coins": 50, "wood": 1, "stone": 0, "rotatable": true, "solid": true},
 	"stone_path": {"name_key": "DECOR_STONE_PATH", "grid_size": Vector2i.ONE, "coins": 30, "wood": 0, "stone": 1, "rotatable": false, "solid": false},
 	"wood_gate": {"name_key": "DECOR_WOOD_GATE", "grid_size": Vector2i.ONE, "coins": 100, "wood": 2, "stone": 0, "rotatable": true, "solid": true},
-	"farm_lamp": {"name_key": "DECOR_FARM_LAMP", "grid_size": Vector2i.ONE, "coins": 150, "wood": 1, "stone": 1, "rotatable": true, "solid": true}
+	"farm_lamp": {"name_key": "DECOR_FARM_LAMP", "grid_size": Vector2i.ONE, "coins": 150, "wood": 1, "stone": 1, "rotatable": true, "solid": true},
+	"fishing_sign": {"name_key": "DECOR_FISHING_SIGN", "grid_size": Vector2i.ONE, "coins": 0, "wood": 0, "stone": 0, "rotatable": true, "solid": false, "hidden": true},
+	"golden_flower_pot": {"name_key": "DECOR_GOLDEN_FLOWER_POT", "grid_size": Vector2i.ONE, "coins": 0, "wood": 0, "stone": 0, "rotatable": false, "solid": false, "hidden": true},
+	"treasure_chest": {"name_key": "DECOR_TREASURE_CHEST", "grid_size": Vector2i.ONE, "coins": 0, "wood": 0, "stone": 0, "rotatable": true, "solid": false, "hidden": true},
+	"golden_scarecrow": {"name_key": "DECOR_GOLDEN_SCARECROW", "grid_size": Vector2i.ONE, "coins": 0, "wood": 0, "stone": 0, "rotatable": true, "solid": false, "hidden": true},
+	"ancient_statue": {"name_key": "DECOR_ANCIENT_STATUE", "grid_size": Vector2i.ONE, "coins": 0, "wood": 0, "stone": 0, "rotatable": true, "solid": false, "hidden": true},
+	"river_lantern": {"name_key": "DECOR_RIVER_LANTERN", "grid_size": Vector2i.ONE, "coins": 0, "wood": 0, "stone": 0, "rotatable": true, "solid": false, "hidden": true}
 }
 
 static func can_afford(id: String) -> bool:

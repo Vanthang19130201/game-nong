@@ -1,17 +1,17 @@
 extends Control
 
-var rain_overlay: ColorRect
+var weather_overlay: ColorRect
 var rain_particles: CPUParticles2D
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	z_index = -1
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	rain_overlay = ColorRect.new()
-	rain_overlay.color = Color(0.32, 0.43, 0.47, 0.07)
-	rain_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rain_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(rain_overlay)
+	weather_overlay = ColorRect.new()
+	weather_overlay.name = "WeatherOverlay"
+	weather_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	weather_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(weather_overlay)
 	rain_particles = CPUParticles2D.new()
 	rain_particles.name = "RainParticles"
 	rain_particles.texture = preload("res://assets/environment/rain_drop.svg")
@@ -36,10 +36,14 @@ func _ready() -> void:
 
 func _on_weather_changed(weather_id: String) -> void:
 	var raining := weather_id == "rain"
-	rain_overlay.visible = raining
+	weather_overlay.visible = weather_id != "sunny"
+	weather_overlay.color = Color(0.46, 0.56, 0.64, 0.025) if weather_id == "cloudy" else Color(0.34, 0.44, 0.48, 0.045)
 	rain_particles.emitting = raining
 
 func _resize() -> void:
 	var view := get_viewport_rect().size
+	var scale_factor := (view.x * view.y) / (1152.0 * 648.0)
+	rain_particles.amount = clampi(roundi(72.0 * scale_factor), 72, 220)
+	rain_particles.lifetime = maxf(0.9, view.y / 500.0 + 0.18)
 	rain_particles.position = Vector2(view.x * 0.5, -4)
 	rain_particles.emission_rect_extents = Vector2(view.x * 0.5, 0)

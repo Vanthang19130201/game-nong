@@ -100,6 +100,9 @@ func _create_item_grids() -> void:
 	for crop in Inventory.CropData.CROPS:
 		seeds.append(crop.to_lower()+"_seed")
 		crops.append(crop.to_lower())
+	seeds.append("mystery_seed")
+	for rare_crop in Inventory.CropData.RARE_VARIANTS:
+		crops.append(rare_crop)
 	_add_grid(produce,tr("STORAGE_SEEDS"),seeds)
 	_add_grid(produce,tr("STORAGE_CROPS"),crops)
 	_add_grid(goods,"",Inventory.BARN_ITEMS)

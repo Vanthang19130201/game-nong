@@ -98,13 +98,25 @@ func try_plant() -> void:
 	if not is_unlocked() or state != PlotState.EMPTY or not Inventory.can_plant(selected):
 		return
 	# Finish the plot state BEFORE consuming seed and saving the whole game.
-	crop_type = selected
 	planted_at = Time.get_unix_time_from_system()
+	if selected == "MYSTERY":
+		var unlocked_crops: Array[String] = []
+		for crop in CropData.CROPS:
+			if Inventory.is_unlocked(crop):
+				unlocked_crops.append(crop)
+		if unlocked_crops.is_empty():
+			return
+		var rng := RandomNumberGenerator.new()
+		var stable_seed := hash("%s|%d|%d" % [plot_id, int(planted_at), Time.get_ticks_usec()])
+		rng.seed = maxi(1, stable_seed & 0x7fffffff)
+		crop_type = unlocked_crops[rng.randi_range(0, unlocked_crops.size() - 1)]
+	else:
+		crop_type = selected
 	ready_at = planted_at + CropData.grow_seconds(crop_type)
 	state = PlotState.GROWING
 	grow_timer.start(ready_at - planted_at)
 	_update_label()
-	Inventory.use_seed(crop_type)
+	Inventory.use_seed(selected)
 
 
 func _on_grow_timer_timeout() -> void:
@@ -124,15 +136,20 @@ func harvest() -> void:
 	if not is_unlocked() or state != PlotState.READY:
 		return
 	var harvested_crop: String = crop_type
-	var rare_variant: String = CropData.roll_rare_variant(harvested_crop)
+	var harvest_key := "%s|%s|%d|%d" % [plot_id, harvested_crop, int(planted_at), int(ready_at)]
+	var rare_variant: String = CropData.roll_rare_variant(harvested_crop, harvest_key)
 	var output_item := rare_variant if not rare_variant.is_empty() and Inventory.can_add_item(rare_variant, 1) else harvested_crop.to_lower()
 	if not Inventory.can_add_item(output_item, 1):
 		Inventory.fail(tr("ERROR_SILO_CROP"))
 		return
+	var already_discovered_rare: bool = not rare_variant.is_empty() and DiscoveryManager.has_discovered("rare_finds", rare_variant)
 	_clear_crop()
 	_update_label()
 	if Inventory.collect_crop(harvested_crop, output_item):
-		get_tree().call_group("farm_hud", "show_harvest_feedback", harvested_crop)
+		if rare_variant.is_empty():
+			get_tree().call_group("farm_hud", "show_harvest_feedback", harvested_crop)
+		elif already_discovered_rare:
+			get_tree().call_group("farm_hud", "show_inventory_change", rare_variant, 1)
 
 
 func _clear_crop() -> void:

@@ -66,6 +66,7 @@ var cotton_seed: int = 0
 var cotton: int = 0
 var flax_seed: int = 0
 var flax: int = 0
+var mystery_seed: int = 0
 var golden_wheat: int = 0
 var golden_corn: int = 0
 var giant_carrot: int = 0
@@ -194,10 +195,14 @@ func sell_fish(fish: String, sell_all: bool = false) -> bool:
 
 
 func is_unlocked(crop: String) -> bool:
+	if crop == "MYSTERY":
+		return true
 	return CropData.CROPS.has(crop) and player_level >= CropData.CROPS[crop]["unlock_level"]
 
 
 func seed_count(crop: String) -> int:
+	if crop == "MYSTERY":
+		return mystery_seed
 	if not CropData.CROPS.has(crop):
 		return 0
 	return get(crop.to_lower() + "_seed")
@@ -210,6 +215,11 @@ func crop_count(crop: String) -> int:
 
 
 func select_crop(crop: String) -> bool:
+	if crop == "MYSTERY":
+		if selected_crop != crop:
+			selected_crop = crop
+			inventory_changed.emit()
+		return true
 	if not is_unlocked(crop):
 		return false
 	if selected_crop != crop:
@@ -242,12 +252,18 @@ func sell_crop(crop: String) -> bool:
 
 
 func can_plant(crop: String) -> bool:
+	if crop == "MYSTERY":
+		return mystery_seed > 0
 	return is_unlocked(crop) and seed_count(crop) > 0
 
 
 func use_seed(crop: String) -> bool:
 	if not can_plant(crop):
 		return false
+	if crop == "MYSTERY":
+		mystery_seed -= 1
+		inventory_changed.emit()
+		return true
 	set(crop.to_lower() + "_seed", seed_count(crop) - 1)
 	inventory_changed.emit()
 	return true

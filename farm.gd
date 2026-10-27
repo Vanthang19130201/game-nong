@@ -46,10 +46,18 @@ func _ready() -> void:
 	dig_manager.set_script(preload("res://dig_spot_manager.gd"))
 	add_child(dig_manager)
 	dig_manager.setup(self)
+	var wildlife_visual := Node2D.new()
+	wildlife_visual.name = "WildlifeVisual"
+	wildlife_visual.set_script(preload("res://wildlife_visual.gd"))
+	add_child(wildlife_visual)
 	var event_visual := Node2D.new()
 	event_visual.name = "FarmEventVisual"
 	event_visual.set_script(preload("res://farm_event_visual.gd"))
 	add_child(event_visual)
+	var merchant_visual := Node2D.new()
+	merchant_visual.name = "WanderingMerchantVisual"
+	merchant_visual.set_script(preload("res://wandering_merchant_visual.gd"))
+	add_child(merchant_visual)
 
 	Inventory.inventory_changed.connect(_update_animals)
 	_update_animals()

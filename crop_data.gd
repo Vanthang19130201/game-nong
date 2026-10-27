@@ -56,6 +56,7 @@ static func inventory_defaults() -> Dictionary:
 	for crop in CROPS:
 		result[crop.to_lower()] = 0
 		result[crop.to_lower() + "_seed"] = CROPS[crop].get("starting_seeds", 0)
+	result["mystery_seed"] = 0
 	for id in RARE_VARIANTS:
 		result[id] = 0
 	return result
@@ -65,13 +66,21 @@ static func silo_items() -> Array[String]:
 	for crop in CROPS:
 		result.append(crop.to_lower() + "_seed")
 		result.append(crop.to_lower())
+	result.append("mystery_seed")
 	for id in RARE_VARIANTS:
 		result.append(id)
 	return result
 
-static func roll_rare_variant(crop: String) -> String:
+
+static func roll_rare_variant(crop: String, stable_key: String) -> String:
+	var rng := RandomNumberGenerator.new()
+	# FNV-1a over this harvest's stable identity avoids global RNG/save-scum rerolls.
+	var seed_value: int = 2166136261
+	for byte_value in stable_key.to_utf8_buffer():
+		seed_value = int((seed_value ^ int(byte_value)) * 16777619) & 0x7fffffff
+	rng.seed = maxi(1, seed_value)
 	for id in RARE_VARIANTS:
 		var info: Dictionary = RARE_VARIANTS[id]
-		if info["base_crop"] == crop and randf() < float(info["chance"]):
+		if info["base_crop"] == crop and rng.randf() < float(info["chance"]):
 			return id
 	return ""

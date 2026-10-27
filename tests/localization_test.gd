@@ -43,7 +43,7 @@ func run_checks() -> void:
 	await create_timer(0.1).timeout
 	check(manager.reset_game(), "reset test fixture")
 	var hud = farm.get_node("HUD")
-	check(not hud.inventory_label.text.contains("Lúa mì") and hud.inventory_label.text.contains("Xu: 100"), "compact Vietnamese HUD")
+	check(hud.coin_count_label.text.contains("100") and inv.coins == 100, "compact Vietnamese HUD shows reset currency without an item summary")
 	check(hud.storage_panel.item_cells["wheat_seed"].tooltip_text.contains(localization.display_name("wheat_seed")), "Vietnamese inventory tooltip")
 	check(hud.reset_confirmation.tr(hud.reset_confirmation.dialog_text) == "Xóa toàn bộ tiến trình và chơi lại từ đầu?", "reset dialog")
 	check(hud.tools_unlock_popup.tr(hud.tools_unlock_popup.dialog_text).contains("Búa"), "tools notification")

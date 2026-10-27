@@ -35,6 +35,7 @@ func _ready() -> void:
 	_tabs = TabContainer.new()
 	_tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(_tabs)
+	DiscoveryManager.discovery_found.connect(_on_discovery_found)
 
 func open() -> void:
 	if not _built:
@@ -111,3 +112,7 @@ func _refresh_categories() -> void:
 			marker.text = "✓" if known else "?"
 			marker.theme_type_variation = &"MutedLabel" if not known else &"RewardLabel"
 			line.add_child(marker)
+
+func _on_discovery_found(_category_id: String, _item_id: String) -> void:
+	if _built and visible:
+		_refresh_categories()
