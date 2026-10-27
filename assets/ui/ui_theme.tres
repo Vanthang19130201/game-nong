@@ -29,6 +29,175 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
+[sub_resource type="StyleBoxFlat" id="CozyButtonFocus"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.91, 0.702, 0.31, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="CozyButtonHover"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+bg_color = Color(0.91, 0.82, 0.62, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.78, 0.57, 0.31, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="CozyButtonNormal"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+bg_color = Color(0.95, 0.88, 0.72, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.65, 0.46, 0.3, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="CozyButtonPressed"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+bg_color = Color(0.84, 0.72, 0.51, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.6, 0.41, 0.27, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="CozyCardPanel"]
+content_margin_left = 12.0
+content_margin_top = 12.0
+content_margin_right = 12.0
+content_margin_bottom = 12.0
+bg_color = Color(0.98, 0.935, 0.82, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76, 0.61, 0.42, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="SystemFont" id="VietnameseFont"]
+font_names = PackedStringArray("Be Vietnam Pro", "Noto Sans", "Segoe UI", "Arial")
+
+[sub_resource type="FontVariation" id="PlotFont"]
+base_font = SubResource("VietnameseFont")
+variation_embolden = 0.3
+
+[sub_resource type="StyleBoxFlat" id="CozyDangerNormal"]
+content_margin_left = 14.0
+content_margin_top = 9.0
+content_margin_right = 14.0
+content_margin_bottom = 9.0
+bg_color = Color(0.722, 0.361, 0.282, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.49, 0.24, 0.18, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="CozyPanel"]
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+bg_color = Color(0.957, 0.906, 0.773, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.604, 0.408, 0.271, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+shadow_color = Color(0.22, 0.15, 0.1, 0.12)
+shadow_size = 4
+
+[sub_resource type="StyleBoxFlat" id="CozyHudPanel"]
+content_margin_left = 12.0
+content_margin_top = 10.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
+bg_color = Color(1, 0.957, 0.847, 0.98)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.604, 0.408, 0.271, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+shadow_color = Color(0.22, 0.15, 0.1, 0.16)
+shadow_size = 5
+
+[sub_resource type="StyleBoxFlat" id="CozySlot"]
+content_margin_left = 2.0
+content_margin_top = 2.0
+content_margin_right = 2.0
+content_margin_bottom = 2.0
+bg_color = Color(1, 0.957, 0.847, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.604, 0.408, 0.271, 1)
+corner_radius_top_left = 11
+corner_radius_top_right = 11
+corner_radius_bottom_right = 11
+corner_radius_bottom_left = 11
+
+[sub_resource type="StyleBoxFlat" id="CozySlotSelected"]
+content_margin_left = 2.0
+content_margin_top = 2.0
+content_margin_right = 2.0
+content_margin_bottom = 2.0
+bg_color = Color(0.98, 0.89, 0.65, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.91, 0.702, 0.31, 1)
+corner_radius_top_left = 11
+corner_radius_top_right = 11
+corner_radius_bottom_right = 11
+corner_radius_bottom_left = 11
+shadow_color = Color(0.314, 0.42, 0.212, 0.2)
+shadow_size = 3
+
 [sub_resource type="StyleBoxFlat" id="ButtonFocus"]
 bg_color = Color(0, 0, 0, 0)
 border_width_left = 2
@@ -74,21 +243,21 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
-[sub_resource type="StyleBoxFlat" id="SelectedSlot"]
-content_margin_left = 2.0
-content_margin_top = 2.0
-content_margin_right = 2.0
-content_margin_bottom = 2.0
-bg_color = Color(1, 0.93, 0.68, 1)
+[sub_resource type="StyleBoxFlat" id="PlotFrame"]
+bg_color = Color(0.88, 0.75, 0.54, 1)
 border_width_left = 3
 border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
-border_color = Color(0.4, 0.55, 0.26, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+border_color = Color(0.57, 0.39, 0.23, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+expand_margin_left = 3.0
+expand_margin_top = 42.0
+expand_margin_right = 3.0
+expand_margin_bottom = 3.0
 
 [sub_resource type="StyleBoxFlat" id="Panel"]
 content_margin_left = 8.0
@@ -106,38 +275,63 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
-[sub_resource type="SystemFont" id="VietnameseFont"]
-font_names = PackedStringArray("Be Vietnam Pro", "Noto Sans", "Segoe UI", "Arial")
-
-[sub_resource type="FontVariation" id="PlotFont"]
-base_font = SubResource("VietnameseFont")
-variation_embolden = 0.3
-
-[sub_resource type="StyleBoxFlat" id="PlotFrame"]
-bg_color = Color(0.88, 0.75, 0.54, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.57, 0.39, 0.23, 1)
+[sub_resource type="StyleBoxFlat" id="CozyPrimaryHover"]
+content_margin_left = 14.0
+content_margin_top = 9.0
+content_margin_right = 14.0
+content_margin_bottom = 9.0
+bg_color = Color(0.49, 0.62, 0.34, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.314, 0.42, 0.212, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
-expand_margin_left = 3.0
-expand_margin_top = 42.0
-expand_margin_right = 3.0
-expand_margin_bottom = 3.0
 
-[sub_resource type="StyleBoxFlat" id="BarBackground"]
-bg_color = Color(0.8, 0.73, 0.56, 1)
+[sub_resource type="StyleBoxFlat" id="CozyPrimaryNormal"]
+content_margin_left = 14.0
+content_margin_top = 9.0
+content_margin_right = 14.0
+content_margin_bottom = 9.0
+bg_color = Color(0.435, 0.561, 0.29, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.314, 0.42, 0.212, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="CozyPrimaryPressed"]
+content_margin_left = 14.0
+content_margin_top = 9.0
+content_margin_right = 14.0
+content_margin_bottom = 9.0
+bg_color = Color(0.314, 0.42, 0.212, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25, 0.34, 0.17, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="CozyProgressBackground"]
+bg_color = Color(0.82, 0.75, 0.59, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="StyleBoxFlat" id="BarFill"]
-bg_color = Color(0.5, 0.64, 0.34, 1)
+[sub_resource type="StyleBoxFlat" id="CozyProgressFill"]
+bg_color = Color(0.435, 0.561, 0.29, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
@@ -208,6 +402,26 @@ bg_color = Color(0.92, 0.85, 0.69, 1)
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
+[sub_resource type="StyleBoxFlat" id="CozyTabSelected"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.91, 0.702, 0.31, 0.5)
+border_width_bottom = 3
+border_color = Color(0.314, 0.42, 0.212, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+
+[sub_resource type="StyleBoxFlat" id="CozyTabUnselected"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.95, 0.88, 0.72, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+
 [resource]
 default_font = SubResource("VietnameseFont")
 default_font_size = 16
@@ -222,24 +436,62 @@ Button/colors/font_hover_pressed_color = Color(0.26, 0.18, 0.11, 1)
 Button/colors/font_pressed_color = Color(0.26, 0.18, 0.11, 1)
 Button/font_sizes/font_size = 16
 Button/styles/disabled = SubResource("Slot")
-Button/styles/focus = SubResource("ButtonFocus")
-Button/styles/hover = SubResource("Hover")
-Button/styles/normal = SubResource("Button")
-Button/styles/pressed = SubResource("Pressed")
+Button/styles/focus = SubResource("CozyButtonFocus")
+Button/styles/hover = SubResource("CozyButtonHover")
+Button/styles/normal = SubResource("CozyButtonNormal")
+Button/styles/pressed = SubResource("CozyButtonPressed")
+CardPanel/base_type = &"PanelContainer"
+CardPanel/styles/panel = SubResource("CozyCardPanel")
+CurrencyLabel/base_type = &"Label"
+CurrencyLabel/colors/font_color = Color(0.357, 0.251, 0.176, 1)
+CurrencyLabel/font_sizes/font_size = 16
+CurrencyLabel/fonts/font = SubResource("PlotFont")
+DangerButton/base_type = &"Button"
+DangerButton/colors/font_color = Color(1, 0.96, 0.86, 1)
+DangerButton/font_sizes/font_size = 16
+DangerButton/styles/focus = SubResource("CozyButtonFocus")
+DangerButton/styles/hover = SubResource("CozyDangerNormal")
+DangerButton/styles/normal = SubResource("CozyDangerNormal")
+DangerButton/styles/pressed = SubResource("CozyDangerNormal")
+GamePanel/base_type = &"PanelContainer"
+GamePanel/styles/panel = SubResource("CozyPanel")
+HUDPanel/base_type = &"PanelContainer"
+HUDPanel/styles/panel = SubResource("CozyHudPanel")
 Heading/base_type = &"Label"
 Heading/font_sizes/font_size = 30
 IconButton/base_type = &"Button"
-IconButton/styles/hover = SubResource("SelectedSlot")
-IconButton/styles/normal = SubResource("Slot")
-IconButton/styles/pressed = SubResource("SelectedSlot")
+IconButton/colors/font_color = Color(0.357, 0.251, 0.176, 1)
+IconButton/font_sizes/font_size = 20
+IconButton/styles/focus = SubResource("CozyButtonFocus")
+IconButton/styles/hover = SubResource("CozyButtonHover")
+IconButton/styles/normal = SubResource("CozyButtonNormal")
+IconButton/styles/pressed = SubResource("CozyButtonPressed")
+ItemKey/base_type = &"Label"
+ItemKey/colors/font_color = Color(0.502, 0.4, 0.302, 1)
+ItemKey/font_sizes/font_size = 11
+ItemKey/fonts/font = SubResource("PlotFont")
+RewardLabel/base_type = &"Label"
+RewardLabel/colors/font_color = Color(0.357, 0.251, 0.176, 1)
+RewardLabel/font_sizes/font_size = 24
+RewardLabel/fonts/font = SubResource("PlotFont")
+ItemQuantity/base_type = &"Label"
+ItemQuantity/colors/font_color = Color(0.357, 0.251, 0.176, 1)
+ItemQuantity/colors/font_outline_color = Color(1, 0.957, 0.847, 1)
+ItemQuantity/constants/outline_size = 3
+ItemQuantity/font_sizes/font_size = 13
+ItemQuantity/fonts/font = SubResource("PlotFont")
 ItemSlot/base_type = &"Button"
-ItemSlot/styles/disabled = SubResource("Slot")
-ItemSlot/styles/hover = SubResource("SelectedSlot")
-ItemSlot/styles/normal = SubResource("Slot")
-ItemSlot/styles/pressed = SubResource("SelectedSlot")
+ItemSlot/styles/disabled = SubResource("CozySlot")
+ItemSlot/styles/hover = SubResource("CozySlotSelected")
+ItemSlot/styles/normal = SubResource("CozySlot")
+ItemSlot/styles/pressed = SubResource("CozySlotSelected")
 Label/colors/font_color = Color(0.32, 0.23, 0.15, 1)
 Label/constants/line_spacing = 4
 Label/font_sizes/font_size = 16
+MutedLabel/base_type = &"Label"
+MutedLabel/colors/font_color = Color(0.502, 0.4, 0.302, 1)
+MutedLabel/font_sizes/font_size = 14
+MutedLabel/fonts/font = SubResource("PlotFont")
 OptionButton/colors/font_color = Color(0.32, 0.23, 0.15, 1)
 OptionButton/colors/font_focus_color = Color(0.26, 0.18, 0.11, 1)
 OptionButton/colors/font_hover_color = Color(0.26, 0.18, 0.11, 1)
@@ -250,7 +502,7 @@ OptionButton/styles/focus = SubResource("ButtonFocus")
 OptionButton/styles/hover = SubResource("Hover")
 OptionButton/styles/normal = SubResource("Button")
 OptionButton/styles/pressed = SubResource("Pressed")
-PanelContainer/styles/panel = SubResource("Panel")
+PanelContainer/styles/panel = SubResource("CozyPanel")
 PlotCancelButton/base_type = &"Button"
 PlotCancelButton/colors/font_color = Color(0.32, 0.23, 0.15, 1)
 PlotCancelButton/colors/font_focus_color = Color(0.32, 0.23, 0.15, 1)
@@ -279,8 +531,17 @@ PopupMenu/colors/font_hover_color = Color(0.26, 0.18, 0.11, 1)
 PopupMenu/font_sizes/font_size = 16
 PopupMenu/styles/hover = SubResource("Hover")
 PopupMenu/styles/panel = SubResource("Panel")
-ProgressBar/styles/background = SubResource("BarBackground")
-ProgressBar/styles/fill = SubResource("BarFill")
+PrimaryButton/base_type = &"Button"
+PrimaryButton/colors/font_color = Color(1, 0.96, 0.86, 1)
+PrimaryButton/colors/font_hover_color = Color(1, 0.96, 0.86, 1)
+PrimaryButton/colors/font_pressed_color = Color(1, 0.96, 0.86, 1)
+PrimaryButton/font_sizes/font_size = 16
+PrimaryButton/styles/focus = SubResource("CozyButtonFocus")
+PrimaryButton/styles/hover = SubResource("CozyPrimaryHover")
+PrimaryButton/styles/normal = SubResource("CozyPrimaryNormal")
+PrimaryButton/styles/pressed = SubResource("CozyPrimaryPressed")
+ProgressBar/styles/background = SubResource("CozyProgressBackground")
+ProgressBar/styles/fill = SubResource("CozyProgressFill")
 PurchaseButton/base_type = &"Button"
 PurchaseButton/colors/font_color = Color(1, 0.96, 0.86, 1)
 PurchaseButton/colors/font_focus_color = Color(1, 0.96, 0.86, 1)
@@ -292,10 +553,22 @@ PurchaseButton/styles/focus = SubResource("PurchaseFocus")
 PurchaseButton/styles/hover = SubResource("PurchaseHover")
 PurchaseButton/styles/normal = SubResource("PurchaseNormal")
 PurchaseButton/styles/pressed = SubResource("PurchasePressed")
+SecondaryButton/base_type = &"Button"
+SecondaryButton/colors/font_color = Color(0.357, 0.251, 0.176, 1)
+SecondaryButton/font_sizes/font_size = 16
+SecondaryButton/styles/focus = SubResource("CozyButtonFocus")
+SecondaryButton/styles/hover = SubResource("CozyButtonHover")
+SecondaryButton/styles/normal = SubResource("CozyButtonNormal")
+SecondaryButton/styles/pressed = SubResource("CozyButtonPressed")
+SectionTitle/base_type = &"Label"
+SectionTitle/colors/font_color = Color(0.357, 0.251, 0.176, 1)
+SectionTitle/font_sizes/font_size = 18
+SectionTitle/fonts/font = SubResource("PlotFont")
 SelectedSlot/base_type = &"ItemSlot"
-SelectedSlot/styles/hover = SubResource("SelectedSlot")
-SelectedSlot/styles/normal = SubResource("SelectedSlot")
-SelectedSlot/styles/pressed = SubResource("SelectedSlot")
+SelectedSlot/styles/disabled = SubResource("CozySlotSelected")
+SelectedSlot/styles/hover = SubResource("CozySlotSelected")
+SelectedSlot/styles/normal = SubResource("CozySlotSelected")
+SelectedSlot/styles/pressed = SubResource("CozySlotSelected")
 TabBar/colors/font_hovered_color = Color(0.28, 0.21, 0.13, 1)
 TabBar/colors/font_selected_color = Color(0.28, 0.21, 0.13, 1)
 TabBar/colors/font_unselected_color = Color(0.44, 0.32, 0.21, 1)
@@ -308,9 +581,9 @@ TabContainer/colors/font_selected_color = Color(0.28, 0.21, 0.13, 1)
 TabContainer/colors/font_unselected_color = Color(0.44, 0.32, 0.21, 1)
 TabContainer/font_sizes/font_size = 18
 TabContainer/styles/panel = SubResource("TabContent")
-TabContainer/styles/tab_hovered = SubResource("Hover")
-TabContainer/styles/tab_selected = SubResource("TabSelected")
-TabContainer/styles/tab_unselected = SubResource("Button")
+TabContainer/styles/tab_hovered = SubResource("CozyTabSelected")
+TabContainer/styles/tab_selected = SubResource("CozyTabSelected")
+TabContainer/styles/tab_unselected = SubResource("CozyTabUnselected")
 TooltipLabel/colors/font_color = Color(0.32, 0.23, 0.15, 1)
 TooltipLabel/font_sizes/font_size = 16
 TooltipPanel/styles/panel = SubResource("Panel")

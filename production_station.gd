@@ -117,14 +117,15 @@ func collect() -> bool:
 	var output: Dictionary = output_data()
 	if not Inventory.can_add_item(output["item"], output["amount"]):
 		return Inventory.fail(tr("ERROR_BARN_BATCH"))
+	if not Inventory.can_add_exp(output["exp"]):
+		return false
 	production_timer.stop()
 	state = "IDLE" if station_id == "feed_mill" else "HUNGRY"
 	production_type = ""
 	started_at = 0.0
 	ready_at = 0.0
 	Inventory.set(output["item"], Inventory.get(output["item"]) + output["amount"])
-	Inventory.player_exp += output["exp"]
-	Inventory.normalize_exp()
+	Inventory.add_exp(output["exp"], false)
 	_update_display()
 	Inventory.inventory_changed.emit()
 	return true

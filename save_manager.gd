@@ -199,7 +199,7 @@ func save_game() -> bool:
 	data.set_value("dairy", "dairy_queue", dairy_queue)
 	data.set_value("buildings","owns_spinning_machine",Inventory.owns_spinning_machine)
 	data.set_value("spinning_machine","spinning_machine_queue",spinning_machine_queue)
-	data.set_value("game", "version", 12)
+	data.set_value("game", "version", 13)
 	data.set_value("game", "character_selection_pending", character_selection_pending)
 	data.set_value("player", "selected_character_id", selected_character_id)
 	data.set_value("player", "player_name", player_name)
@@ -226,6 +226,7 @@ func save_game() -> bool:
 		data.set_value("inventory", key, Inventory.get(key))
 	data.set_value("player", "player_exp", Inventory.player_exp)
 	data.set_value("player", "player_level", Inventory.player_level)
+	data.set_value("player", "last_rewarded_level", Inventory.last_rewarded_level)
 	data.set_value("player", "selected_crop", Inventory.selected_crop)
 	data.set_value("player", "has_dog", Inventory.has_dog)
 	for id in Inventory.ToolData.TOOLS:
@@ -309,6 +310,8 @@ func reset_game() -> bool:
 	for key in INVENTORY_DEFAULTS:
 		Inventory.set(key, INVENTORY_DEFAULTS[key])
 	Inventory.player_level = 1
+	Inventory.last_rewarded_level = 1
+	Inventory.level_up_events_cleared.emit()
 	Inventory.unlocked_plot_count = FarmData.STARTING_PLOTS
 	Inventory.fishing_unlocked = false
 	Inventory.player_exp = 0
@@ -407,7 +410,16 @@ func _load_game() -> void:
 	Inventory.has_fishing_rod = rod_owned if rod_owned is bool else false
 	Inventory.fishing_rod_level = mini(Inventory.FishingData.ROD_LEVELS.size(), _read_int(data, "fishing", "fishing_rod_level", 0))
 	Inventory.fishing_rod_level = maxi(1, Inventory.fishing_rod_level) if Inventory.has_fishing_rod else 0
-	Inventory.normalize_exp()
+	# Loading normalizes malformed/legacy XP quietly; it must not create level-up rewards.
+	Inventory.normalize_exp(false)
+	if data.has_section_key("player", "last_rewarded_level"):
+		Inventory.last_rewarded_level = mini(
+			Inventory.player_level,
+			_read_int(data, "player", "last_rewarded_level", Inventory.player_level, 1)
+		)
+	else:
+		# A pre-reward save starts reward tracking at its current level; no retroactive grants.
+		Inventory.last_rewarded_level = Inventory.player_level
 	for id in Progression.UPGRADES:
 		var max_level: int = Progression.UPGRADES[id].size() + 1
 		Inventory.set(id + "_level", mini(max_level, _read_int(data, "upgrades", id + "_level", 1, 1)))

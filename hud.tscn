@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://floating_feedback.gd" id="6_floating"]
 [ext_resource type="PackedScene" path="res://calendar_hud.tscn" id="7_calendar"]
 [ext_resource type="Script" path="res://feed_queue_view.gd" id="8_feed_queue"]
+[ext_resource type="PackedScene" path="res://level_up_popup.tscn" id="9_level_up"]
 
 [sub_resource type="StyleBoxEmpty" id="CatalogInset"]
 
@@ -29,6 +30,8 @@ theme = ExtResource("99_theme")
 script = ExtResource("6_floating")
 
 [node name="Calendar" parent="." instance=ExtResource("7_calendar")]
+
+[node name="LevelUpPopup" parent="." instance=ExtResource("9_level_up")]
 
 [node name="ResetControls" type="Control" parent="."]
 theme = ExtResource("99_theme")
@@ -76,6 +79,7 @@ cancel_button_text = "UI_CANCEL"
 
 [node name="StatsBackdrop" type="PanelContainer" parent="."]
 theme = ExtResource("99_theme")
+theme_type_variation = &"HUDPanel"
 offset_left = 12.0
 offset_top = 12.0
 offset_right = 350.0

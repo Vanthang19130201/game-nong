@@ -27,14 +27,13 @@ func _init() -> void:
 	amount.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	amount.offset_right = -6
 	amount.offset_bottom = -3
+	amount.theme_type_variation = &"ItemQuantity"
 	amount.add_theme_font_size_override("font_size",13)
-	amount.add_theme_color_override("font_color",Color("fff4d7"))
-	amount.add_theme_color_override("font_outline_color",Color("67462f"))
-	amount.add_theme_constant_override("outline_size",4)
 	amount.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(amount)
 	key_label = Label.new()
 	key_label.position = Vector2(6,1)
+	key_label.theme_type_variation = &"ItemKey"
 	key_label.add_theme_font_size_override("font_size",11)
 	key_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(key_label)

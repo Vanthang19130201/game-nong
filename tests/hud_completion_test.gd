@@ -152,6 +152,21 @@ func run_checks() -> void:
 			root.size = Vector2i(1280,720)
 			root.content_scale_size = root.size
 			hud.close_all_panels()
+			for view in [Vector2i(1152,648),Vector2i(1280,720),Vector2i(1920,1080)]:
+				root.size = view
+				root.content_scale_size = view
+				await create_timer(0.1).timeout
+				var screen := Rect2(Vector2.ZERO,Vector2(view))
+				var profile_rect: Rect2 = hud.get_node("StatsBackdrop").get_rect()
+				var calendar_rect: Rect2 = hud.get_node("Calendar").get_rect()
+				var menu_rect: Rect2 = hud.get_node("ResetControls/SettingsButton").get_global_rect()
+				check(screen.encloses(profile_rect),"profile card fits viewport %s" % view)
+				check(screen.encloses(calendar_rect),"calendar card fits viewport %s" % view)
+				check(screen.encloses(menu_rect),"menu button fits viewport %s" % view)
+				check(not profile_rect.intersects(calendar_rect),"profile and calendar do not overlap at %s" % view)
+				check(not calendar_rect.intersects(menu_rect),"calendar and menu button do not overlap at %s" % view)
+				check(screen.encloses(hud.hotbar.get_global_rect()),"hotbar fits viewport %s" % view)
+				check(hud.hotbar.slots.size() == 8 and hud.hotbar.slots[0].size.x >= 52 and hud.hotbar.slots[0].size.x <= 60,"hotbar slot size fits target viewport %s" % view)
 			check(hud.transaction_feedback.get_child_count() == 0 and not hud.transaction_feedback.visible,"no large transaction notification panels")
 			inv.add_coins(100)
 			check(hud.floating_feedback.get_child_count() > 0,"successful income still uses small floating text")

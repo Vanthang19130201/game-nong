@@ -252,8 +252,7 @@ func complete_order(order_id: String) -> bool:
 		for item in order["requirements"]:
 			Inventory.set(item, Inventory.get(item) - order["requirements"][item])
 		Inventory.coins += order["coin_reward"]
-		Inventory.player_exp += order["exp_reward"]
-		Inventory.normalize_exp()
+		Inventory.add_exp(order["exp_reward"], false)
 		# Replace first, then one signal saves items, rewards and new order together.
 		orders[index] = _generate_order()
 		Inventory.inventory_changed.emit()

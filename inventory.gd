@@ -2,6 +2,8 @@ extends Node
 
 signal inventory_changed
 signal action_failed(message: String)
+signal level_up(level: int, unlocks: Array, reward: Dictionary)
+signal level_up_events_cleared
 
 const FarmData = preload("res://farm_data.gd")
 const ToolData = preload("res://tool_data.gd")
@@ -58,6 +60,7 @@ var flax: int = 0
 var coins: int = 100
 var player_exp: int = 0
 var player_level: int = 1
+var last_rewarded_level: int = 1
 var selected_crop: String = "WHEAT"
 var chicken_feed: int = 0
 var egg: int = 0
@@ -234,9 +237,10 @@ func collect_crop(crop: String) -> bool:
 		return false
 	if not can_add_item(crop.to_lower(), 1):
 		return fail(tr("ERROR_SILO_CROP"))
+	if not can_add_exp(CropData.CROPS[crop]["harvest_exp"]):
+		return false
 	set(crop.to_lower(), crop_count(crop) + 1)
-	player_exp += CropData.CROPS[crop]["harvest_exp"]
-	normalize_exp()
+	add_exp(CropData.CROPS[crop]["harvest_exp"], false)
 	inventory_changed.emit()
 	return true
 
@@ -244,10 +248,20 @@ func exp_to_next_level() -> int:
 	return player_level * 100
 
 
-func normalize_exp() -> void:
+func normalize_exp(emit_level_events: bool = true) -> void:
 	while player_exp >= exp_to_next_level():
 		player_exp -= exp_to_next_level()
 		player_level += 1
+		ensure_tools_for_level()
+		if player_level >= FarmData.FISHING_LEVEL:
+			fishing_unlocked = true
+			if not has_fishing_rod:
+				has_fishing_rod = true
+				fishing_rod_level = 1
+		if emit_level_events:
+			if player_level >= ToolData.UNLOCK_LEVEL:
+				tools_unlock_notified = true
+			level_up.emit(player_level, Progression.unlocks_for_level(player_level), Progression.reward_for_level(player_level))
 	ensure_tools_for_level()
 	if player_level >= FarmData.FISHING_LEVEL:
 		fishing_unlocked = true
@@ -256,12 +270,37 @@ func normalize_exp() -> void:
 			fishing_rod_level = 1
 
 
-func add_exp(amount: int) -> void:
-	if amount <= 0:
-		return
+func can_add_exp(amount: int) -> bool:
+	return amount >= 0 and player_exp <= 9223372036854775807 - amount
+
+
+func add_exp(amount: int, notify: bool = true) -> bool:
+	if amount <= 0 or not can_add_exp(amount):
+		return false
 	player_exp += amount
 	normalize_exp()
+	if notify:
+		inventory_changed.emit()
+	return true
+
+
+func claim_level_reward(level: int) -> bool:
+	if level != last_rewarded_level + 1 or level > player_level:
+		return false
+	var reward: Dictionary = Progression.reward_for_level(level)
+	var coin_reward: int = int(reward["coins"])
+	if coins > 9223372036854775807 - coin_reward:
+		return fail(tr("LEVEL_UP_SAVE_ERROR"))
+	var previous_coins: int = coins
+	var previous_level: int = last_rewarded_level
+	coins += coin_reward
+	last_rewarded_level = level
+	if not SaveManager.save_game():
+		coins = previous_coins
+		last_rewarded_level = previous_level
+		return fail(tr("LEVEL_UP_SAVE_ERROR"))
 	inventory_changed.emit()
+	return true
 
 
 # Keep the original Wheat methods available for existing callers.

@@ -1,5 +1,12 @@
 extends RefCounted
 
+const FarmData = preload("res://farm_data.gd")
+const CropData = preload("res://crop_data.gd")
+const ToolData = preload("res://tool_data.gd")
+const BakeryData = preload("res://bakery_data.gd")
+const DairyData = preload("res://dairy_data.gd")
+const SpinningData = preload("res://spinning_machine_data.gd")
+
 static var FEATURES: Dictionary = _features()
 
 static func _features() -> Dictionary:
@@ -11,6 +18,57 @@ static func _features() -> Dictionary:
 	for crop in preload("res://crop_data.gd").CROPS.values():
 		result[crop["name"]] = crop["unlock_level"]
 	return result
+
+
+static func unlocks_for_level(level: int) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for crop_id in CropData.CROPS:
+		var crop: Dictionary = CropData.CROPS[crop_id]
+		if int(crop["unlock_level"]) == level:
+			_add_unlock(result, crop_id.to_lower(), crop["name"], "crop")
+	for id in BUILDINGS:
+		var building: Dictionary = BUILDINGS[id]
+		if int(building["level"]) == level:
+			_add_unlock(result, id, building["name"], "building")
+	for id in ANIMALS:
+		var animal: Dictionary = ANIMALS[id]
+		if int(animal["level"]) == level:
+			_add_unlock(result, id, animal["name"], "animal")
+	for id in ToolData.TOOLS:
+		if ToolData.UNLOCK_LEVEL == level:
+			_add_unlock(result, id, ToolData.TOOLS[id]["name"], "tool")
+	for id in RECIPES:
+		if int(RECIPES[id]["level"]) == level:
+			_add_unlock(result, id, RECIPES[id]["name"], "recipe")
+	for recipes in [BakeryData.RECIPES, DairyData.RECIPES, SpinningData.RECIPES]:
+		for id in recipes:
+			if int(recipes[id]["level"]) == level:
+				_add_unlock(result, id, recipes[id]["name"], "recipe")
+	for id in PRODUCTS:
+		var product: Dictionary = PRODUCTS[id]
+		if int(product["level"]) == level and product["item"] == "milk":
+			_add_unlock(result, product["item"], "Milk", "product")
+	if FarmData.FISHING_LEVEL == level:
+		_add_unlock(result, "fishing_area", "Fishing Area", "zone")
+		_add_unlock(result, "fishing_rod", "Fishing Rod", "tool")
+	# This legacy progression entry is the source of truth for the order feature.
+	if FEATURES.get("Egg Orders", -1) == level:
+		_add_unlock(result, "egg_orders", "Egg Orders", "feature")
+	return result
+
+
+static func _add_unlock(result: Array[Dictionary], id: String, name: String, type: String) -> void:
+	for existing in result:
+		if existing["id"] == id:
+			return
+	result.append({"id": id, "name": name, "type": type})
+
+
+static func reward_for_level(level: int) -> Dictionary:
+	var coins: int = 50 + level * 25
+	if level > 0 and level % 5 == 0:
+		coins += 100
+	return {"coins": coins}
 const BUILDINGS: Dictionary = {
 	"feed_mill": {"name": "Feed Mill", "level": 4, "price": 500},
 	"chicken_coop": {"name": "Chicken Coop", "level": 5, "price": 800},

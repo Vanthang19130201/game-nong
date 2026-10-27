@@ -1,4 +1,12 @@
 extends RefCounted
 
 # Add the same translation keys here when English copy is ready.
-const MESSAGES: Dictionary = {}
+const MESSAGES: Dictionary = {
+	"LEVEL_UP_TITLE": "LEVEL UP!",
+	"LEVEL_UP_LEVEL": "LEVEL %d",
+	"LEVEL_UP_UNLOCKS_TITLE": "YOU UNLOCKED",
+	"LEVEL_UP_REWARD_TITLE": "REWARD",
+	"LEVEL_UP_REWARD_COINS": "+%d Coins",
+	"LEVEL_UP_CLAIM": "Claim & Continue",
+	"LEVEL_UP_SAVE_ERROR": "Reward could not be saved. Please try again."
+}

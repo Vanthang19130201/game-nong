@@ -82,6 +82,7 @@ var pending_plot_number: int = 0
 var debug_panel: PanelContainer
 @onready var plot_purchase: ConfirmationDialog = $PlotPurchase
 @onready var tools_unlock_popup: AcceptDialog = $ToolsUnlocked
+@onready var level_up_popup: Control = $LevelUpPopup
 
 @onready var storage_label: Label = $Layout/StorageLabel
 @onready var build_panel: PanelContainer = $ShopBuildPanel/Margin/Content/Tabs/BuildPanel
@@ -130,7 +131,7 @@ func _ready() -> void:
 		debug_panel.set_script(preload("res://dev_debug_panel.gd"))
 		add_child(debug_panel)
 		debug_panel.visibility_changed.connect(_on_main_panel_visibility_changed)
-	for panel in [market_stall_panel, land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel, reset_confirmation, animal_sale_confirmation, plot_purchase, tools_unlock_popup, fishing_ui.panel]:
+	for panel in [market_stall_panel, land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel, reset_confirmation, animal_sale_confirmation, plot_purchase, tools_unlock_popup, fishing_ui.panel, level_up_popup]:
 		panel.visibility_changed.connect(_on_main_panel_visibility_changed)
 	crop_ids = CropData.CROPS.keys()
 	var content: VBoxContainer = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent
@@ -342,15 +343,13 @@ func _setup_profile_hud() -> void:
 	player_name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	player_name_label.clip_text = true
 	player_name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	player_name_label.add_theme_font_size_override("font_size", 18)
-	player_name_label.add_theme_color_override("font_color", Color("5b402d"))
+	player_name_label.theme_type_variation = &"SectionTitle"
 	player_name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	header.add_child(player_name_label)
 
 	player_level_label = Label.new()
 	player_level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	player_level_label.add_theme_font_size_override("font_size", 14)
-	player_level_label.add_theme_color_override("font_color", Color("6d5139"))
+	player_level_label.theme_type_variation = &"MutedLabel"
 	player_level_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	header.add_child(player_level_label)
 
@@ -370,14 +369,14 @@ func _setup_profile_hud() -> void:
 	coin_row.add_child(coin_icon)
 
 	coin_count_label = Label.new()
-	coin_count_label.add_theme_font_size_override("font_size", 16)
-	coin_count_label.add_theme_color_override("font_color", Color("5b402d"))
+	coin_count_label.theme_type_variation = &"CurrencyLabel"
 	coin_count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	coin_row.add_child(coin_count_label)
 
-	$Layout/Experience/Title.add_theme_color_override("font_color", Color("7a6249"))
-	$Layout/Materials/WoodCount.add_theme_color_override("font_color", Color("5b402d"))
-	$Layout/Materials/StoneCount.add_theme_color_override("font_color", Color("5b402d"))
+	$Layout/Experience/Title.theme_type_variation = &"MutedLabel"
+	$Layout/Experience/ExperienceValue.theme_type_variation = &"MutedLabel"
+	$Layout/Materials/WoodCount.theme_type_variation = &"MutedLabel"
+	$Layout/Materials/StoneCount.theme_type_variation = &"MutedLabel"
 
 
 func _update_inventory() -> void:
@@ -639,11 +638,24 @@ func _collect() -> void:
 
 
 func blocks_world_input() -> bool:
-	return market_stall_panel.visible or animal_sale_confirmation.visible or land_panel.visible or edit_farm.active or bakery_panel.visible or dairy_panel.visible or spinning_machine_panel.visible or settings_panel.visible or shop_build_panel.visible or storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or station_panel.visible or order_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
+	return level_up_popup.visible or market_stall_panel.visible or animal_sale_confirmation.visible or land_panel.visible or edit_farm.active or bakery_panel.visible or dairy_panel.visible or spinning_machine_panel.visible or settings_panel.visible or shop_build_panel.visible or storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or station_panel.visible or order_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
 
 
 func _input(event: InputEvent) -> void:
 	# Handle UI keys before any farm node receives _unhandled_input.
+	if level_up_popup.visible:
+		if event is InputEventKey and (
+			event.is_action_pressed("ui_cancel")
+			or event.is_action("toggle_shop_build")
+			or event.is_action("toggle_inventory")
+			or event.is_action("interact")
+		):
+			# Do not let gameplay shortcuts dismiss or open panels over a reward.
+			get_viewport().set_input_as_handled()
+			return
+		if event is InputEventMouseButton and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN, MOUSE_BUTTON_MIDDLE]:
+			get_viewport().set_input_as_handled()
+			return
 	if edit_farm.active:
 		if event.is_action_pressed("ui_cancel") and not event.is_echo():
 			edit_farm.cancel_or_exit()
@@ -678,7 +690,9 @@ func _input(event: InputEvent) -> void:
 
 func close_current_panel() -> void:
 	# Native popup windows sit above the panels. Panel priority matches z_index.
-	if animal_sale_confirmation.visible:
+	if level_up_popup.visible:
+		return
+	elif animal_sale_confirmation.visible:
 		animal_sale_confirmation.hide()
 	elif reset_confirmation.visible:
 		reset_confirmation.hide()
@@ -746,7 +760,7 @@ func _close_game_panels() -> void:
 
 
 func _native_dialog_open() -> bool:
-	return animal_sale_confirmation.visible or edit_farm.active or reset_confirmation.visible or plot_purchase.visible or tools_unlock_popup.visible
+	return level_up_popup.visible or animal_sale_confirmation.visible or edit_farm.active or reset_confirmation.visible or plot_purchase.visible or tools_unlock_popup.visible
 
 
 func open_land_purchase(id: String) -> void:
@@ -800,10 +814,10 @@ func _on_main_panel_visibility_changed() -> void:
 	crop_selector.disabled = _native_dialog_open() or fishing_ui.panel.visible or [market_stall_panel, land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel].any(func(panel): return panel.visible) or (is_instance_valid(debug_panel) and debug_panel.visible)
 	if is_instance_valid(hotbar):
 		hotbar.visible = not crop_selector.disabled
-	$ModalBackdrop.visible = crop_selector.disabled and not edit_farm.active and not fishing_ui.panel.visible
+	$ModalBackdrop.visible = crop_selector.disabled and not edit_farm.active and not fishing_ui.panel.visible and not level_up_popup.visible
 	# z_index controls drawing, not GUI picking. Keep the active panel after
 	# the backdrop and hotbar in tree order so its tabs/buttons receive clicks.
-	for panel in [market_stall_panel,land_panel,bakery_panel,dairy_panel,spinning_machine_panel,settings_panel,shop_build_panel,station_panel,house_panel,order_panel,fish_market_panel,storage_panel,debug_panel]:
+	for panel in [market_stall_panel,land_panel,bakery_panel,dairy_panel,spinning_machine_panel,settings_panel,shop_build_panel,station_panel,house_panel,order_panel,fish_market_panel,storage_panel,debug_panel,level_up_popup]:
 		if is_instance_valid(panel) and panel.visible:
 			move_child(panel,get_child_count()-1)
 	transaction_feedback.set_popup_mode($ModalBackdrop.visible)

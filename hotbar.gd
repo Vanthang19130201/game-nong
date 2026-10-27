@@ -30,6 +30,7 @@ var last_caption_slot: int = -1
 
 func _ready() -> void:
 	z_index = 12
+	theme_type_variation = &"HUDPanel"
 
 	tooltip_text = tr("HOTBAR_HINT")
 
@@ -45,6 +46,7 @@ func _ready() -> void:
 	caption.horizontal_alignment = (
 		HORIZONTAL_ALIGNMENT_CENTER
 	)
+	caption.theme_type_variation = &"MutedLabel"
 
 	caption.add_theme_font_size_override(
 		"font_size",
