@@ -12,8 +12,8 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
 	offset_left = -180
 	offset_right = 180
-	offset_top = -16
-	offset_bottom = -16
+	offset_top = -128
+	offset_bottom = -128
 	grow_vertical = Control.GROW_DIRECTION_BEGIN
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_theme_constant_override("separation", 8)

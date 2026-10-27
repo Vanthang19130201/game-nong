@@ -37,28 +37,28 @@ tab_alignment = 1
 layout_mode = 2
 horizontal_scroll_mode = 0
 
-[node name="Items" type="Label" parent="Margin/Content/Tabs/Produce"]
+[node name="Items" type="VBoxContainer" parent="Margin/Content/Tabs/Produce"]
 layout_mode = 2
 size_flags_horizontal = 3
-autowrap_mode = 2
+theme_override_constants/separation = 12
 
 [node name="Goods" type="ScrollContainer" parent="Margin/Content/Tabs"]
 layout_mode = 2
 horizontal_scroll_mode = 0
 
-[node name="Items" type="Label" parent="Margin/Content/Tabs/Goods"]
+[node name="Items" type="VBoxContainer" parent="Margin/Content/Tabs/Goods"]
 layout_mode = 2
 size_flags_horizontal = 3
-autowrap_mode = 2
+theme_override_constants/separation = 12
 
 [node name="Materials" type="ScrollContainer" parent="Margin/Content/Tabs"]
 layout_mode = 2
 horizontal_scroll_mode = 0
 
-[node name="Items" type="Label" parent="Margin/Content/Tabs/Materials"]
+[node name="Items" type="VBoxContainer" parent="Margin/Content/Tabs/Materials"]
 layout_mode = 2
 size_flags_horizontal = 3
-autowrap_mode = 2
+theme_override_constants/separation = 12
 
 [node name="CloseButton" type="Button" parent="Margin/Content"]
 custom_minimum_size = Vector2(140, 44)

@@ -36,9 +36,7 @@ func run_checks() -> void:
 	check(manager.reset_game(), "reset test")
 	var hud = main.get_node("HUD")
 	var panel = hud.storage_panel
-	var produce = panel.get_node("Margin/Content/Tabs/Produce/Items")
-	var goods = panel.get_node("Margin/Content/Tabs/Goods/Items")
-	var materials = panel.get_node("Margin/Content/Tabs/Materials/Items")
+	var cells: Dictionary = panel.item_cells
 	check(not hud.storage_label.visible and hud.storage_label.text.is_empty(), "no permanent inventory/storage HUD")
 	check(hud.inventory_label.text == tr("HUD_COMPACT") % [100,1], "compact Coins/level")
 	check(hud.experience_bar.max_value == 100 and hud.experience_bar.value == 0, "EXP bar")
@@ -48,7 +46,7 @@ func run_checks() -> void:
 		if event is InputEventKey and event.physical_keycode == KEY_TAB:
 			tab_bound = true
 	check(tab_bound, "physical Tab binding")
-	check(produce.text.contains("Lúa mì: 10") and produce.text.contains("10 / 30"), "existing inventory data")
+	check(cells["wheat_seed"].quantity == 10 and panel.capacity_labels["silo"].text.contains("10 / 30"), "existing inventory grid data")
 	check(panel.tabs.get_tab_count() == 3 and panel.tabs.get_tab_title(2) == "NGUYÊN LIỆU", "three Vietnamese tabs")
 	await key(KEY_TAB)
 	check(panel.visible and hud.blocks_world_input() and hud.crop_selector.disabled, "Tab opens modal")
@@ -90,33 +88,33 @@ func run_checks() -> void:
 	check(not hud.reset_confirmation.visible, "ESC cancels confirmation")
 	# Real transactions refresh the same read-only panel even when it is closed.
 	manager.plots["soil_01"].try_plant()
-	check(produce.text.contains("Lúa mì: 9"), "plant refresh")
+	check(cells["wheat_seed"].quantity == 9, "plant refresh")
 	var plot = manager.plots["soil_01"]
 	plot.ready_at = Time.get_unix_time_from_system()-1
 	plot._on_grow_timer_timeout()
 	plot.harvest()
-	check(produce.text.contains("Cà rốt: 0") and produce.text.contains("Nông sản\nLúa mì: 1"), "harvest refresh")
+	check(cells["carrot"].quantity == 0 and cells["wheat"].quantity == 1, "harvest refresh")
 	check(hud.transaction_feedback.visible and hud.transaction_feedback.text == "+1 Lúa mì\n+10 Kinh nghiệm", "successful harvest feedback")
 	var toast_count: int = hud.transaction_feedback.get_child_count()
 	plot.harvest()
 	check(hud.transaction_feedback.get_child_count() == toast_count and inv.wheat == 1, "empty plot gives no reward or feedback")
-	check(inv.buy_seed("WHEAT") and produce.text.contains("Hạt giống\nLúa mì: 10"), "buy refresh")
+	check(inv.buy_seed("WHEAT") and cells["wheat_seed"].quantity == 10, "buy refresh")
 	inv.tools_unlock_notified = true
 	inv.player_level = 10
 	inv.normalize_exp()
 	inv.inventory_changed.emit()
 	check(inv.add_item("egg",1) and inv.add_item("milk",1) and inv.add_item("small_fish",1), "products fixture")
-	check(goods.text.contains("Trứng: 1") and goods.text.contains("Sữa: 1") and goods.text.contains("Cá nhỏ: 1"), "product/fish refresh")
-	check(inv.sell_fish("small_fish") and goods.text.contains("Cá nhỏ: 0"), "fish sale refresh")
+	check(cells["egg"].quantity == 1 and cells["milk"].quantity == 1 and cells["small_fish"].quantity == 1, "product/fish refresh")
+	check(inv.sell_fish("small_fish") and cells["small_fish"].quantity == 0, "fish sale refresh")
 	inv.wood = 30
 	inv.stone = 15
 	inv.coins = 500
 	inv.inventory_changed.emit()
-	check(materials.text == "Gỗ: 30\nĐá: 15", "material refresh")
-	check(inv.upgrade_structure("house") and materials.text == "Gỗ: 0\nĐá: 0", "upgrade refresh")
+	check(cells["wood"].quantity == 30 and cells["stone"].quantity == 15, "material refresh")
+	check(inv.upgrade_structure("house") and cells["wood"].quantity == 0 and cells["stone"].quantity == 0, "upgrade refresh")
 	hud._toggle_storage()
 	check(manager.reset_game() and not panel.visible, "reset closes storage")
-	check(produce.text.contains("Hạt giống\nLúa mì: 10") and goods.text.contains("0 / 20") and materials.text == "Gỗ: 0\nĐá: 0", "reset data refresh")
+	check(cells["wheat_seed"].quantity == 10 and panel.capacity_labels["barn"].text.contains("0 / 20") and cells["wood"].quantity == 0 and cells["stone"].quantity == 0, "reset data refresh")
 	# P uses the same modal as the HUD button, for both tabs.
 	check(InputMap.action_get_events("toggle_shop_build")[0].physical_keycode == KEY_P, "physical P binding")
 	hud._toggle_storage()

@@ -1,0 +1,53 @@
+extends Button
+
+const Icon = preload("res://item_icon.gd")
+var item_id: String = ""
+var quantity: int = 0
+var item_visual: Control
+var amount: Label
+var key_label: Label
+
+func _init() -> void:
+	custom_minimum_size = Vector2(64,64)
+	focus_mode = Control.FOCUS_NONE
+	theme_type_variation = &"ItemSlot"
+	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	item_visual = Control.new()
+	item_visual.set_script(Icon)
+	item_visual.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	item_visual.offset_left = 10
+	item_visual.offset_right = -10
+	item_visual.offset_top = 5
+	item_visual.offset_bottom = -9
+	add_child(item_visual)
+	amount = Label.new()
+	amount.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	amount.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	amount.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	amount.offset_right = -6
+	amount.offset_bottom = -3
+	amount.add_theme_font_size_override("font_size",13)
+	amount.add_theme_color_override("font_color",Color("fff4d7"))
+	amount.add_theme_color_override("font_outline_color",Color("67462f"))
+	amount.add_theme_constant_override("outline_size",4)
+	amount.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(amount)
+	key_label = Label.new()
+	key_label.position = Vector2(6,1)
+	key_label.add_theme_font_size_override("font_size",11)
+	key_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(key_label)
+
+func display(id: String, count: int, locked: bool = false, hint: String = "") -> void:
+	item_id = id
+	quantity = count
+	item_visual.item_id = id
+	item_visual.modulate.a = 0.38 if locked else (0.65 if count == 0 else 1.0)
+	amount.text = str(count)
+	tooltip_text = tr("ITEM_TOOLTIP") % [Localization.display_name(id),count]
+	if not hint.is_empty():
+		tooltip_text += "\n"+hint
+	disabled = locked
+
+func highlight(selected: bool) -> void:
+	theme_type_variation = &"SelectedSlot" if selected else &"ItemSlot"

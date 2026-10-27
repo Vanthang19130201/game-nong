@@ -20,6 +20,7 @@ func button(index: int, point: Vector2, pressed: bool = true) -> void:
 	event.global_position = point
 	event.button_index = index
 	event.factor = 1.0
+	event.ctrl_pressed = index in [MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN]
 	event.pressed = pressed
 	root.push_input(event, true)
 	await process_frame
@@ -106,7 +107,7 @@ func run_checks() -> void:
 	camera.request_zoom(100)
 	check(is_equal_approx(camera.target_zoom,1.5), "maximum zoom 1.5")
 	# HUD buttons block camera even while no modal is open.
-	var ui_point: Vector2 = hud.shop_button.get_global_rect().get_center()
+	var ui_point: Vector2 = hud.get_node("ResetControls/SettingsButton").get_global_rect().get_center()
 	await motion(ui_point)
 	var zoom_before: float = camera.target_zoom
 	await button(MOUSE_BUTTON_WHEEL_DOWN, ui_point)

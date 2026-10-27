@@ -73,7 +73,7 @@ func run_checks() -> void:
 			check(player.position == position_before, "world movement locked")
 			check(panel.tabs.get_tab_count() == 3, "three existing inventory tabs")
 			check(inv.add_item("flax",1) and inv.add_item("bread",1), "existing crop/goods inventory")
-			check(panel.get_node("Margin/Content/Tabs/Produce/Items").text.contains("Cây lanh: 1") and panel.get_node("Margin/Content/Tabs/Goods/Items").text.contains("Bánh mì: 1"), "same inventory updates immediately")
+			check(panel.item_cells["flax"].quantity == 1 and panel.item_cells["bread"].quantity == 1, "same inventory updates immediately")
 			inv.wood = 100
 			inv.stone = 100
 			inv.coins = 10000

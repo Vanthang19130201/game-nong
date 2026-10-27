@@ -46,6 +46,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _modal_open() or get_viewport().gui_get_hovered_control() != null:
 		return
 	if event is InputEventMouseButton and event.pressed:
+		# Ordinary wheel input belongs to the hotbar. Keep zoom on Ctrl+wheel;
+		# placement/edit mode continues to use its existing wheel controls.
+		if event.button_index in [MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN] and not event.ctrl_pressed and not hud.edit_farm.active:
+			return
 		match event.button_index:
 			MOUSE_BUTTON_WHEEL_UP:
 				request_zoom(zoom_step * event.factor)

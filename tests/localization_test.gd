@@ -44,7 +44,7 @@ func run_checks() -> void:
 	check(manager.reset_game(), "reset test fixture")
 	var hud = farm.get_node("HUD")
 	check(not hud.inventory_label.text.contains("Lúa mì") and hud.inventory_label.text.contains("Xu: 100"), "compact Vietnamese HUD")
-	check(hud.storage_panel.get_node("Margin/Content/Tabs/Produce/Items").text.contains("Lúa mì"), "Vietnamese inventory in storage panel")
+	check(hud.storage_panel.item_cells["wheat_seed"].tooltip_text.contains("Lúa mì"), "Vietnamese inventory tooltip")
 	check(hud.reset_confirmation.tr(hud.reset_confirmation.dialog_text) == "Xóa toàn bộ tiến trình và chơi lại từ đầu?", "reset dialog")
 	check(hud.tools_unlock_popup.tr(hud.tools_unlock_popup.dialog_text).contains("Búa"), "tools notification")
 	inv.tools_unlock_notified = true

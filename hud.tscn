@@ -36,7 +36,9 @@ offset_right = -12.0
 offset_bottom = 36.0
 grow_horizontal = 0
 focus_mode = 0
-text = "UI_SETTINGS"
+text = "≡"
+tooltip_text = "UI_MENU"
+theme_override_font_sizes/font_size = 24
 
 [node name="ResetConfirmation" type="ConfirmationDialog" parent="."]
 theme = ExtResource("99_theme")
@@ -48,14 +50,19 @@ dialog_text = "RESET_CONFIRM"
 ok_button_text = "RESET_DELETE_PROGRESS"
 cancel_button_text = "UI_CANCEL"
 
+[node name="StatsBackdrop" type="PanelContainer" parent="."]
+theme = ExtResource("99_theme")
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 350.0
+offset_bottom = 100.0
+
 [node name="Layout" type="VBoxContainer" parent="."]
 theme = ExtResource("99_theme")
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 16.0
-offset_top = 8.0
-offset_right = -96.0
-offset_bottom = 120.0
+offset_left = 28.0
+offset_top = 22.0
+offset_right = 334.0
+offset_bottom = 90.0
 mouse_filter = 2
 theme_override_constants/separation = 6
 
@@ -63,9 +70,7 @@ theme_override_constants/separation = 6
 autowrap_mode = 2
 layout_mode = 2
 mouse_filter = 2
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 18
 text = "HUD_COMPACT_DEFAULT"
 
 [node name="Experience" type="HBoxContainer" parent="Layout"]
@@ -75,17 +80,22 @@ theme_override_constants/separation = 8
 
 [node name="Title" type="Label" parent="Layout/Experience"]
 layout_mode = 2
-text = "UI_EXP"
+text = "UI_EXP_SHORT"
+theme_override_font_sizes/font_size = 12
+mouse_filter = 2
 
 [node name="ExperienceBar" type="ProgressBar" parent="Layout/Experience"]
-custom_minimum_size = Vector2(60, 18)
+custom_minimum_size = Vector2(60, 10)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 4
 show_percentage = false
 mouse_filter = 2
 
 [node name="ExperienceValue" type="Label" parent="Layout/Experience"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
+mouse_filter = 2
 
 [node name="StorageLabel" type="Label" parent="Layout"]
 visible = false
@@ -94,6 +104,7 @@ layout_mode = 2
 mouse_filter = 2
 
 [node name="Actions" type="HFlowContainer" parent="Layout"]
+visible = false
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 12
@@ -492,7 +503,7 @@ theme_override_constants/separation = 16
 
 [node name="Title" type="Label" parent="SettingsPanel/Margin/Content"]
 theme_type_variation = &"Heading"
-text = "UI_SETTINGS"
+text = "UI_MENU"
 horizontal_alignment = 1
 
 [node name="ResetButton" type="Button" parent="SettingsPanel/Margin/Content"]

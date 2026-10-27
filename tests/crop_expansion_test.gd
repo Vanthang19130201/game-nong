@@ -71,7 +71,7 @@ func run_checks() -> void:
 				plot.harvest()
 				plot.harvest()
 				check(inv.get(item) == 1, "harvest once")
-				check(hud.storage_panel.get_node("Margin/Content/Tabs/Produce/Items").text.contains(root.get_node("Localization").display_name(crop) + ": 1"), "new crop storage label")
+				check(hud.storage_panel.item_cells[crop.to_lower()].quantity == 1, "new crop storage grid")
 				coins = inv.coins
 				check(inv.sell_crop(crop) and inv.coins == coins+sells[i] and inv.get(item) == 0, "new crop sell")
 			inv.CropData.crop_time_scale = 1.0

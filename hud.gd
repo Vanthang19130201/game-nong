@@ -15,6 +15,12 @@ var spinning_machine_panel: PanelContainer
 var edit_farm: Node
 var land_panel: PanelContainer
 var decoration_panel: ScrollContainer
+const ItemCard = preload("res://item_card.gd")
+var hotbar: PanelContainer
+var sell_buttons: Dictionary = {}
+var product_sell_buttons: Dictionary = {}
+var shop_cards: Dictionary = {}
+var catalog_grids: Array[GridContainer] = []
 @onready var fishing_ui: Control = $FishingUI
 @onready var fish_market_panel: PanelContainer = $FishMarketPanel
 @onready var storage_panel: PanelContainer = $StoragePanel
@@ -115,12 +121,14 @@ func _ready() -> void:
 		button.focus_mode = Control.FOCUS_NONE
 		button.pressed.connect(_sell_dairy_item.bind(item))
 		content.add_child(button)
+		product_sell_buttons[item] = button
 	for item in Inventory.BakeryData.RECIPES:
 		var button := Button.new()
 		button.text = tr("UI_SELL_CROP") % [Localization.display_name(item), Inventory.BakeryData.RECIPES[item]["price"]]
 		button.focus_mode = Control.FOCUS_NONE
 		button.pressed.connect(_sell_bakery_item.bind(item))
 		content.add_child(button)
+		product_sell_buttons[item] = button
 	for crop in crop_ids:
 		crop_selector.add_item(Localization.display_name(CropData.CROPS[crop]["name"]))
 		var prefix: String = "" if crop == "WHEAT" else crop.capitalize()
@@ -137,6 +145,7 @@ func _ready() -> void:
 			sell.focus_mode = Control.FOCUS_NONE
 			content.add_child(sell)
 		buy_buttons[crop] = buy
+		sell_buttons[crop] = sell
 		buy.pressed.connect(_buy_seed.bind(crop))
 		sell.pressed.connect(_sell_crop.bind(crop))
 		sell.text = tr("UI_SELL_CROP") % [Localization.display_name(CropData.CROPS[crop]["name"]), CropData.CROPS[crop]["sell_price"]]
@@ -174,6 +183,7 @@ func _ready() -> void:
 	$StationPanel/Margin/Content/CloseButton.pressed.connect(close_station)
 	$OrderPanel/Margin/Content/CloseButton.pressed.connect(order_panel.hide)
 	OrderManager.orders_changed.connect(_refresh_orders)
+	_setup_cozy_ui()
 	_apply_ui_theme(self)
 	_update_inventory()
 
@@ -203,8 +213,10 @@ func _setup_shop_build() -> void:
 
 func _fit_shop_build() -> void:
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
-	shop_build_panel.size = Vector2(860, 560).min(viewport_size - Vector2(24, 32))
+	shop_build_panel.size = Vector2(920, 600).min(viewport_size - Vector2(24, 32))
 	shop_build_panel.position = (viewport_size - shop_build_panel.size) / 2.0
+	for grid in catalog_grids:
+		grid.columns = maxi(1,int((shop_build_panel.size.x-112)/214))
 
 
 func _open_shop_build(tab: int) -> void:
@@ -300,6 +312,7 @@ func _update_inventory() -> void:
 		if not unlocked:
 			buy.text += " | " + tr("CROP_LOCKED_LEVEL") % info["unlock_level"]
 	crop_selector.select(crop_ids.find(Inventory.selected_crop))
+	_refresh_shop_cards()
 	_update_station_panel()
 	_update_house_panel()
 	if order_panel.visible:
@@ -316,6 +329,7 @@ func _toggle_settings() -> void:
 	var was_open: bool = settings_panel.visible
 	_close_game_panels()
 	settings_panel.visible = not was_open
+	_fit_menu()
 
 
 func _show_reset_confirmation() -> void:
@@ -787,15 +801,15 @@ func _update_build_rows() -> void:
 		var info: Dictionary = Progression.ANIMALS[animal]
 		var row: Dictionary = animal_buttons[animal]
 		var count: int = Inventory.get(animal + "_count")
-		row["label"].text = "%s | %s: %d / %d" % [Localization.display_name(Progression.BUILDINGS[info["building"]]["name"]), Localization.display_name(info["name"]), count, Inventory.animal_capacity(animal)]
+		row["label"].text = "%d / %d" % [count, Inventory.animal_capacity(animal)]
 		var locked: bool = Inventory.player_level < info["level"] or not Inventory.owns_building(info["building"])
 		var busy: bool = Inventory.animal_trade_busy(animal)
 		if busy:
 			row["label"].text += tr("UI_COLLECT_BEFORE_TRADE")
 		row["buy"].disabled = locked or busy or count >= Inventory.animal_capacity(animal)
-		row["buy"].text = tr("UI_ANIMAL_LOCKED") % info["level"] if locked else tr("UI_BUY_ANIMAL_SHORT") % [Localization.display_name(info["name"]), info["buy"]]
+		row["buy"].text = tr("UI_LOCKED_LEVEL") % info["level"] if locked else tr("UI_BUY_COMPACT") % info["buy"]
 		row["sell"].disabled = busy or count <= 0
-		row["sell"].text = tr("UI_SELL_ANIMAL") % [Localization.display_name(info["name"]), info["sell"]]
+		row["sell"].text = tr("UI_SELL_COMPACT") % info["sell"]
 
 
 	for id in upgrade_rows:
@@ -810,12 +824,13 @@ func _update_build_rows() -> void:
 		elif cost.is_empty():
 			row["button"].text = tr("UI_MAX_LEVEL")
 		else:
-			row["button"].text = tr("UI_STRUCTURE_UPGRADE") % [current + 1, cost["wood"], cost["stone"], cost["coins"]]
+			row["button"].text = tr("UI_UPGRADE")
+			row["label"].text += "\n" + tr("UI_UPGRADE_MATERIALS") % [cost["wood"],cost["stone"],cost["coins"]]
 			if cost.has("capacity"):
-				row["button"].text += tr("UI_CAPACITY") % cost["capacity"]
+				row["label"].text += tr("UI_CAPACITY") % cost["capacity"]
 	dog_house_button.disabled = Inventory.has_dog_house
 	var dog_house_cost: Dictionary = Progression.DOG_HOUSE_COST
-	dog_house_button.text = tr("UI_DOG_HOUSE_BUILT") if Inventory.has_dog_house else tr("UI_BUILD_DOG_HOUSE") % dog_house_cost["wood"]
+	dog_house_button.text = tr("UI_OWNED") if Inventory.has_dog_house else tr("UI_DOG_HOUSE_COMPACT") % dog_house_cost["wood"]
 
 func _buy_building(id: String) -> void:
 	if Progression.BUILDINGS[id].get("placement_required",false):
@@ -946,3 +961,164 @@ func _update_rod_row() -> void:
 	rod_info.text = tr("ROD_INFO") % [level, FishingData.ROD_LEVELS[level]["bite_window"]]
 	rod_upgrade.disabled = not FishingData.ROD_LEVELS.has(level + 1)
 	rod_upgrade.text = tr("ROD_UPGRADE") % FishingData.ROD_LEVELS[level + 1]["cost"] if not rod_upgrade.disabled else tr("UI_MAX_LEVEL")
+
+
+func _setup_cozy_ui() -> void:
+	hotbar = PanelContainer.new()
+	hotbar.name = "Hotbar"
+	hotbar.set_script(preload("res://hotbar.gd"))
+	add_child(hotbar)
+	var menu: VBoxContainer = $SettingsPanel/Margin/Content
+	var shortcuts: Array = [
+		["UI_MENU_SHOP",_toggle_shop], ["UI_MENU_STORAGE",_toggle_storage],
+		["UI_MENU_ORDERS",open_orders]
+	]
+	for i in range(shortcuts.size()):
+		var button := Button.new()
+		button.text = tr(shortcuts[i][0])
+		button.focus_mode = Control.FOCUS_NONE
+		button.pressed.connect(shortcuts[i][1])
+		menu.add_child(button)
+		menu.move_child(button,i+1)
+	get_viewport().size_changed.connect(_fit_menu)
+	_setup_shop_cards()
+	_setup_build_cards()
+	_fit_menu.call_deferred()
+	_fit_shop_build.call_deferred()
+
+
+func _fit_menu() -> void:
+	settings_panel.size = Vector2(360,380).min(get_viewport().get_visible_rect().size-Vector2(24,32))
+	settings_panel.position = (get_viewport().get_visible_rect().size-settings_panel.size)/2
+
+
+func _catalog(parent: Control, title: String) -> GridContainer:
+	var heading := Label.new()
+	heading.text = title
+	heading.add_theme_font_size_override("font_size",18)
+	parent.add_child(heading)
+	var grid := GridContainer.new()
+	grid.columns = 3
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid.add_theme_constant_override("h_separation",12)
+	grid.add_theme_constant_override("v_separation",12)
+	parent.add_child(grid)
+	catalog_grids.append(grid)
+	return grid
+
+
+func _card(parent: GridContainer, id: String, title: String) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.set_script(ItemCard)
+	parent.add_child(card)
+	card.build(id,title)
+	return card
+
+
+func _setup_shop_cards() -> void:
+	var content: VBoxContainer = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent
+	content.add_theme_constant_override("separation",14)
+	for child in content.get_children():
+		child.hide()
+	var seeds: GridContainer = _catalog(content,tr("UI_SHOP_SEEDS"))
+	for crop in crop_ids:
+		var id: String = crop.to_lower()+"_seed"
+		var card = _card(seeds,id,Localization.display_name(crop))
+		card.add_action(buy_buttons[crop])
+		card.add_action(sell_buttons[crop])
+		shop_cards[id] = card
+	var goods: GridContainer = _catalog(content,tr("UI_SHOP_GOODS"))
+	product_sell_buttons["egg"] = egg_sell_button
+	product_sell_buttons["milk"] = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/MilkSellButton
+	for item in product_sell_buttons:
+		var card = _card(goods,item,Localization.display_name(item))
+		card.add_action(product_sell_buttons[item])
+		shop_cards[item] = card
+	for item in ["chicken_feed","cow_feed"]:
+		var card = _card(goods,item,Localization.display_name(item))
+		var button: Button = content.get_node("DiscardChickenFeed" if item == "chicken_feed" else "DiscardCowFeed")
+		button.text = tr("UI_DISCARD_COMPACT")
+		card.add_action(button)
+		shop_cards[item] = card
+	var pets: GridContainer = _catalog(content,tr("UI_PETS_SHORT"))
+	var dog_card = _card(pets,"dog",Localization.display_name("dog"))
+	dog_card.add_action(dog_buy_button)
+	shop_cards["dog"] = dog_card
+	var tools: GridContainer = _catalog(content,tr("UI_TOOLS_SHORT"))
+	for id in tool_rows:
+		var card = _card(tools,id,Localization.display_name(id))
+		card.add_action(tool_rows[id]["button"])
+		shop_cards[id] = card
+	var rod_card = _card(tools,"fishing_rod",Localization.display_name("fishing_rod"))
+	rod_card.add_action(rod_upgrade)
+	shop_cards["fishing_rod"] = rod_card
+	message_label.show()
+	message_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.move_child(message_label,content.get_child_count()-1)
+
+
+func _refresh_shop_cards() -> void:
+	for id in shop_cards:
+		var card = shop_cards[id]
+		if id.ends_with("_seed"):
+			var crop: String = id.trim_suffix("_seed").to_upper()
+			var info: Dictionary = CropData.CROPS[crop]
+			card.stats.text = tr("UI_SEED_CROP_COUNTS") % [Inventory.seed_count(crop),Inventory.crop_count(crop)]
+			buy_buttons[crop].text = tr("UI_BUY_COMPACT") % info["seed_buy_price"]
+			sell_buttons[crop].text = tr("UI_SELL_COMPACT") % info["sell_price"]
+			if not Inventory.is_unlocked(crop):
+				buy_buttons[crop].text = tr("UI_LOCKED")
+				card.stats.text = tr("CROP_LOCKED_LEVEL") % info["unlock_level"]
+		elif id in tool_rows:
+			card.stats.text = tool_rows[id]["label"].text
+		elif id == "fishing_rod":
+			card.stats.text = rod_info.text
+		elif id == "dog":
+			card.stats.text = tr("UI_OWNED") if Inventory.has_dog else tr("UI_PRICE_COINS") % Inventory.DOG_PRICE
+			dog_buy_button.text = tr("UI_OWNED") if Inventory.has_dog else tr("UI_BUY")
+		else:
+			card.stats.text = tr("UI_ITEM_COUNT") % Inventory.get(id)
+			if id in product_sell_buttons:
+				var price: int = Inventory.EGG_PRICE if id == "egg" else Inventory.MILK_PRICE
+				if Inventory.BakeryData.RECIPES.has(id):
+					price = Inventory.BakeryData.RECIPES[id]["price"]
+				elif Inventory.DairyData.RECIPES.has(id):
+					price = Inventory.DairyData.RECIPES[id]["price"]
+				product_sell_buttons[id].text = tr("UI_SELL_COMPACT") % price
+
+
+func _use_card_label(card: PanelContainer, label: Label) -> void:
+	var container: VBoxContainer = card.get_child(0)
+	container.remove_child(card.stats)
+	card.stats.queue_free()
+	label.reparent(container)
+	label.custom_minimum_size.x = 0
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	container.move_child(label,1)
+	label.show()
+	card.stats = label
+
+
+func _setup_build_cards() -> void:
+	for child in build_rows.get_children():
+		if child.name != "EditFarmButton":
+			child.hide()
+	var buildings: GridContainer = _catalog(build_rows,tr("UI_BUILD_SHORT"))
+	for id in building_buttons:
+		var card = _card(buildings,id,Localization.display_name(id))
+		card.stats.hide()
+		card.add_action(building_buttons[id])
+	var animals: GridContainer = _catalog(build_rows,tr("UI_ANIMALS_SHORT"))
+	for id in animal_buttons:
+		var card = _card(animals,id,Localization.display_name(id))
+		_use_card_label(card,animal_buttons[id]["label"])
+		card.add_action(animal_buttons[id]["buy"])
+		card.add_action(animal_buttons[id]["sell"])
+	var upgrades: GridContainer = _catalog(build_rows,tr("UI_FARM_UPGRADES"))
+	for id in upgrade_rows:
+		var card = _card(upgrades,id,Localization.display_name(id))
+		_use_card_label(card,upgrade_rows[id]["label"])
+		card.add_action(upgrade_rows[id]["button"])
+	var dog_house = _card(upgrades,"dog_house",Localization.display_name("dog_house"))
+	dog_house.stats.hide()
+	dog_house.add_action(dog_house_button)
