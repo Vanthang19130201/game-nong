@@ -48,7 +48,10 @@ func _hide_hint() -> void:
 		hud.clear_item_hint(self)
 
 func add_action(button: Button) -> void:
-	button.reparent(actions)
+	if button.get_parent() == null:
+		actions.add_child(button)
+	else:
+		button.reparent(actions)
 	button.clip_text = true
 	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL

@@ -51,7 +51,7 @@ var coin_count_label: Label
 @onready var animal_sale_confirmation: ConfirmationDialog = $AnimalSaleConfirmation
 var pending_sale_animal: Node2D
 @onready var egg_sell_button: Button = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/EggSellButton
-@onready var dog_buy_button: Button = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/DogBuyButton
+@onready var dog_buy_button: Button = $ShopBuildPanel/Margin/Content/Tabs/AnimalPanel/Margin/Content/Scroll/Cards/DogBuyButton
 @onready var station_panel: PanelContainer = $StationPanel
 @onready var station_info: Label = $StationPanel/Margin/Content/ContentScroll/Body/Info
 @onready var produce_button: Button = $StationPanel/Margin/Content/ContentScroll/Body/ProduceButton
@@ -88,6 +88,9 @@ var debug_panel: PanelContainer
 @onready var build_panel: PanelContainer = $ShopBuildPanel/Margin/Content/Tabs/BuildPanel
 @onready var build_rows: VBoxContainer = $ShopBuildPanel/Margin/Content/Tabs/BuildPanel/Margin/Content/Scroll/Rows
 @onready var recipe_selector: OptionButton = $StationPanel/Margin/Content/ContentScroll/Body/RecipeSelector
+@onready var animal_panel: PanelContainer = $ShopBuildPanel/Margin/Content/Tabs/AnimalPanel
+@onready var animal_cards_grid: GridContainer = $ShopBuildPanel/Margin/Content/Tabs/AnimalPanel/Margin/Content/Scroll/Cards
+var dog_status_label: Label
 
 
 func _ready() -> void:
@@ -222,7 +225,8 @@ func _setup_shop_build() -> void:
 	decoration_panel.name = "DecorationPanel"
 	decoration_panel.set_script(preload("res://decoration_catalog.gd"))
 	shop_build_tabs.add_child(decoration_panel)
-	shop_build_tabs.set_tab_title(2,tr("DECOR_TAB"))
+	shop_build_tabs.set_tab_title(2, tr("UI_ANIMALS_SHORT"))
+	shop_build_tabs.set_tab_title(3,tr("DECOR_TAB"))
 	shop_build_tabs.set_tab_title(0, tr("SHOP_BUILD_SHOP_TAB"))
 	shop_build_tabs.set_tab_title(1, tr("SHOP_BUILD_BUILD_TAB"))
 	$ShopBuildPanel/Margin/Content/Footer/CloseButton.pressed.connect(_close_game_panels)
@@ -256,7 +260,8 @@ func _open_shop_build(tab: int) -> void:
 	shop_build_tabs.current_tab = tab
 	shop_panel.visible = tab == 0
 	build_panel.visible = tab == 1
-	decoration_panel.visible = tab == 2
+	animal_panel.visible = tab == 2
+	decoration_panel.visible = tab == 3
 	_fit_shop_build()
 
 
@@ -403,7 +408,6 @@ func _update_inventory() -> void:
 	egg_sell_button.text = tr("UI_SELL_EGG") % Inventory.EGG_PRICE
 	dog_buy_button.disabled = Inventory.has_dog
 	dog_buy_button.text = tr("UI_OWNED") if Inventory.has_dog else tr("UI_BUY_DOG") % Inventory.DOG_PRICE
-	$ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/PetsLabel.text = tr("UI_PETS") % Inventory.DOG_PRICE
 	for i in range(crop_ids.size()):
 		var crop: String = crop_ids[i]
 		var info: Dictionary = CropData.CROPS[crop]
@@ -959,17 +963,11 @@ func _create_build_rows() -> void:
 		building_buttons[id] = buy
 		build_rows.add_child(row)
 	for animal in Progression.ANIMALS:
-		var row := VBoxContainer.new()
 		var label := Label.new()
-		row.add_child(label)
-		var buttons := HBoxContainer.new()
 		var buy := Button.new()
 		buy.focus_mode = Control.FOCUS_NONE
 		buy.pressed.connect(_buy_animal.bind(animal))
-		buttons.add_child(buy)
-		row.add_child(buttons)
 		animal_buttons[animal] = {"label": label, "buy": buy}
-		build_rows.add_child(row)
 
 
 	var heading := Label.new()
@@ -1012,6 +1010,8 @@ func _update_build_rows() -> void:
 			row["label"].text += tr("UI_COLLECT_BEFORE_TRADE")
 		row["buy"].disabled = locked or busy or count >= Inventory.animal_capacity(animal)
 		row["buy"].text = tr("UI_LOCKED_LEVEL") % info["level"] if locked else tr("UI_BUY_COMPACT") % info["buy"]
+	if is_instance_valid(dog_status_label):
+		dog_status_label.text = tr("UI_OWNED") if Inventory.has_dog else tr("UI_PRICE_COINS") % Inventory.DOG_PRICE
 
 
 	for id in upgrade_rows:
@@ -1179,6 +1179,7 @@ func _setup_cozy_ui() -> void:
 	get_viewport().size_changed.connect(_fit_menu)
 	_setup_shop_cards()
 	_setup_build_cards()
+	_setup_animal_cards()
 	_setup_item_hints()
 	_fit_menu.call_deferred()
 	_fit_shop_build.call_deferred()
@@ -1246,10 +1247,6 @@ func _setup_shop_cards() -> void:
 		button.text = tr("UI_DISCARD_COMPACT")
 		card.add_action(button)
 		shop_cards[item] = card
-	var pets: GridContainer = _catalog(content,tr("UI_PETS_SHORT"))
-	var dog_card = _card(pets,"dog",Localization.display_name("dog"))
-	dog_card.add_action(dog_buy_button)
-	shop_cards["dog"] = dog_card
 	var tools: GridContainer = _catalog(content,tr("UI_TOOLS_SHORT"))
 	for id in tool_rows:
 		var card = _card(tools,id,Localization.display_name(id))
@@ -1279,9 +1276,6 @@ func _refresh_shop_cards() -> void:
 			card.stats.text = tool_rows[id]["label"].text
 		elif id == "fishing_rod":
 			card.stats.text = rod_info.text
-		elif id == "dog":
-			card.stats.text = tr("UI_OWNED") if Inventory.has_dog else tr("UI_PRICE_COINS") % Inventory.DOG_PRICE
-			dog_buy_button.text = tr("UI_OWNED") if Inventory.has_dog else tr("UI_BUY")
 		else:
 			card.stats.text = tr("UI_ITEM_COUNT") % Inventory.get(id)
 			if id in product_sell_buttons:
@@ -1299,7 +1293,10 @@ func _use_card_label(card: PanelContainer, label: Label) -> void:
 	var container: VBoxContainer = card.get_child(0)
 	container.remove_child(card.stats)
 	card.stats.queue_free()
-	label.reparent(container)
+	if label.get_parent() == null:
+		container.add_child(label)
+	else:
+		label.reparent(container)
 	label.custom_minimum_size.x = 0
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	container.move_child(label,1)
@@ -1316,11 +1313,6 @@ func _setup_build_cards() -> void:
 		var card = _card(buildings,id,Localization.display_name(id))
 		card.stats.hide()
 		card.add_action(building_buttons[id])
-	var animals: GridContainer = _catalog(build_rows,tr("UI_ANIMALS_SHORT"))
-	for id in animal_buttons:
-		var card = _card(animals,id,Localization.display_name(id))
-		_use_card_label(card,animal_buttons[id]["label"])
-		card.add_action(animal_buttons[id]["buy"])
 	var upgrades: GridContainer = _catalog(build_rows,tr("UI_FARM_UPGRADES"))
 	for id in upgrade_rows:
 		var card = _card(upgrades,id,Localization.display_name(id))
@@ -1329,6 +1321,19 @@ func _setup_build_cards() -> void:
 	var dog_house = _card(upgrades,"dog_house",Localization.display_name("dog_house"))
 	dog_house.stats.hide()
 	dog_house.add_action(dog_house_button)
+
+
+func _setup_animal_cards() -> void:
+	for id in animal_buttons:
+		var card = _card(animal_cards_grid, id, Localization.display_name(id))
+		_use_card_label(card, animal_buttons[id]["label"])
+		card.add_action(animal_buttons[id]["buy"])
+	var dog_card = _card(animal_cards_grid, "dog", Localization.display_name("dog"))
+	dog_status_label = Label.new()
+	dog_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_use_card_label(dog_card, dog_status_label)
+	dog_card.add_action(dog_buy_button)
+	catalog_grids.append(animal_cards_grid)
 
 
 func _setup_item_hints() -> void:

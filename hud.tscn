@@ -340,16 +340,6 @@ layout_mode = 2
 focus_mode = 0
 text = "UI_DISCARD_COW"
 
-[node name="PetsLabel" type="Label" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
-layout_mode = 2
-text = "DEFAULT_PETS"
-
-[node name="DogBuyButton" type="Button" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
-custom_minimum_size = Vector2(0, 32)
-layout_mode = 2
-focus_mode = 0
-text = "DEFAULT_BUY_DOG"
-
 [node name="MessageLabel" type="Label" parent="ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent"]
 custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
@@ -504,6 +494,44 @@ theme_override_constants/separation = 16
 layout_mode = 2
 focus_mode = 0
 text = "UI_CLOSE"
+
+[node name="AnimalPanel" type="PanelContainer" parent="ShopBuildPanel/Margin/Content/Tabs"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("CatalogInset")
+
+[node name="Margin" type="MarginContainer" parent="ShopBuildPanel/Margin/Content/Tabs/AnimalPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Content" type="VBoxContainer" parent="ShopBuildPanel/Margin/Content/Tabs/AnimalPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="ShopBuildPanel/Margin/Content/Tabs/AnimalPanel/Margin/Content"]
+theme_type_variation = &"Heading"
+layout_mode = 2
+text = "UI_ANIMALS_SHORT"
+
+[node name="Scroll" type="ScrollContainer" parent="ShopBuildPanel/Margin/Content/Tabs/AnimalPanel/Margin/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Cards" type="GridContainer" parent="ShopBuildPanel/Margin/Content/Tabs/AnimalPanel/Margin/Content/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 3
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+
+[node name="DogBuyButton" type="Button" parent="ShopBuildPanel/Margin/Content/Tabs/AnimalPanel/Margin/Content/Scroll/Cards"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+focus_mode = 0
+text = "DEFAULT_BUY_DOG"
 
 [node name="ToolsUnlocked" type="AcceptDialog" parent="."]
 theme = ExtResource("99_theme")
