@@ -1,30 +1,128 @@
 extends Control
 
 var active_spot: Node = null
+
 @onready var hud: Node = get_parent()
 @onready var panel: PanelContainer = $Panel
 @onready var info: Label = $Panel/Content/Info
 @onready var reaction_bar: ProgressBar = $Panel/Content/ReactionBar
 @onready var reel_button: Button = $Panel/Content/Reel
 @onready var fish_button: Button = $Fish
+@onready var hint: Label = $Panel/Content/Hint
+@onready var close_button: Button = $Panel/Content/Close
+
+var catch_card: PanelContainer
+var catch_icon: Control
+var catch_title: Label
+var catch_rarity: Label
+var catch_detail: Label
+
+var last_visual_state: int = -1
+var shown_fish_id: String = ""
 
 
 func _ready() -> void:
 	reel_button.pressed.connect(_reel)
 	fish_button.pressed.connect(_start)
-	$Panel/Content/Close.pressed.connect(close_session)
+	close_button.pressed.connect(close_session)
+
+	reaction_bar.custom_minimum_size.y = 18
+	reel_button.custom_minimum_size.y = 62
+
+	_build_catch_card()
 	clear_session()
+
+
+func _build_catch_card() -> void:
+	catch_card = PanelContainer.new()
+	catch_card.name = "CatchCard"
+	catch_card.custom_minimum_size = Vector2(410, 230)
+	catch_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	catch_card.add_theme_stylebox_override(
+		"panel",
+		_catch_panel_style()
+	)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	catch_card.add_child(margin)
+
+	var content := VBoxContainer.new()
+	content.alignment = BoxContainer.ALIGNMENT_CENTER
+	content.add_theme_constant_override("separation", 7)
+	margin.add_child(content)
+
+	var heading := Label.new()
+	heading.text = "BẠN ĐÃ CÂU ĐƯỢC"
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 17)
+	heading.add_theme_color_override(
+		"font_color",
+		Color("6b4a2e")
+	)
+	content.add_child(heading)
+
+	catch_title = Label.new()
+	catch_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	catch_title.add_theme_font_size_override("font_size", 25)
+	catch_title.add_theme_color_override(
+		"font_color",
+		Color("4f3828")
+	)
+	content.add_child(catch_title)
+
+	var icon_holder := CenterContainer.new()
+	icon_holder.custom_minimum_size.y = 88
+	content.add_child(icon_holder)
+
+	catch_icon = Control.new()
+	catch_icon.custom_minimum_size = Vector2(82, 82)
+	catch_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	catch_icon.set_script(preload("res://item_icon.gd"))
+	icon_holder.add_child(catch_icon)
+
+	catch_rarity = Label.new()
+	catch_rarity.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	catch_rarity.add_theme_font_size_override("font_size", 15)
+	content.add_child(catch_rarity)
+
+	catch_detail = Label.new()
+	catch_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	catch_detail.add_theme_font_size_override("font_size", 14)
+	catch_detail.add_theme_color_override(
+		"font_color",
+		Color("765b43")
+	)
+	content.add_child(catch_detail)
+
+	$Panel/Content.add_child(catch_card)
+	$Panel/Content.move_child(catch_card, 0)
+
+	catch_card.hide()
 
 
 func show_session(spot: Node) -> void:
 	active_spot = spot
+	last_visual_state = -1
+	shown_fish_id = ""
+
 	panel.show()
 	fish_button.hide()
+
+	_show_fishing_controls()
 
 
 func clear_session() -> void:
 	active_spot = null
+	last_visual_state = -1
+	shown_fish_id = ""
+
 	panel.hide()
+	catch_card.hide()
+
 	reaction_bar.value = 0
 	info.text = ""
 
@@ -32,30 +130,40 @@ func clear_session() -> void:
 func close_session() -> void:
 	if is_instance_valid(active_spot):
 		active_spot.cancel_session()
+
 	clear_session()
 
 
 func handle_interact() -> bool:
 	if not is_instance_valid(active_spot):
 		return false
+
 	active_spot.reel()
 	return true
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("fishing_reel") and not event.is_echo():
-		if not hud.blocks_world_input() and handle_interact():
+		if (
+			is_instance_valid(active_spot)
+			and not hud.blocks_world_input()
+			and active_spot.state in [
+				active_spot.State.WAITING_FOR_BITE,
+				active_spot.State.BITE_WINDOW
+			]
+		):
+			handle_interact()
 			get_viewport().set_input_as_handled()
 
 
 func _reel() -> void:
-	# SPACE and the mobile Reel button share the same state/reward validation.
 	if not hud.blocks_world_input():
 		handle_interact()
 
 
 func _start() -> void:
 	var spot = _nearby_spot()
+
 	if spot != null and not hud.blocks_world_input():
 		spot.start_session()
 
@@ -64,32 +172,400 @@ func _nearby_spot() -> Node:
 	var player = get_tree().get_first_node_in_group("farm_player")
 	var nearest: Node = null
 	var distance: float = INF
+
 	if player == null:
 		return null
+
 	for spot in get_tree().get_nodes_in_group("fishing_spots"):
-		var candidate_distance: float = player.global_position.distance_squared_to(spot.global_position)
+		var candidate_distance: float = (
+			player.global_position.distance_squared_to(
+				spot.global_position
+			)
+		)
+
 		if spot.can_interact() and candidate_distance < distance:
 			nearest = spot
 			distance = candidate_distance
+
 	return nearest
 
 
 func _process(_delta: float) -> void:
-	fish_button.visible = not is_instance_valid(active_spot) and not hud.blocks_world_input() and _nearby_spot() != null
+	fish_button.visible = (
+		not is_instance_valid(active_spot)
+		and not hud.blocks_world_input()
+		and _nearby_spot() != null
+	)
+
 	var remaining: int = Inventory.fishing_attempts_remaining()
-	fish_button.text = tr("FISHING_ATTEMPTS") % [remaining, Inventory.FishingData.ATTEMPTS_PER_CYCLE]
+
+	fish_button.text = tr("FISHING_ATTEMPTS") % [
+		remaining,
+		Inventory.FishingData.ATTEMPTS_PER_CYCLE
+	]
+
 	if remaining == 0:
 		var seconds: int = Inventory.fishing_cycle_seconds_left()
-		fish_button.text = tr("FISHING_ATTEMPTS_WAIT") % [int(seconds / 3600), int(seconds / 60) % 60]
+
+		fish_button.text = tr("FISHING_ATTEMPTS_WAIT") % [
+			int(seconds / 3600),
+			int(seconds / 60) % 60
+		]
+
 	if not is_instance_valid(active_spot):
 		panel.hide()
 		return
+
+	panel.show()
+
+	var current_state: int = active_spot.state
+
+	if current_state != last_visual_state:
+		last_visual_state = current_state
+		_apply_visual_state()
+
+	if (
+		current_state == active_spot.State.SUCCESS
+		or (
+			current_state == active_spot.State.COOLDOWN
+			and not active_spot.last_caught_fish.is_empty()
+		)
+	):
+		_show_catch(active_spot.last_caught_fish)
+		return
+
+	_show_fishing_controls()
+
 	info.text = active_spot.feedback
-	var reacting: bool = active_spot.state == active_spot.State.BITE_WINDOW
-	var waiting: bool = active_spot.state == active_spot.State.WAITING_FOR_BITE
-	reel_button.disabled = not (reacting or waiting)
-	reel_button.text = tr("FISHING_REEL_NOW") if reacting else tr("FISHING_REEL")
-	info.modulate = Color(1.0, 0.8, 0.1) if reacting else Color.WHITE
+
+	var reacting: bool = (
+		current_state == active_spot.State.BITE_WINDOW
+	)
+
 	reaction_bar.visible = reacting
-	reaction_bar.max_value = active_spot.bite_window
-	reaction_bar.value = maxf(0.0, active_spot.deadline - active_spot.now()) if reacting else 0.0
+
+	if reacting:
+		reaction_bar.max_value = active_spot.bite_window
+		reaction_bar.value = maxf(
+			0.0,
+			active_spot.deadline - active_spot.now()
+		)
+	else:
+		reaction_bar.value = 0.0
+
+
+func _apply_visual_state() -> void:
+	if not is_instance_valid(active_spot):
+		return
+
+	match active_spot.state:
+		active_spot.State.BITE_WINDOW:
+			_apply_bite_style()
+
+		active_spot.State.WAITING_FOR_BITE:
+			_apply_waiting_style()
+
+		active_spot.State.FAILED:
+			_apply_failed_style()
+
+		active_spot.State.SUCCESS:
+			pass
+
+		active_spot.State.COOLDOWN:
+			pass
+
+		_:
+			_apply_waiting_style()
+
+
+func _show_fishing_controls() -> void:
+	catch_card.hide()
+
+	info.show()
+	hint.show()
+	reel_button.show()
+	close_button.show()
+
+	var waiting: bool = (
+		is_instance_valid(active_spot)
+		and active_spot.state == active_spot.State.WAITING_FOR_BITE
+	)
+
+	var reacting: bool = (
+		is_instance_valid(active_spot)
+		and active_spot.state == active_spot.State.BITE_WINDOW
+	)
+
+	reel_button.disabled = not (waiting or reacting)
+
+
+func _show_catch(fish_id: String) -> void:
+	if (
+		fish_id.is_empty()
+		or not Inventory.FishingData.FISH.has(fish_id)
+	):
+		return
+
+	info.hide()
+	hint.hide()
+	reaction_bar.hide()
+	reel_button.hide()
+	close_button.hide()
+
+	catch_card.show()
+
+	var fish_data: Dictionary = Inventory.FishingData.FISH[fish_id]
+
+	catch_icon.set("item_id", fish_id)
+
+	catch_title.text = Localization.display_name(
+		fish_data["name"]
+	)
+
+	catch_rarity.text = _rarity_name(
+		str(fish_data.get("rarity", "common"))
+	)
+
+	catch_rarity.add_theme_color_override(
+		"font_color",
+		_rarity_color(
+			str(fish_data.get("rarity", "common"))
+		)
+	)
+
+	catch_detail.text = "Trong kho: %d    •    Giá bán: %d xu" % [
+		Inventory.get(fish_id),
+		int(fish_data.get("sell_price", 0))
+	]
+
+	if shown_fish_id != fish_id:
+		shown_fish_id = fish_id
+
+		catch_card.scale = Vector2(0.9, 0.9)
+		catch_card.modulate.a = 0.0
+
+		var tween := create_tween()
+		tween.set_parallel(true)
+		tween.set_trans(Tween.TRANS_BACK)
+		tween.set_ease(Tween.EASE_OUT)
+
+		tween.tween_property(
+			catch_card,
+			"scale",
+			Vector2.ONE,
+			0.22
+		)
+
+		tween.tween_property(
+			catch_card,
+			"modulate:a",
+			1.0,
+			0.16
+		)
+
+
+func _apply_waiting_style() -> void:
+	panel.add_theme_stylebox_override(
+		"panel",
+		_waiting_panel_style()
+	)
+
+	info.add_theme_font_size_override("font_size", 18)
+	info.add_theme_color_override(
+		"font_color",
+		Color("5a432f")
+	)
+
+	hint.text = "Chờ cá cắn mồi · ESC để hủy"
+	hint.add_theme_color_override(
+		"font_color",
+		Color("7a624b")
+	)
+
+	reel_button.text = "SPACE: Giật cần"
+	reel_button.add_theme_font_size_override("font_size", 18)
+	reel_button.add_theme_stylebox_override(
+		"normal",
+		_waiting_button_style()
+	)
+	reel_button.add_theme_stylebox_override(
+		"hover",
+		_waiting_button_style()
+	)
+	reel_button.add_theme_stylebox_override(
+		"pressed",
+		_waiting_button_style()
+	)
+
+
+func _apply_bite_style() -> void:
+	panel.add_theme_stylebox_override(
+		"panel",
+		_bite_panel_style()
+	)
+
+	info.text = "CÁ CẮN MỒI!"
+	info.add_theme_font_size_override("font_size", 28)
+	info.add_theme_color_override(
+		"font_color",
+		Color("fff4c4")
+	)
+
+	hint.text = "Nhấn SPACE ngay!"
+	hint.add_theme_font_size_override("font_size", 17)
+	hint.add_theme_color_override(
+		"font_color",
+		Color("ffe48a")
+	)
+
+	reel_button.text = "SPACE  —  GIẬT CẦN!"
+	reel_button.add_theme_font_size_override("font_size", 24)
+
+	var bite_button := _bite_button_style()
+
+	reel_button.add_theme_stylebox_override(
+		"normal",
+		bite_button
+	)
+	reel_button.add_theme_stylebox_override(
+		"hover",
+		bite_button
+	)
+	reel_button.add_theme_stylebox_override(
+		"pressed",
+		bite_button
+	)
+
+	reel_button.add_theme_color_override(
+		"font_color",
+		Color("4b321d")
+	)
+
+	reaction_bar.add_theme_stylebox_override(
+		"background",
+		_reaction_background_style()
+	)
+
+	reaction_bar.add_theme_stylebox_override(
+		"fill",
+		_reaction_fill_style()
+	)
+
+
+func _apply_failed_style() -> void:
+	panel.add_theme_stylebox_override(
+		"panel",
+		_waiting_panel_style()
+	)
+
+	info.add_theme_font_size_override("font_size", 20)
+	info.add_theme_color_override(
+		"font_color",
+		Color("9b4e3c")
+	)
+
+	hint.text = "Tự động thả câu lại..."
+	hint.add_theme_color_override(
+		"font_color",
+		Color("7a624b")
+	)
+
+	reel_button.hide()
+	reaction_bar.hide()
+
+
+func _rarity_name(rarity: String) -> String:
+	match rarity:
+		"rare":
+			return "HIẾM"
+
+		"uncommon":
+			return "KHÁ HIẾM"
+
+		_:
+			return "PHỔ BIẾN"
+
+
+func _rarity_color(rarity: String) -> Color:
+	match rarity:
+		"rare":
+			return Color("d49a20")
+
+		"uncommon":
+			return Color("4d87a6")
+
+		_:
+			return Color("60945d")
+
+
+func _waiting_panel_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+
+	style.bg_color = Color("f4e7c8")
+	style.border_color = Color("a96f43")
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(14)
+
+	return style
+
+
+func _bite_panel_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+
+	style.bg_color = Color("443323")
+	style.border_color = Color("ffc44d")
+	style.set_border_width_all(4)
+	style.set_corner_radius_all(14)
+
+	return style
+
+
+func _waiting_button_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+
+	style.bg_color = Color("ead2a0")
+	style.border_color = Color("b17b48")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(10)
+
+	return style
+
+
+func _bite_button_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+
+	style.bg_color = Color("ffc44d")
+	style.border_color = Color("fff0a8")
+	style.set_border_width_all(4)
+	style.set_corner_radius_all(12)
+
+	return style
+
+
+func _reaction_background_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+
+	style.bg_color = Color("705b3d")
+	style.set_corner_radius_all(6)
+
+	return style
+
+
+func _reaction_fill_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+
+	style.bg_color = Color("ffd34e")
+	style.set_corner_radius_all(6)
+
+	return style
+
+
+func _catch_panel_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+
+	style.bg_color = Color("f6e8c8")
+	style.border_color = Color("bd814b")
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(14)
+
+	return style

@@ -1,7 +1,18 @@
 extends Area2D
 
 const Data = preload("res://fishing_data.gd")
-enum State { IDLE, WAITING_FOR_BITE, BITE_WINDOW, SUCCESS, FAILED, COOLDOWN }
+
+enum State {
+	IDLE,
+	WAITING_FOR_BITE,
+	BITE_WINDOW,
+	SUCCESS,
+	FAILED,
+	COOLDOWN
+}
+
+const CATCH_DISPLAY_TIME: float = 1.8
+const AUTO_RECAST_DELAY: float = 0.65
 
 var state: State = State.IDLE
 var deadline: float = 0.0
@@ -10,7 +21,9 @@ var bite_window: float = 1.0
 var feedback: String = ""
 var player: Node2D
 var reserved_slot: bool = false
+var last_caught_fish: String = ""
 var rng := RandomNumberGenerator.new()
+
 @onready var label: Label = $Label
 @onready var hud: Node = get_tree().get_first_node_in_group("farm_hud")
 
@@ -23,16 +36,20 @@ func _ready() -> void:
 
 
 func now() -> float:
-	# A reaction session is transient: monotonic time ignores changes to system clock.
 	return Time.get_ticks_msec() / 1000.0
 
 
 func can_interact() -> bool:
 	if state != State.IDLE or not Inventory.is_zone_unlocked("fishing"):
 		return false
+
 	for body in get_overlapping_bodies():
-		if body.is_in_group("farm_player") and body.global_position.distance_to(global_position) <= Data.SESSION_DISTANCE:
+		if (
+			body.is_in_group("farm_player")
+			and body.global_position.distance_to(global_position) <= Data.SESSION_DISTANCE
+		):
 			return true
+
 	return false
 
 
@@ -41,77 +58,162 @@ func interact(body: Node2D = null) -> void:
 
 
 func start_session(body: Node2D = null) -> bool:
-	if not can_interact() or hud == null or hud.blocks_world_input() or is_instance_valid(hud.fishing_ui.active_spot):
+	if (
+		not can_interact()
+		or hud == null
+		or hud.blocks_world_input()
+		or is_instance_valid(hud.fishing_ui.active_spot)
+	):
 		return false
+
 	if not Inventory.has_fishing_rod:
 		return Inventory.fail(tr("FISHING_NEED_ROD"))
+
 	player = body if body != null else get_tree().get_first_node_in_group("farm_player")
+
 	if not is_instance_valid(player) or is_instance_valid(player.active_resource):
 		return false
+
+	if not _begin_cast():
+		player = null
+		return false
+
+	hud.fishing_ui.show_session(self)
+	return true
+
+
+func _begin_cast() -> bool:
+	if not _can_continue_session():
+		return false
+
+	if Inventory.fishing_attempts_remaining() <= 0:
+		Inventory.fail("Đã hết lượt câu cá.")
+		return false
+
 	if not Inventory.reserve_fishing_slot():
-		return Inventory.fail(tr("FISHING_BARN_FULL"))
+		Inventory.fail(tr("FISHING_BARN_FULL"))
+		return false
+
 	reserved_slot = true
+
 	if not Inventory.consume_fishing_attempt():
 		_release_slot()
 		return false
-	bite_delay = rng.randf_range(Data.MIN_BITE_DELAY, Data.MAX_BITE_DELAY)
-	# Snapshot rod level once, so upgrading mid-session cannot change the deadline.
-	bite_window = Data.ROD_LEVELS[clampi(Inventory.fishing_rod_level, 1, Data.ROD_LEVELS.size())]["bite_window"]
+
+	last_caught_fish = ""
+
+	bite_delay = rng.randf_range(
+		Data.MIN_BITE_DELAY,
+		Data.MAX_BITE_DELAY
+	)
+
+	bite_window = Data.ROD_LEVELS[
+		clampi(
+			Inventory.fishing_rod_level,
+			1,
+			Data.ROD_LEVELS.size()
+		)
+	]["bite_window"]
+
 	state = State.WAITING_FOR_BITE
 	deadline = now() + bite_delay
-	feedback = tr("FISHING_WAITING")
-	hud.fishing_ui.show_session(self)
+	feedback = "Đang câu cá...\nHãy kiên nhẫn, chờ cá cắn mồi."
+
 	return true
 
 
 func _process(_delta: float) -> void:
 	if state in [State.WAITING_FOR_BITE, State.BITE_WINDOW]:
-		if not _session_valid():
+		if not _can_continue_session():
 			cancel_session()
 			return
+
 	_advance_state()
+
 	if state == State.IDLE:
-		label.text = tr("FISHING_SPOT_PROMPT") if can_interact() else tr("WORLD_FISHING_SPOT")
+		label.text = (
+			tr("FISHING_SPOT_PROMPT")
+			if can_interact()
+			else tr("WORLD_FISHING_SPOT")
+		)
 	elif state == State.BITE_WINDOW:
-		label.text = tr("FISHING_BITE")
+		label.text = "!!! CÁ CẮN MỒI !!!"
+	elif state == State.SUCCESS:
+		label.text = "Câu thành công!"
+	elif state == State.FAILED:
+		label.text = "Cá đã chạy mất!"
+	elif state == State.COOLDOWN:
+		label.text = "Chuẩn bị thả câu..."
 	else:
 		label.text = feedback
 
 
-func _session_valid() -> bool:
-	return is_instance_valid(player) and player.global_position.distance_to(global_position) <= Data.SESSION_DISTANCE and Inventory.is_zone_unlocked("fishing") and Inventory.has_fishing_rod and hud != null and not hud.blocks_world_input()
+func _can_continue_session() -> bool:
+	return (
+		is_instance_valid(player)
+		and player.global_position.distance_to(global_position) <= Data.SESSION_DISTANCE
+		and Inventory.is_zone_unlocked("fishing")
+		and Inventory.has_fishing_rod
+		and hud != null
+		and not hud.blocks_world_input()
+	)
 
 
 func _advance_state() -> void:
 	if state == State.IDLE or now() < deadline:
 		return
+
 	match state:
 		State.WAITING_FOR_BITE:
 			state = State.BITE_WINDOW
-			# Preserve the exact bite deadline even when a frame arrives late.
 			deadline += bite_window
-			feedback = tr("FISHING_BITE")
+			feedback = "CÁ CẮN MỒI!\nNhấn SPACE ngay!"
+
 			if now() >= deadline:
 				_fail(tr("FISHING_MISSED"))
+
 		State.BITE_WINDOW:
 			_fail(tr("FISHING_MISSED"))
-		State.SUCCESS, State.FAILED:
+
+		State.SUCCESS:
 			state = State.COOLDOWN
-			feedback += tr("FISHING_COOLDOWN")
-			deadline = now() + Data.COOLDOWN_TIME
+			deadline = now() + AUTO_RECAST_DELAY
+
+		State.FAILED:
+			# Miss một lần thì kết thúc buổi câu.
+			# Giữ thông báo thất bại đủ lâu để người chơi đọc,
+			# sau đó trả về map thay vì tự động đốt lượt câu tiếp theo.
+			cancel_session()
+
 		State.COOLDOWN:
-			state = State.IDLE
-			feedback = ""
-			_clear_ui()
+			# Chỉ câu thành công mới được tự động thả câu tiếp.
+			_auto_recast()
+
+
+func _auto_recast() -> void:
+	if not _can_continue_session():
+		cancel_session()
+		return
+
+	if Inventory.fishing_attempts_remaining() <= 0:
+		cancel_session()
+		Inventory.fail("Đã hết lượt câu cá.")
+		return
+
+	if not _begin_cast():
+		cancel_session()
 
 
 func reel() -> void:
 	if state not in [State.WAITING_FOR_BITE, State.BITE_WINDOW]:
 		return
-	if not _session_valid():
+
+	if not _can_continue_session():
 		cancel_session()
 		return
+
 	_advance_state()
+
 	if state == State.WAITING_FOR_BITE:
 		_fail(tr("FISHING_TOO_EARLY"))
 	elif state == State.BITE_WINDOW:
@@ -119,35 +221,53 @@ func reel() -> void:
 
 
 func _catch_fish() -> void:
-	# Change state before any Inventory signal. One reaction grants at most one fish.
+	# Chuyển state trước khi Inventory phát signal để một lần giật chỉ nhận một cá.
 	state = State.SUCCESS
+
 	var fish: String = _roll_fish()
+
 	_release_slot()
+
 	if not Inventory.can_add_item(fish, 1):
-		# Defensive fallback for external/debug changes to capacity during the session.
 		_fail(tr("FISHING_BARN_FULL"))
 		return
-	feedback = tr("FISHING_CAUGHT") % Localization.display_name(Data.FISH[fish]["name"])
-	deadline = now() + Data.RESULT_TIME
+
+	last_caught_fish = fish
+
+	feedback = (
+		"Bạn đã câu được %s!"
+		% Localization.display_name(Data.FISH[fish]["name"])
+	)
+
+	# Cho người chơi đủ thời gian nhìn thẻ khoe cá.
+	deadline = now() + CATCH_DISPLAY_TIME
+
 	Inventory.add_item(fish, 1)
 
 
 func _roll_fish() -> String:
 	var total: int = 0
-	for info in Data.FISH.values():
-		total += info["weight"]
+
+	for fish_info in Data.FISH.values():
+		total += fish_info["weight"]
+
 	var roll: int = rng.randi_range(1, total)
+
 	for fish in Data.FISH:
 		roll -= Data.FISH[fish]["weight"]
+
 		if roll <= 0:
 			return fish
+
 	return "small_fish"
 
 
 func _fail(message: String) -> void:
 	_release_slot()
+
+	last_caught_fish = ""
 	state = State.FAILED
-	feedback = message
+	feedback = message + "\nBuổi câu đã kết thúc."
 	deadline = now() + Data.RESULT_TIME
 
 
@@ -159,26 +279,31 @@ func _release_slot() -> void:
 
 func cancel_session() -> void:
 	_release_slot()
-	if state in [State.WAITING_FOR_BITE, State.BITE_WINDOW]:
-		state = State.IDLE
-		deadline = 0.0
-		feedback = ""
+
+	state = State.IDLE
+	deadline = 0.0
+	feedback = ""
+	last_caught_fish = ""
 	player = null
+
 	_clear_ui()
 
 
 func _clear_ui() -> void:
-	if is_instance_valid(hud) and hud.fishing_ui.active_spot == self:
+	if (
+		is_instance_valid(hud)
+		and hud.fishing_ui.active_spot == self
+	):
 		hud.fishing_ui.clear_session()
 
 
 func _on_inventory_changed() -> void:
 	if SaveManager.resetting:
 		cancel_session()
-		state = State.IDLE
-		deadline = 0.0
-		feedback = ""
-	elif state in [State.WAITING_FOR_BITE, State.BITE_WINDOW] and not _session_valid():
+	elif (
+		state in [State.WAITING_FOR_BITE, State.BITE_WINDOW]
+		and not _can_continue_session()
+	):
 		cancel_session()
 
 
