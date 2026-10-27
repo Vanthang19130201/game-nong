@@ -30,7 +30,9 @@ func _find_artwork_texture() -> Texture2D:
 			"res://assets/buildings/%s.png" % artwork_id,
 			"res://assets/buildings/%s.svg" % artwork_id,
 			"res://assets/environment/%s/%s.png" % [artwork_id, artwork_id],
+			"res://assets/environment/%s/%s.svg" % [artwork_id, artwork_id],
 			"res://assets/environment/%s.png" % artwork_id,
+			"res://assets/environment/%s.svg" % artwork_id,
 		])
 	candidates.append_array(texture_paths)
 	for path in candidates:

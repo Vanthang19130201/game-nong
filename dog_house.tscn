@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
 
 [node name="DogHouse" type="Node2D"]
+metadata/placement_rect = Rect2(-44, -32, 88, 64)
 
 [node name="Visual" type="ColorRect" parent="."]
 offset_left = -40.0
@@ -28,4 +29,6 @@ text = "WORLD_DOG_HOUSE"
 [node name="BuildingSprite" type="Sprite2D" parent="Visuals"]
 z_index = -1
 script = ExtResource("90_art")
+artwork_id = "dog_house"
+target_size = Vector2(112, 84)
 fallback_paths = Array[NodePath]([NodePath("../../Visual"), NodePath("../../Label")])

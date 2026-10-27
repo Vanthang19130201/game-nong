@@ -14,6 +14,7 @@ size = Vector2(100, 100)
 
 [node name="Bridge" type="Node2D"]
 script = ExtResource("1")
+metadata/placement_rect = Rect2(-90, -60, 180, 120)
 
 [node name="Visual" type="ColorRect" parent="."]
 z_index = -7
@@ -29,13 +30,13 @@ color = Color(0.6, 0.43, 0.25, 1)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Blocker"]
 shape = SubResource("GateShape")
 
-[node name="Gate" type="ColorRect" parent="."]
-offset_left = -74.0
-offset_top = -6.0
-offset_right = 74.0
-offset_bottom = 6.0
-mouse_filter = 2
-color = Color(0.65, 0.18, 0.14, 1)
+[node name="Gate" type="Node2D" parent="."]
+[node name="Crossbar" type="Polygon2D" parent="Gate"]
+polygon = PackedVector2Array(-74, -6, 74, -6, 74, 6, -74, 6)
+color = Color(0.65, 0.43, 0.28, 1)
+[node name="Brace" type="Polygon2D" parent="Gate"]
+polygon = PackedVector2Array(-56, -21, -50, -25, 56, 21, 50, 25)
+color = Color(0.48, 0.32, 0.21, 1)
 
 [node name="Sign" type="Label" parent="."]
 script = ExtResource("95_prompt")
@@ -43,6 +44,9 @@ area_path = NodePath("../InteractionArea")
 base_text = "WORLD_FISHING_AREA"
 zone_id = "fishing"
 theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.96, 0.84, 1)
+theme_override_colors/font_outline_color = Color(0.22, 0.15, 0.1, 1)
+theme_override_constants/outline_size = 3
 offset_left = -250.0
 offset_top = -110.0
 offset_right = -70.0
@@ -59,5 +63,7 @@ shape = SubResource("SignArea")
 
 [node name="Sprite2D" type="Sprite2D" parent="Visuals"]
 script = ExtResource("90_art")
+artwork_id = "fishing_bridge"
+target_size = Vector2(224, 140)
 fallback_paths = Array[NodePath]([NodePath("../../Visual")])
 z_index = -7

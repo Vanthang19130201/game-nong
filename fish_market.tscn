@@ -11,6 +11,7 @@ size = Vector2(180, 160)
 [node name="FishMarket" type="Area2D"]
 collision_layer = 0
 script = ExtResource("1")
+metadata/placement_rect = Rect2(-85, -65, 170, 105)
 
 [node name="Visual" type="ColorRect" parent="."]
 offset_left = -75.0
@@ -29,11 +30,15 @@ color = Color(0.15, 0.65, 0.7, 1)
 mouse_filter = 2
 
 [node name="Label" type="Label" parent="."]
+z_index = 1
 theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.96, 0.84, 1)
+theme_override_colors/font_outline_color = Color(0.22, 0.15, 0.1, 1)
+theme_override_constants/outline_size = 3
 offset_left = -110.0
-offset_top = 48.0
+offset_top = -110.0
 offset_right = 110.0
-offset_bottom = 84.0
+offset_bottom = -78.0
 horizontal_alignment = 1
 vertical_alignment = 1
 mouse_filter = 2
@@ -49,4 +54,6 @@ building_kind = "fish_market"
 [node name="BuildingSprite" type="Sprite2D" parent="Visuals"]
 z_index = -1
 script = ExtResource("90_art")
+artwork_id = "fish_market"
+target_size = Vector2(180, 135)
 fallback_paths = Array[NodePath]([NodePath("../../Visual"), NodePath("../../Awning")])

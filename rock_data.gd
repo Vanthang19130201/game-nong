@@ -7,6 +7,7 @@ const TYPES: Dictionary = {
 }
 static var texture_paths: Dictionary = {}
 static var textures_scanned: bool = false
+static var _textures: Dictionary = {}
 
 static func texture_for(type: String) -> Texture2D:
 	if not textures_scanned:
@@ -28,7 +29,9 @@ static func texture_for(type: String) -> Texture2D:
 	if texture_paths.is_empty():
 		return null
 	var path: String = texture_paths.get(type,texture_paths.values()[0])
-	return load(path) as Texture2D
+	if not _textures.has(path):
+		_textures[path] = load(path) as Texture2D
+	return _textures[path] as Texture2D
 
 static func _find_textures(directory: String, paths: Array[String]) -> void:
 	for entry in ResourceLoader.list_directory(directory):

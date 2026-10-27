@@ -1,6 +1,8 @@
 extends RefCounted
 
 const MESSAGES: Dictionary = {
+    "WORLD_QUARRY": "Khu khai thác đá",
+    "WORLD_PRODUCTION_YARD": "Khu chế biến",
     "PRODUCTION_RECIPES": "CÔNG THỨC",
     "PRODUCTION_DURATION": "Thời gian: %d giây",
     "PRODUCTION_INGREDIENT": "%s ×%d · có %d",

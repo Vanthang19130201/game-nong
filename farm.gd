@@ -36,10 +36,10 @@ func _ready() -> void:
 
 
 func _place_resources() -> void:
-	# Keep resource positions unless they overlap restored buildings/plots/decor.
+	# Keep resource positions unless they overlap restored objects or the player.
 	# Relocating a resource within its zone never changes its saved cooldown.
 	for resource in SaveManager.resources.values():
-		if Placement.can_place(resource,resource.global_position,false):
+		if _resource_position_is_clear(resource, resource.global_position):
 			continue
 		var zone: String = SaveManager.LandData.zone_at(resource.global_position)
 		var area: Rect2 = SaveManager.LandData.ZONES[zone]["area"]
@@ -49,7 +49,7 @@ func _place_resources() -> void:
 				var point := Vector2(x,y)
 				var footprint: Rect2 = Placement.bounds(resource)
 				footprint.position += point-resource.global_position
-				if area.encloses(footprint) and Placement.can_place(resource,point,false):
+				if area.encloses(footprint) and _resource_position_is_clear(resource, point):
 					resource.global_position = point
 					found = true
 					break
@@ -59,6 +59,16 @@ func _place_resources() -> void:
 			# A completely filled zone cannot safely accept another resource.
 			resource.zone_id = "unplaced"
 		resource._update_zone(true)
+
+
+func _resource_position_is_clear(resource: Node2D, point: Vector2) -> bool:
+	if not Placement.can_place(resource, point, false):
+		return false
+	var footprint := Placement.bounds(resource)
+	footprint.position += point - resource.global_position
+	var player_shape: CollisionShape2D = $Player/CollisionShape2D
+	var player_bounds: Rect2 = player_shape.global_transform * player_shape.shape.get_rect()
+	return not footprint.intersects(player_bounds.grow(8.0))
 
 
 func _restore_owned_land_positions() -> void:

@@ -8,7 +8,7 @@ const RockData = preload("res://rock_data.gd")
 @export var rock_texture: Texture2D
 @export var rock_textures: Dictionary = {}
 @export var stump_texture: Texture2D
-@export var depleted_rock_texture: Texture2D
+@export var depleted_rock_texture: Texture2D = preload("res://assets/environment/rocks/rock_rubble.svg")
 @onready var resource_node: Node = get_parent()
 @onready var default_texture: Texture2D = $ResourceSprite.texture
 
@@ -49,7 +49,10 @@ func refresh() -> void:
 		_fit_tree()
 	if not wood and $ResourceSprite.texture != null:
 		# All variants keep the existing 80x80 footprint; only the sprite scales.
-		$ResourceSprite.scale = Vector2(80,80)/$ResourceSprite.texture.get_size()
+		var art_size: Vector2 = $ResourceSprite.texture.get_size()
+		var factor := minf(80.0 / art_size.x, 80.0 / art_size.y)
+		$ResourceSprite.scale = Vector2.ONE * factor
+		$ResourceSprite.position = Vector2(0, 40.0 - art_size.y * factor * 0.5)
 	sprite_color.a = 0.3 if depleted else 1.0
 	$ResourceSprite.modulate = sprite_color
 	resource_node.progress.visible = state == "GATHERING"

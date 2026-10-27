@@ -84,7 +84,8 @@ func run_checks() -> void:
 	var trees: int = 0
 	for resource in manager.resources.values():
 		if resource.resource_type != "wood":
-			check(resource.get_node("Visuals/ResourceSprite").texture == null,"Rocks never inherit Tree texture")
+			var rock_sprite: Sprite2D = resource.get_node("Visuals/ResourceSprite")
+			check(rock_sprite.texture != null and rock_sprite.texture == resource.RockData.texture_for(resource.rock_type),"Rocks use their own type-specific artwork instead of Tree texture")
 			continue
 		trees += 1
 		var sprite: Sprite2D = resource.get_node("Visuals/ResourceSprite")
