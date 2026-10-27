@@ -1,12 +1,14 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://world_body.gd" id="98_body"]
+
 [ext_resource type="Script" path="res://market_stall.gd" id="1"]
 [ext_resource type="Script" path="res://artwork_sprite.gd" id="2"]
 
 [sub_resource type="RectangleShape2D" id="Range"]
 size = Vector2(180, 170)
 [sub_resource type="RectangleShape2D" id="Body"]
-size = Vector2(128, 56)
+size = Vector2(112, 32)
 
 [node name="MarketStall" type="Area2D"]
 collision_layer = 0
@@ -17,7 +19,12 @@ metadata/placement_rect = Rect2(-72, -48, 144, 88)
 shape = SubResource("Range")
 
 [node name="Body" type="StaticBody2D" parent="."]
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("98_body")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Body"]
+position = Vector2(0, 13)
+disabled = true
 shape = SubResource("Body")
 
 [node name="Visuals" type="Node2D" parent="."]
@@ -38,16 +45,30 @@ color = Color(0.54, 0.67, 0.38, 1)
 polygon = PackedVector2Array(-68, -4, 68, -4, 68, 7, -68, 7)
 color = Color(0.87, 0.72, 0.46, 1)
 
-[node name="Prompt" type="Label" parent="Visuals"]
+[node name="NameLabel" type="Label" parent="Visuals"]
 z_index = 1
 offset_left = -110.0
-offset_top = -104.0
+offset_top = -90.0
 offset_right = 110.0
-offset_bottom = -80.0
+offset_bottom = -68.0
 horizontal_alignment = 1
+vertical_alignment = 2
 mouse_filter = 2
 theme_override_font_sizes/font_size = 12
 theme_override_colors/font_color = Color(1, 0.96, 0.84, 1)
 theme_override_colors/font_outline_color = Color(0.22, 0.15, 0.1, 1)
 theme_override_constants/outline_size = 3
 text = "BUILDING_MARKET_STALL"
+
+[node name="Prompt" type="Label" parent="Visuals"]
+z_index = 1
+offset_left = -110.0
+offset_top = 50.0
+offset_right = 110.0
+offset_bottom = 72.0
+horizontal_alignment = 1
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.96, 0.84, 1)
+theme_override_colors/font_outline_color = Color(0.22, 0.15, 0.1, 1)
+theme_override_constants/outline_size = 3

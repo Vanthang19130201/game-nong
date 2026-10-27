@@ -1,6 +1,11 @@
 extends RefCounted
 
 const MESSAGES: Dictionary = {
+    "ANIMAL_NEED_CHICKEN_FEED": "Cần thức ăn cho gà",
+    "ANIMAL_NEED_COW_FEED": "Cần thức ăn cho bò",
+    "ANIMAL_FEED_PROMPT": "[E] Cho ăn",
+    "ANIMAL_EGG_PROMPT": "[E] Thu hoạch trứng",
+    "ANIMAL_MILK_PROMPT": "[E] Vắt sữa",
     "WORLD_QUARRY": "Khu khai thác đá",
     "WORLD_PRODUCTION_YARD": "Khu chế biến",
     "PRODUCTION_RECIPES": "CÔNG THỨC",

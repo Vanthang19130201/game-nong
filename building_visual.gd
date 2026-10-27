@@ -8,7 +8,7 @@ func refresh() -> void:
 		"house":
 			_refresh_prompt()
 		"feed_mill":
-			building.get_node("StatusLabel").text = tr("WORLD_MILL_STATUS") % [Localization.display_name(building.production_type), Localization.state(building.state)]
+			building.get_node("StatusLabel").text = (tr("WORLD_MILL_STATUS") % [Localization.state(building.state), Localization.display_name(building.production_type)]).strip_edges()
 		"chicken_coop":
 			building.get_node("StatusLabel").text = tr("WORLD_CHICKEN_STATUS") % [Inventory.chicken_count, Inventory.animal_capacity("chicken"), tr("WORLD_EGGS_READY") if building.state == "READY" else Localization.state(building.state)]
 		"cow_shed":
@@ -30,4 +30,5 @@ func _refresh_prompt() -> void:
 		label.text = tr("WORLD_HOUSE_PROMPT") if near else ""
 		label.visible = near
 	else:
-		building.get_node("Label").text = tr("WORLD_MARKET_PROMPT") if near else tr("TITLE_FISH_MARKET")
+		building.get_node("Label").text = tr("TITLE_FISH_MARKET")
+		building.get_node("InteractionPrompt").text = tr("PRODUCTION_INTERACT") if near else ""

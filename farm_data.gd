@@ -15,6 +15,7 @@ const BUILDINGS: Dictionary = {
 	"house": {"movable": true, "always_owned": true, "node": "House", "position": Vector2(700, 400), "scene": ""},
 	"warehouse": {"movable": true, "always_owned": true, "preserve_scale": true, "node": "Warehouse", "position": Vector2(920, 260), "scene": "res://warehouse.tscn"},
 	"order_board": {"movable": true, "always_owned": true, "node": "OrderBoard", "position": Vector2(920, 420), "scene": "res://order_board.tscn"},
+	"market_stall": {"movable": true, "always_owned": true, "node": "MarketStall", "position": Vector2(920, 650), "scene": "res://market_stall.tscn"},
 	"feed_mill": {"movable": true, "node": "FeedMill", "position": Vector2(1160, 1020), "scene": "res://feed_mill.tscn"},
 	"chicken_coop": {"movable": true, "node": "ChickenCoop", "position": Vector2(1500, 1020), "scene": "res://chicken_coop.tscn"},
 	"cow_shed": {"movable": true, "node": "CowShed", "position": Vector2(900, 1020), "scene": "res://cow_shed.tscn"},

@@ -1,5 +1,7 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://world_body.gd" id="98_body"]
+
 [ext_resource type="Script" path="res://world_prompt.gd" id="95_prompt"]
 
 [ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
@@ -8,6 +10,9 @@
 
 [sub_resource type="RectangleShape2D" id="BoardShape"]
 size = Vector2(160, 110)
+
+[sub_resource type="RectangleShape2D" id="PhysicalBodyShape"]
+size = Vector2(96, 24)
 
 [node name="OrderBoard" type="Area2D"]
 script = ExtResource("1")
@@ -26,18 +31,33 @@ z_index = 1
 script = ExtResource("95_prompt")
 area_path = NodePath("..")
 base_text = "WORLD_ORDER_BOARD"
+prompt_text = "PRODUCTION_INTERACT"
+separate_prompt_path = NodePath("../InteractionPrompt")
 theme_override_font_sizes/font_size = 12
 theme_override_colors/font_color = Color(1, 0.96, 0.84, 1)
 theme_override_colors/font_outline_color = Color(0.22, 0.15, 0.1, 1)
 theme_override_constants/outline_size = 3
 offset_left = -110.0
-offset_top = -110.0
+offset_top = -77.0
 offset_right = 110.0
-offset_bottom = -74.0
+offset_bottom = -55.0
 horizontal_alignment = 1
-vertical_alignment = 1
+vertical_alignment = 2
 mouse_filter = 2
 text = "WORLD_ORDER_BOARD"
+
+[node name="InteractionPrompt" type="Label" parent="."]
+z_index = 1
+offset_left = -110.0
+offset_top = 56.0
+offset_right = 110.0
+offset_bottom = 78.0
+horizontal_alignment = 1
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.96, 0.84, 1)
+theme_override_colors/font_outline_color = Color(0.22, 0.15, 0.1, 1)
+theme_override_constants/outline_size = 3
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("BoardShape")
@@ -50,3 +70,12 @@ script = ExtResource("90_art")
 fallback_paths = Array[NodePath]([NodePath("../../Visual")])
 artwork_id = "order_board"
 target_size = Vector2(150, 115)
+
+[node name="Body" type="StaticBody2D" parent="."]
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("98_body")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Body"]
+position = Vector2(0, 24)
+shape = SubResource("PhysicalBodyShape")
+disabled = true

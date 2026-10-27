@@ -70,13 +70,12 @@ func run_checks() -> void:
 	player.position = coop.position
 	await create_timer(0.1).timeout
 	await key(KEY_E)
-	assert(hud.active_station == coop)
-	hud.produce_button.pressed.emit()
+	assert(not hud.station_panel.visible)
 	assert(coop.state == "PRODUCING")
 	coop.ready_at = Time.get_unix_time_from_system()-0.1
 	coop.production_timer.start(0.01)
 	await create_timer(0.1).timeout
-	hud.collect_button.pressed.emit()
+	await key(KEY_E)
 	assert(inv.egg == 1)
 	await key(KEY_ESCAPE)
 	player.position = mill.position
@@ -95,13 +94,12 @@ func run_checks() -> void:
 	player.position = cows.position
 	await create_timer(0.1).timeout
 	await key(KEY_E)
-	assert(hud.active_station == cows)
-	hud.produce_button.pressed.emit()
+	assert(not hud.station_panel.visible)
 	assert(cows.state == "PRODUCING")
 	cows.ready_at = Time.get_unix_time_from_system()-0.1
 	cows.production_timer.start(0.01)
 	await create_timer(0.1).timeout
-	hud.collect_button.pressed.emit()
+	await key(KEY_E)
 	assert(inv.milk == 1)
 	await key(KEY_ESCAPE)
 	assert(inv.sell_egg() and inv.sell_milk())

@@ -15,6 +15,7 @@ var walking: bool = false
 var speed: float
 var body_radius: float
 var spacing: float
+var status_bubble: Node2D
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var idle_timer: Timer = $IdleTimer
 @onready var player: Node2D = get_tree().get_first_node_in_group("farm_player")
@@ -39,7 +40,20 @@ func configure(kind: String, group: Node2D) -> void:
 	shape.size = frame.get_size() * sprite.scale
 	$CollisionShape2D.shape = shape
 	$CollisionShape2D.position.y = -data["height"] / 2.0
+	if not is_instance_valid(status_bubble):
+		status_bubble = preload("res://animal_status_bubble.gd").new()
+		status_bubble.name = "StatusBubble"
+		add_child(status_bubble)
+	status_bubble.configure(data["height"])
+	refresh_status()
 	rest()
+
+func refresh_status() -> void:
+	if not is_instance_valid(status_bubble) or not is_instance_valid(herd):
+		return
+	var station = herd.home
+	var product: Dictionary = station.Progression.PRODUCTS[station.station_id]
+	status_bubble.refresh(station.state, product["item"] if station.state == "READY" else product["feed"])
 
 func get_interaction_position() -> Vector2:
 	return $CollisionShape2D.global_position

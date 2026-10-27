@@ -9,6 +9,11 @@
 [sub_resource type="RectangleShape2D" id="ResourceArea"]
 size = Vector2(110, 110)
 
+[sub_resource type="RectangleShape2D" id="TreeBody"]
+size = Vector2(22, 20)
+[sub_resource type="RectangleShape2D" id="RockBody"]
+size = Vector2(60, 32)
+
 [node name="ResourceNode" type="Area2D"]
 script = ExtResource("1")
 metadata/placement_rect = Rect2(-40, -40, 80, 80)
@@ -32,6 +37,18 @@ mouse_filter = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("ResourceArea")
+
+[node name="Body" type="StaticBody2D" parent="."]
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Body"]
+position = Vector2(0, 29)
+shape = SubResource("TreeBody")
+disabled = true
+[node name="RockCollisionShape2D" type="CollisionShape2D" parent="Body"]
+position = Vector2(0, 25)
+shape = SubResource("RockBody")
+disabled = true
 
 [node name="RespawnTimer" type="Timer" parent="."]
 one_shot = true

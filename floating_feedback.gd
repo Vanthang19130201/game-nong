@@ -36,6 +36,13 @@ func _on_inventory_changed() -> void:
 func show_inventory_change(item_id: String, amount: int) -> void:
 	if amount != 0:
 		show_floating_feedback(tr("TRADE_ITEM") % [amount, Localization.display_name(item_id)])
+		if get_child_count() > 0 and item_id in ["egg", "milk", "chicken_feed", "cow_feed"]:
+			var item_icon: Control = preload("res://item_icon.gd").new()
+			item_icon.item_id = item_id
+			item_icon.position = Vector2(-24, 0)
+			item_icon.size = Vector2(20, 20)
+			item_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			get_child(get_child_count() - 1).add_child(item_icon)
 
 func show_floating_feedback(text: String) -> void:
 	if not is_instance_valid(player):

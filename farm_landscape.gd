@@ -16,7 +16,7 @@ func _draw() -> void:
 	_path(PackedVector2Array([Vector2(700, 520), Vector2(838, 520), Vector2(838, 335), Vector2(920, 335)]), 30.0)
 	_path(PackedVector2Array([Vector2(838, 480), Vector2(920, 480)]), 26.0)
 	_path(PackedVector2Array([Vector2(700, 650), Vector2(920, 650)]), 30.0)
-	_path(PackedVector2Array([Vector2(700, 730), Vector2(550, 730)]), 25.0)
+	_path(PackedVector2Array([Vector2(700, 730), Vector2(630, 750), Vector2(550, 750)]), 25.0)
 	_path(PackedVector2Array([Vector2(700, 840), Vector2(700, 1140), Vector2(1570, 1140)]), 36.0)
 	_path(PackedVector2Array([Vector2(700, 960), Vector2(640, 960)]), 24.0)
 	_path(PackedVector2Array([Vector2(700, 1140), Vector2(560, 1140)]), 30.0)
@@ -25,10 +25,10 @@ func _draw() -> void:
 	for x in [1250.0, 1450.0]:
 		_path(PackedVector2Array([Vector2(x, 1140), Vector2(x, 1250)]), 24.0)
 	_path(PackedVector2Array([Vector2(1980, 850), Vector2(2190, 850), Vector2(2190, 1040)]), 32.0)
-	_path(PackedVector2Array([Vector2(2020, 850), Vector2(2020, 980)]), 24.0)
+	_path(PackedVector2Array([Vector2(2020, 850), Vector2(2020, 1040)]), 24.0)
 	for point in [Vector2(2010, 1110), Vector2(2080, 1175), Vector2(2250, 1095), Vector2(2290, 790), Vector2(1965, 730), Vector2(2010, 680)]:
 		_tuft(point, Color("a1b486"))
-	for point in [Vector2(209, 983), Vector2(526, 1080), Vector2(226, 1353), Vector2(535, 1335), Vector2(592, 747), Vector2(1035, 289)]:
+	for point in [Vector2(209, 983), Vector2(526, 1080), Vector2(226, 1353), Vector2(535, 1335), Vector2(592, 790), Vector2(1035, 289)]:
 		_tuft(point, Color("9da26d"))
 	for point in [Vector2(237, 1054), Vector2(380, 1025), Vector2(414, 1230), Vector2(229, 1302), Vector2(536, 1361)]:
 		draw_circle(point + Vector2(0, 3), 6, Color("7f7c60"))

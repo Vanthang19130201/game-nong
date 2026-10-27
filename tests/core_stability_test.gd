@@ -204,7 +204,10 @@ func check_core() -> void:
 		check(building.visible and building.scale == Vector2.ONE and building.can_interact(), "visible/near purchased " + id)
 		check(not building.get_node("CollisionShape2D").disabled, "owned collision " + id)
 		await key(KEY_E)
-		check(hud.active_station == building and hud.station_panel.visible, "E opens purchased " + id)
+		if id == "feed_mill":
+			check(hud.active_station == building and hud.station_panel.visible, "E opens purchased Feed Mill")
+		else:
+			check(building.state == "HUNGRY" and not hud.station_panel.visible, "empty animal station uses contextual feedback without a modal " + id)
 		await key(KEY_ESCAPE)
 	# House transaction remains atomic and saved; max level survives load in other tests.
 	player.position = Vector2(700,500)

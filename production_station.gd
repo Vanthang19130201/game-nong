@@ -175,8 +175,28 @@ func interact(_player: Node2D = null) -> void:
 	if not can_interact():
 		return
 	var hud = get_tree().get_first_node_in_group("farm_hud")
-	if hud != null:
+	if hud == null or hud.blocks_world_input():
+		return
+	if station_id == "feed_mill":
 		hud.open_station(self)
+		return
+	var product: Dictionary = Progression.PRODUCTS[station_id]
+	match state:
+		"HUNGRY":
+			if Inventory.get(product["animal"] + "_count") <= 0:
+				hud.show_floating_feedback(tr("ERROR_STATION_PRODUCE"))
+			elif Inventory.get(product["feed"]) <= 0:
+				hud.show_floating_feedback(tr("ANIMAL_NEED_CHICKEN_FEED" if station_id == "chicken_coop" else "ANIMAL_NEED_COW_FEED"))
+			else:
+				produce()
+		"READY":
+			var output := output_data()
+			if not Inventory.can_add_item(output["item"], output["amount"]):
+				hud.show_floating_feedback(tr("FEED_STORAGE_FULL"))
+			else:
+				collect()
+		"PRODUCING":
+			hud.show_floating_feedback(tr("WORLD_PRODUCTION_TIMER") % ceili(maxf(0.0, ready_at - Time.get_unix_time_from_system())))
 
 func _on_body_entered(body: Node2D) -> void:
 	if body.name == "Player" and Inventory.owns_building(station_id):

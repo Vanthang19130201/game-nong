@@ -120,7 +120,9 @@ func _update_buildings() -> void:
 			continue
 		if not SaveManager.register_building(id, building):
 			continue
-		building.visible = owned
+		# The existing Dog House stays on the map as a visual landmark.
+		# Ownership and pet behavior continue to use Inventory.has_dog_house.
+		building.visible = owned or id == "dog_house"
 		if not info.get("preserve_scale", false):
 			building.scale = Vector2.ONE
 		building.z_index = maxi(1, building.z_index)
@@ -157,6 +159,8 @@ func _update_pets() -> void:
 			dog = DOG_SCENE.instantiate()
 			dog.home_point = home
 			dog.position = home.position
+			if home == dog_house:
+				dog.position.y += 52.0
 			add_child(dog)
 		elif dog.home_point != home:
 			dog.set_home_point(home)

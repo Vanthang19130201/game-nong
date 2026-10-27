@@ -24,9 +24,13 @@
 [ext_resource type="PackedScene" path="res://dog_house.tscn" id="98_dog_house"]
 [ext_resource type="Script" path="res://farm_landscape.gd" id="99_landscape"]
 [ext_resource type="Texture2D" path="res://assets/environment/rocks/normal_rock.svg" id="100_shore_rock"]
+[ext_resource type="Script" path="res://world_body.gd" id="101_body"]
 
 [sub_resource type="RectangleShape2D" id="HouseInteractionShape"]
 size = Vector2(260, 220)
+
+[sub_resource type="RectangleShape2D" id="HouseBodyShape"]
+size = Vector2(150, 64)
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_cegan"]
 load_path = "res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex"
@@ -79,10 +83,11 @@ script = ExtResource("99_landscape")
 
 [node name="QuarryLabel" type="Label" parent="."]
 offset_left = 220.0
-offset_top = 875.0
+offset_top = 880.0
 offset_right = 540.0
-offset_bottom = 900.0
+offset_bottom = 902.0
 horizontal_alignment = 1
+vertical_alignment = 2
 mouse_filter = 2
 theme_override_font_sizes/font_size = 12
 theme_override_colors/font_color = Color(1, 0.96, 0.84, 1)
@@ -99,6 +104,15 @@ collision_layer = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="House/InteractionArea" unique_id=54735998]
 shape = SubResource("HouseInteractionShape")
+
+[node name="Body" type="StaticBody2D" parent="House"]
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("101_body")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="House/Body"]
+position = Vector2(0, 65)
+shape = SubResource("HouseBodyShape")
+disabled = true
 
 [node name="Visual" type="ColorRect" parent="House" unique_id=1491943828]
 visible = false
@@ -181,7 +195,7 @@ position = Vector2(1453, 948)
 position = Vector2(897, 903)
 
 [node name="DogHomePoint" type="Node2D" parent="." unique_id=942056642]
-position = Vector2(650, 760)
+position = Vector2(550, 750)
 
 [node name="HUD" parent="." unique_id=786439489 instance=ExtResource("4_hud")]
 
@@ -239,7 +253,7 @@ position = Vector2(1174, 520)
 plot_id = "soil_02"
 
 [node name="DogHouse" parent="." unique_id=13681641 instance=ExtResource("98_dog_house")]
-visible = false
+visible = true
 position = Vector2(550, 700)
 
 [node name="tree1" parent="." unique_id=1109680128 instance=ExtResource("10_resource")]
@@ -357,6 +371,7 @@ scale = Vector2(0.55, 0.55)
 texture = ExtResource("100_shore_rock")
 
 [node name="FishingAreaLabel" type="Label" parent="." unique_id=1836452223]
+visible = false
 offset_left = 2020.0
 offset_top = 650.0
 offset_right = 2145.0
@@ -378,7 +393,7 @@ shape = SubResource("RiverLowerShape")
 position = Vector2(1870, 850)
 
 [node name="FishingSpot" parent="." unique_id=1923137942 instance=ExtResource("14_fishing")]
-position = Vector2(2020, 980)
+position = Vector2(2020, 1040)
 
 [node name="FishMarket" parent="." unique_id=1259020075 instance=ExtResource("15_market")]
 position = Vector2(2190, 980)

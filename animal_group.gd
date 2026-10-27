@@ -22,6 +22,7 @@ func _ready() -> void:
 	refresh_timer.wait_time = 0.5
 	refresh_timer.timeout.connect(_refresh_area)
 	add_child(refresh_timer)
+	home.state_changed.connect(_refresh_status)
 	# farm.gd owns spawning and count synchronization, not the station scene.
 
 func animals() -> Array[Node]:
@@ -30,6 +31,10 @@ func animals() -> Array[Node]:
 		if child != refresh_timer:
 			result.append(child)
 	return result
+
+func _refresh_status() -> void:
+	for animal in animals():
+		animal.refresh_status()
 
 func sync_count() -> void:
 	var station_id: String = "chicken_coop" if animal_type == "chicken" else "cow_shed"

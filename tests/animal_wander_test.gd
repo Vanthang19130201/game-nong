@@ -1,6 +1,6 @@
 extends SceneTree
 
-const DESTINATIONS: Dictionary = {"cow_shed": Vector2(512,1152), "chicken_coop": Vector2(768,1152)}
+const DESTINATIONS: Dictionary = {"cow_shed": Vector2(768,1216), "chicken_coop": Vector2(1152,1216)}
 var inv: Node
 var manager: Node
 var farm: Node

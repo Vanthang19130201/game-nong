@@ -1,5 +1,7 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://world_body.gd" id="98_body"]
+
 [ext_resource type="Script" path="res://building_visual.gd" id="94_building"]
 
 [ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
@@ -7,6 +9,9 @@
 [ext_resource type="Script" path="res://fish_market.gd" id="1"]
 [sub_resource type="RectangleShape2D" id="MarketArea"]
 size = Vector2(180, 160)
+
+[sub_resource type="RectangleShape2D" id="PhysicalBodyShape"]
+size = Vector2(112, 34)
 
 [node name="FishMarket" type="Area2D"]
 collision_layer = 0
@@ -36,13 +41,26 @@ theme_override_colors/font_color = Color(1, 0.96, 0.84, 1)
 theme_override_colors/font_outline_color = Color(0.22, 0.15, 0.1, 1)
 theme_override_constants/outline_size = 3
 offset_left = -110.0
-offset_top = -110.0
+offset_top = -78.0
 offset_right = 110.0
-offset_bottom = -78.0
+offset_bottom = -56.0
 horizontal_alignment = 1
-vertical_alignment = 1
+vertical_alignment = 2
 mouse_filter = 2
 text = "TITLE_FISH_MARKET"
+
+[node name="InteractionPrompt" type="Label" parent="."]
+z_index = 1
+offset_left = -110.0
+offset_top = 72.0
+offset_right = 110.0
+offset_bottom = 94.0
+horizontal_alignment = 1
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.96, 0.84, 1)
+theme_override_colors/font_outline_color = Color(0.22, 0.15, 0.1, 1)
+theme_override_constants/outline_size = 3
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("MarketArea")
@@ -57,3 +75,12 @@ script = ExtResource("90_art")
 artwork_id = "fish_market"
 target_size = Vector2(180, 135)
 fallback_paths = Array[NodePath]([NodePath("../../Visual"), NodePath("../../Awning")])
+
+[node name="Body" type="StaticBody2D" parent="."]
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("98_body")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Body"]
+position = Vector2(0, 32)
+shape = SubResource("PhysicalBodyShape")
+disabled = true

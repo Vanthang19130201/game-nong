@@ -1,9 +1,9 @@
 extends SceneTree
 
-const IDS: Array[String] = ["feed_mill", "bakery", "dairy", "spinning_machine", "market_stall", "order_board"]
-const TARGETS: Array[Vector2] = [Vector2(160, 120), Vector2(180, 135), Vector2(180, 135), Vector2(170, 125), Vector2(160, 120), Vector2(150, 115)]
-const FOOTPRINTS: Array[Rect2] = [Rect2(-64, -36, 128, 72), Rect2(-85, -55, 170, 110), Rect2(-85, -65, 170, 120), Rect2(-85, -55, 170, 110), Rect2(-72, -48, 144, 88), Rect2(-72, -36, 144, 72)]
-const AREA_SIZES: Array[Vector2] = [Vector2(144, 100), Vector2(210, 160), Vector2(210, 160), Vector2(210, 160), Vector2(180, 170), Vector2(160, 110)]
+const IDS: Array[String] = ["feed_mill", "bakery", "dairy", "spinning_machine", "market_stall", "order_board", "fish_market"]
+const TARGETS: Array[Vector2] = [Vector2(160, 120), Vector2(180, 135), Vector2(180, 135), Vector2(170, 125), Vector2(160, 120), Vector2(150, 115), Vector2(180, 135)]
+const FOOTPRINTS: Array[Rect2] = [Rect2(-64, -36, 128, 72), Rect2(-85, -55, 170, 110), Rect2(-85, -65, 170, 120), Rect2(-85, -55, 170, 110), Rect2(-72, -48, 144, 88), Rect2(-72, -36, 144, 72), Rect2(-85, -65, 170, 105)]
+const AREA_SIZES: Array[Vector2] = [Vector2(144, 100), Vector2(210, 160), Vector2(210, 160), Vector2(210, 160), Vector2(180, 170), Vector2(160, 110), Vector2(180, 160)]
 
 var farm: Node
 var inv: Node
@@ -106,9 +106,37 @@ func check_visual(building: Node2D, index: int, preview: Image) -> void:
 	var used := image.get_used_rect()
 	check(used.position.x > 0 and used.position.y > 0 and used.end.x < 256 and used.end.y < 192, "artwork has canvas margins " + id)
 	preview.blend_rect(image, Rect2i(0, 0, 256, 192), Vector2i(12 + (index % 3) * 280, 12 + (index / 3) * 216))
-	var label: Label = building.get_node("Visuals/Prompt" if id == "market_stall" else ("Label" if id == "order_board" else "StatusLabel"))
-	check(label.position.y + label.size.y <= sprite.position.y - sprite.texture.get_height() * sprite.scale.y * 0.5 - 4, "text stays above artwork " + id)
+	var label: Label = building.get_node("Visuals/NameLabel" if id == "market_stall" else ("Label" if id in ["order_board", "fish_market"] else "StatusLabel"))
+	var visible_art := Rect2(Vector2(used.position) - image.get_size() * 0.5, Vector2(used.size))
+	visible_art = sprite.transform * visible_art
+	var gap := visible_art.position.y - label.get_rect().end.y
+	check(gap >= 8.0 and gap <= 12.0, "text sits 8-12 px above visible artwork " + id + " gap=" + str(gap))
+	check(label.vertical_alignment == VERTICAL_ALIGNMENT_BOTTOM, "text is anchored to the bottom of its local label rect " + id)
 	check(label.visible and label.get_theme_font_size("font_size") == 12 and label.get_theme_constant("outline_size") == 3, "status text remains readable " + id)
+	var prompt: Label = building.get_node("Visuals/Prompt" if id == "market_stall" else "InteractionPrompt")
+	var prompt_gap := prompt.position.y - visible_art.end.y
+	check(prompt_gap >= 8.0 and prompt_gap <= 12.0, "separate prompt sits below artwork " + id)
+	var local_position := label.position
+	var world_position := label.global_position
+	building.position += Vector2(20, 10)
+	check(label.position == local_position and label.global_position.is_equal_approx(world_position + Vector2(20, 10)), "moving building preserves local label offset " + id)
+	building.position -= Vector2(20, 10)
+	print("LABEL GAP: ", id, " = ", gap)
+
+func capture_layout(building: Node2D, id: String) -> void:
+	var camera = player.get_node("Camera2D")
+	camera.target_zoom = 1.0
+	camera.zoom = Vector2.ONE
+	camera.begin_pan()
+	camera.end_pan()
+	camera.pan_center = building.global_position
+	await create_timer(0.15).timeout
+	var prompt: Label = building.get_node("Visuals/Prompt" if id == "market_stall" else "InteractionPrompt")
+	check(not prompt.text.is_empty() and prompt.is_visible_in_tree(), "prompt stays visible during rendered capture " + id)
+	await RenderingServer.frame_post_draw
+	var screenshot := root.get_texture().get_image()
+	check(screenshot != null and screenshot.get_size() == Vector2i(1152, 648), "capture uses game resolution")
+	check(screenshot.save_png("res://label-layout-" + id + ".png") == OK, "capture building with HUD " + id)
 
 func run_checks() -> void:
 	await process_frame
@@ -116,7 +144,7 @@ func run_checks() -> void:
 	inv = root.get_node("Inventory")
 	check(manager.SAVE_PATH == "res://test-save.cfg", "test uses an isolated save")
 	check(manager.reset_game(), "reset test fixture")
-	root.size = Vector2i(1280, 720)
+	root.size = Vector2i(1152, 648)
 	root.content_scale_size = root.size
 	farm = load("res://main.tscn").instantiate()
 	root.add_child(farm)
@@ -134,18 +162,27 @@ func run_checks() -> void:
 	inv.owns_spinning_machine = true
 	inv.inventory_changed.emit()
 	await create_timer(0.15).timeout
+	hud.floating_feedback.clear()
 	check_loading()
-	var preview := Image.create(840, 432, false, Image.FORMAT_RGBA8)
+	var preview := Image.create(840, 648, false, Image.FORMAT_RGBA8)
 	preview.fill(Color("e5dec8"))
 	for index in range(IDS.size()):
 		var id := IDS[index]
-		var building: Node2D = farm.get_node("OrderBoard" if id == "order_board" else "MarketStall") if id in ["order_board", "market_stall"] else manager.buildings[id]
+		var scene_name: String = {"order_board": "OrderBoard", "market_stall": "MarketStall", "fish_market": "FishMarket"}.get(id, "")
+		var building: Node2D = farm.get_node(scene_name) if not scene_name.is_empty() else manager.buildings[id]
 		check_visual(building, index, preview)
 		hud.close_all_panels()
+		player.global_position = Vector2(1600, 1800)
+		await create_timer(0.08).timeout
+		var prompt: Label = building.get_node("Visuals/Prompt" if id == "market_stall" else "InteractionPrompt")
+		check(prompt.text.is_empty(), "interaction prompt is empty when player is far " + id)
 		player.global_position = building.global_position + Vector2(0, 64 if id == "market_stall" else 0)
 		await create_timer(0.12).timeout
 		check(building.can_interact(), "player can reach building " + id)
+		check(prompt.text == tr("PRODUCTION_INTERACT"), "separate interaction prompt appears only nearby " + id)
 		check(player._nearest_interactable() == building, "E selects the intended fixture " + id)
+		if "--capture" in OS.get_cmdline_user_args():
+			await capture_layout(building, id)
 		await key(KEY_E)
 		match id:
 			"feed_mill": check(hud.active_station == building and hud.feed_queue.visible, "E opens Feed Mill")
@@ -154,9 +191,10 @@ func run_checks() -> void:
 			"spinning_machine": check(hud.spinning_machine_panel.visible, "E opens Spinning Machine")
 			"market_stall": check(hud.market_stall_panel.visible and hud.market_stall_panel.active_stall == building, "E opens Market Stall")
 			"order_board": check(hud.order_panel.visible, "E opens Order Board")
+			"fish_market": check(hud.fish_market_panel.visible, "E opens Fish Market")
 		await key(KEY_ESCAPE)
 		check(not hud.blocks_world_input(), "ESC closes building panel " + id)
 	check(preview.save_png("res://building-artwork-preview.png") == OK, "save artwork contact sheet")
 	check(manager.reset_game(), "cleanup isolated fixture")
-	print("PASS: building_artwork (six SVGs, fallback, aspect ratio, footprints, crop icons, E and panels)")
+	print("PASS: building_artwork (seven buildings, 8-12 px text gap, separate nearby prompts, local offsets, E and panels at 1152x648)")
 	quit()

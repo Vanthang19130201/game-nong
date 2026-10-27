@@ -70,6 +70,7 @@ func _update_zone(force: bool = false) -> void:
 	set_process(unlocked)
 	set_deferred("monitoring", unlocked)
 	$CollisionShape2D.set_deferred("disabled", not unlocked)
+	_refresh_body_collision()
 	if not unlocked:
 		player_near = false
 		cancel_harvest()
@@ -186,7 +187,13 @@ func _randomize_rock_type() -> void:
 
 
 func _update_display() -> void:
+	_refresh_body_collision()
 	$Visuals.refresh()
+
+func _refresh_body_collision() -> void:
+	var inactive: bool = not zone_active or state == "DEPLETED"
+	$Body/CollisionShape2D.set_deferred("disabled", inactive or resource_type != "wood")
+	$Body/RockCollisionShape2D.set_deferred("disabled", inactive or resource_type != "stone")
 
 
 func _on_body_entered(body: Node2D) -> void:

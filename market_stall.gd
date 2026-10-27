@@ -18,7 +18,7 @@ func interact(_player: Node2D = null) -> void:
 		hud.open_market_stall(self)
 
 func _update_prompt(_body: Node2D = null) -> void:
-	$Visuals/Prompt.text = tr("STALL_PROMPT") if can_interact() else tr("BUILDING_MARKET_STALL")
+	$Visuals/Prompt.text = tr("PRODUCTION_INTERACT") if can_interact() else ""
 
 func _on_body_exited(body: Node2D) -> void:
 	_update_prompt()
