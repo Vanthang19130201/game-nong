@@ -1,16 +1,71 @@
 extends Node2D
 
+const ROD_TEXTURE: Texture2D = preload("res://assets/characters/fishing_rod.png")
+const AXE_TEXTURE: Texture2D = preload("res://assets/characters/farm_axe.png")
+const HAMMER_TEXTURE: Texture2D = preload("res://assets/characters/farm_hammer.png")
+
 var tool_id: String = ""
 var facing: String = ""
 var base_rotation: float = 0.0
 var swinging: bool = false
 var swing_tween: Tween
+var rod_sprite: Sprite2D
+var axe_sprite: Sprite2D
+var hammer_sprite: Sprite2D
+
+
+func _ready() -> void:
+	rod_sprite = Sprite2D.new()
+	rod_sprite.name = "RodSprite"
+	rod_sprite.texture = ROD_TEXTURE
+	rod_sprite.region_enabled = true
+	rod_sprite.region_rect = Rect2(550, 0, 300, 1254)
+	rod_sprite.position = Vector2(7, -22.3)
+	rod_sprite.scale = Vector2.ONE * 0.037
+	rod_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	rod_sprite.visible = false
+	add_child(rod_sprite)
+	axe_sprite = _create_tool_sprite(
+		"AxeSprite", AXE_TEXTURE, Rect2(80, 30, 800, 1470),
+		Vector2(-3.3, -15.4), 0.022
+	)
+	hammer_sprite = _create_tool_sprite(
+		"HammerSprite", HAMMER_TEXTURE, Rect2(120, 30, 780, 1470),
+		Vector2(-0.2, -15.4), 0.022
+	)
+	add_child(axe_sprite)
+	add_child(hammer_sprite)
+
+
+func _create_tool_sprite(
+	sprite_name: String,
+	texture: Texture2D,
+	region: Rect2,
+	sprite_position: Vector2,
+	sprite_scale: float
+) -> Sprite2D:
+	var sprite := Sprite2D.new()
+	sprite.name = sprite_name
+	sprite.texture = texture
+	sprite.region_enabled = true
+	sprite.region_rect = region
+	sprite.position = sprite_position
+	sprite.scale = Vector2.ONE * sprite_scale
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite.visible = false
+	return sprite
 
 
 func set_equipped(item_id: String, direction: String) -> void:
 	tool_id = item_id if item_id in ["axe", "hammer", "fishing_rod"] else ""
 	set_facing(direction)
 	visible = not tool_id.is_empty()
+	if is_instance_valid(rod_sprite):
+		rod_sprite.visible = tool_id == "fishing_rod"
+	if is_instance_valid(axe_sprite):
+		axe_sprite.visible = tool_id == "axe"
+	if is_instance_valid(hammer_sprite):
+		hammer_sprite.visible = tool_id == "hammer"
 	queue_redraw()
 
 
@@ -73,66 +128,4 @@ func tip_world_position() -> Vector2:
 
 
 func _draw() -> void:
-	if tool_id.is_empty():
-		return
-	if tool_id == "fishing_rod":
-		_draw_rod()
-	else:
-		_draw_handle()
-		if tool_id == "axe":
-			_draw_axe_head()
-		else:
-			_draw_hammer_head()
-
-
-func _draw_handle() -> void:
-	# Narrow handle, beveled wood, and a small hand grip keep the tool visually
-	# attached to the character instead of looking like a floating icon.
-	draw_line(Vector2(0, 5), Vector2(0, -25), Color("493426"), 5.2, true)
-	draw_line(Vector2(0, 4), Vector2(0, -24), Color("a97443"), 3.0, true)
-	draw_line(Vector2(1, 2), Vector2(1, -18), Color("d6aa72", 0.9), 0.9, true)
-	draw_line(Vector2(-2, 2), Vector2(2, 2), Color("67452f"), 1.4, true)
-
-
-func _draw_axe_head() -> void:
-	draw_colored_polygon(PackedVector2Array([
-		Vector2(-2, -22), Vector2(-13, -27), Vector2(-20, -23),
-		Vector2(-22, -16), Vector2(-17, -11), Vector2(-7, -12),
-		Vector2(-2, -16), Vector2(3, -19)
-	]), Color("53686a"))
-	draw_colored_polygon(PackedVector2Array([
-		Vector2(-13, -27), Vector2(-20, -23), Vector2(-22, -16),
-		Vector2(-17, -11), Vector2(-17, -20)
-	]), Color("d8dfd0"))
-	draw_line(Vector2(-2, -22), Vector2(-13, -27), Color("46372b"), 1.2, true)
-	draw_line(Vector2(-19, -21), Vector2(-19, -15), Color("f0e4c8"), 1.0, true)
-	draw_line(Vector2(-5, -17), Vector2(-2, -20), Color("88634a"), 1.2, true)
-
-
-func _draw_hammer_head() -> void:
-	draw_colored_polygon(PackedVector2Array([
-		Vector2(-5, -25), Vector2(10, -25), Vector2(13, -22),
-		Vector2(13, -17), Vector2(10, -14), Vector2(-4, -14),
-		Vector2(-7, -17), Vector2(-7, -22)
-	]), Color("48504c"))
-	draw_colored_polygon(PackedVector2Array([
-		Vector2(-4, -24), Vector2(9, -24), Vector2(11, -21),
-		Vector2(11, -18), Vector2(9, -16), Vector2(-3, -16),
-		Vector2(-5, -18), Vector2(-5, -22)
-	]), Color("89958c"))
-	draw_line(Vector2(8, -23), Vector2(9, -17), Color("e1dec9"), 1.4, true)
-	draw_line(Vector2(-3, -24), Vector2(8, -24), Color("b9c0b4"), 1.0, true)
-	draw_line(Vector2(-2, -14), Vector2(7, -14), Color("4a4033"), 1.0, true)
-
-
-func _draw_rod() -> void:
-	# Compact cork-and-wood grip meets the hand; the tapered rod is drawn as
-	# two lines so all four facing rotations keep the same clean silhouette.
-	draw_line(Vector2(0, 5), Vector2(0, -34), Color("483326"), 3.6, true)
-	draw_line(Vector2(-1, 3), Vector2(-1, -31), Color("b77e49"), 2.0, true)
-	draw_line(Vector2(0, -34), Vector2(5, -42), Color("67482f"), 1.3, true)
-	draw_line(Vector2(0, -34), Vector2(5, -42), Color("d1a36c"), 0.7, true)
-	draw_line(Vector2(-2, -8), Vector2(2, -8), Color("775132"), 1.1, true)
-	draw_line(Vector2(-2, -13), Vector2(2, -13), Color("775132"), 1.1, true)
-	draw_circle(Vector2(0, 4), 2.5, Color("62452f"))
-	draw_circle(Vector2(0, 0), 2.0, Color("d3ad77"))
+	pass
