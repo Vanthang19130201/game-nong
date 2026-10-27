@@ -1,4 +1,3 @@
-@tool
 extends Sprite2D
 
 @export var fallback_paths: Array[NodePath] = []

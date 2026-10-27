@@ -1,4 +1,3 @@
-@tool
 extends AnimatedSprite2D
 
 @export var fallback_paths: Array[NodePath] = []
@@ -8,7 +7,7 @@ var facing: String = "down"
 func _process(_delta: float) -> void:
 	var moving: bool = false
 	var body = get_parent()
-	if not Engine.is_editor_hint() and body is CharacterBody2D:
+	if body is CharacterBody2D:
 		var direction: Vector2 = body.velocity
 		moving = direction.length_squared() > 0.01
 		if moving:

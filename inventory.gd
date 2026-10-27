@@ -271,11 +271,12 @@ func can_add_item(item: String, amount: int) -> bool:
 	return false
 
 
-func add_item(item: String, amount: int = 1) -> bool:
+func add_item(item: String, amount: int = 1, notify: bool = true) -> bool:
 	if not can_add_item(item, amount):
 		return fail(tr("ERROR_STORAGE"))
 	set(item, get(item) + amount)
-	inventory_changed.emit()
+	if notify:
+		inventory_changed.emit()
 	return true
 
 

@@ -1,6 +1,7 @@
 extends Button
 
 const Icon = preload("res://item_icon.gd")
+const ItemData = preload("res://item_ui_data.gd")
 var item_id: String = ""
 var quantity: int = 0
 var item_visual: Control
@@ -42,6 +43,8 @@ func _init() -> void:
 
 func _get_tooltip(_at_position: Vector2) -> String:
 	var hud = get_tree().get_first_node_in_group("farm_hud")
+	if hud != null and hud.storage_panel.visible:
+		return tooltip_text
 	# The reserved hint row keeps item details away from other action buttons.
 	return "" if hud != null and hud.has_item_hint_area() else tooltip_text
 
@@ -59,9 +62,13 @@ func display(id: String, count: int, locked: bool = false, hint: String = "") ->
 	item_id = id
 	quantity = count
 	item_visual.item_id = id
-	item_visual.modulate.a = 0.38 if locked else (0.65 if count == 0 else 1.0)
+	item_visual.modulate.a = 0.38 if locked else (0.35 if count == 0 else 1.0)
+	amount.modulate.a = 0.55 if count == 0 else 1.0
 	amount.text = str(count)
 	tooltip_text = tr("ITEM_TOOLTIP") % [Localization.display_name(id),count]
+	var price: int = ItemData.sell_price(id)
+	if price > 0:
+		tooltip_text += "\n" + tr("ITEM_SELL_TOOLTIP") % price
 	if not hint.is_empty():
 		tooltip_text += "\n"+hint
 	disabled = locked

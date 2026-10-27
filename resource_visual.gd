@@ -1,4 +1,3 @@
-@tool
 extends Node2D
 
 const RockData = preload("res://rock_data.gd")
@@ -13,10 +12,6 @@ const RockData = preload("res://rock_data.gd")
 @onready var resource_node: Node = get_parent()
 @onready var default_texture: Texture2D = $ResourceSprite.texture
 
-func _ready() -> void:
-	if Engine.is_editor_hint():
-		_refresh_editor()
-
 func _fit_tree() -> void:
 	var sprite: Sprite2D = $ResourceSprite
 	sprite.region_enabled = tree_region.has_area()
@@ -25,13 +20,6 @@ func _fit_tree() -> void:
 	var factor: float = minf(tree_size.x/art_size.x,tree_size.y/art_size.y)
 	sprite.scale = Vector2.ONE*factor
 	sprite.position = Vector2(0,tree_ground_y-art_size.y*factor/2)
-
-func _refresh_editor() -> void:
-	var wood: bool = resource_node.get("resource_type") == "wood"
-	$ResourceSprite.texture = tree_texture if wood else rock_texture
-	$ResourceSprite.region_enabled = false
-	if wood and tree_texture != null:
-		_fit_tree()
 
 func refresh() -> void:
 	var wood: bool = resource_node.resource_type == "wood"
@@ -71,10 +59,7 @@ func refresh() -> void:
 
 
 func _process(_delta: float) -> void:
-	if Engine.is_editor_hint():
-		_refresh_editor()
-	else:
-		_refresh_label()
+	_refresh_label()
 
 
 func _refresh_label() -> void:

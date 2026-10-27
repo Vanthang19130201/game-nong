@@ -4,7 +4,7 @@
 
 [ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
 
-[ext_resource type="Script" path="res://production_station.gd" id="1"]
+[ext_resource type="Script" path="res://feed_mill.gd" id="1"]
 
 [sub_resource type="RectangleShape2D" id="AreaShape"]
 size = Vector2(144, 100)

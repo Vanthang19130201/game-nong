@@ -1,0 +1,54 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://calendar_hud.gd" id="1"]
+[ext_resource type="Theme" path="res://assets/ui/ui_theme.tres" id="2"]
+[ext_resource type="Texture2D" path="res://assets/ui/weather_sun.svg" id="3"]
+
+[node name="Calendar" type="PanelContainer"]
+z_index = 1
+theme = ExtResource("2")
+script = ExtResource("1")
+
+[node name="Content" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Date" type="HBoxContainer" parent="Content"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Day" type="Label" parent="Content/Date"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+
+[node name="Season" type="Label" parent="Content/Date"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+
+[node name="Time" type="HBoxContainer" parent="Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="WeatherIcon" type="TextureRect" parent="Content/Time"]
+custom_minimum_size = Vector2(26,26)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("3")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Hour" type="Label" parent="Content/Time"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_font_sizes/font_size = 18
+
+[node name="Weather" type="Label" parent="Content/Time"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12

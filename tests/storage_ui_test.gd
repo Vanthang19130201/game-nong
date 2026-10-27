@@ -94,7 +94,7 @@ func run_checks() -> void:
 	plot._on_grow_timer_timeout()
 	plot.harvest()
 	check(cells["carrot"].quantity == 0 and cells["wheat"].quantity == 1, "harvest refresh")
-	check(hud.transaction_feedback.visible and hud.transaction_feedback.text == "+1 Lúa mì\n+10 Kinh nghiệm", "successful harvest feedback")
+	check(not hud.transaction_feedback.visible and hud.transaction_feedback.get_child_count() == 0 and hud.transaction_feedback.text == "+1 Lúa mì\n+10 Kinh nghiệm", "harvest never creates a large notification panel")
 	var toast_count: int = hud.transaction_feedback.get_child_count()
 	plot.harvest()
 	check(hud.transaction_feedback.get_child_count() == toast_count and inv.wheat == 1, "empty plot gives no reward or feedback")
@@ -160,20 +160,14 @@ func run_checks() -> void:
 	await key(KEY_TAB)
 	check(not hud.shop_build_panel.visible and panel.visible, "Tab replaces shop")
 	await key(KEY_ESCAPE)
-	# Consecutive feedback is bounded, readable and never intercepts input.
+	# Legacy notifications never create large panels. Real inventory changes
+	# use the shared small floating feedback instead.
 	for i in range(8):
 		hud.show_transaction_feedback("-1 Lúa mì\n+10 Xu")
 	await process_frame
 	await process_frame
 	var feedback = hud.transaction_feedback
-	check(feedback.get_child_count() == 4, "toast burst bounded")
-	for i in range(feedback.get_child_count()):
-		var toast = feedback.get_child(i)
-		var lines = toast.get_child(0)
-		check(lines.get_child_count() == 2 and toast.mouse_filter == Control.MOUSE_FILTER_IGNORE, "two readable lines, no input capture")
-		check(lines.get_child(0).get_theme_color("font_color") == Color("ffab70") and lines.get_child(1).get_theme_color("font_color") == Color("8df59b"), "loss/gain colors")
-		if i > 0:
-			check(not toast.get_global_rect().intersects(feedback.get_child(i-1).get_global_rect()), "toasts do not overlap")
+	check(feedback.get_child_count() == 0 and not feedback.visible, "legacy feedback cannot create a toast burst")
 	await create_timer(1.55).timeout
 	check(not feedback.visible and feedback.get_child_count() == 0, "burst cleans up without stale callbacks")
 	# The panel stays inside a narrow mobile viewport and has touch-sized tabs.

@@ -40,6 +40,9 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'animal_wander_test.gd') -Destin
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'animal_entity_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'station_status_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'crop_visual_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'floating_feedback_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'hud_completion_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'feed_mill_test.gd') -Destination $testRoot -Force
 $projectPath = Join-Path $testRoot 'project.godot'
 Add-Content -LiteralPath $projectPath -Value "`n[debug]`nfile_logging/enable_file_logging=false"
 # Reuse the project's existing imports; no editor/settings writes are needed.
@@ -70,7 +73,11 @@ $stages = @('core', 'position_write', 'position_read', 'legacy_write', 'legacy_r
     'animals_core','animals_write','animals_read','animals_again','animals_reset_read',
     'animal_entity_core','animal_entity_write','animal_entity_read',
     'station_status_core','station_status_write','station_status_read',
-    'crop_visual_core','crop_visual_write','crop_visual_read')
+    'crop_visual_core','crop_visual_write','crop_visual_read',
+    'floating_core','floating_write','floating_read',
+    'hud_completion','calendar_write','calendar_read','calendar_legacy_write','calendar_legacy_read','calendar_invalid_write','calendar_invalid_read',
+    'feed_core','feed_write','feed_read','feed_again','feed_offline_write','feed_offline_read','feed_legacy_write','feed_legacy_read','feed_reset_read',
+    'feed_cancel','feed_cancel_write','feed_cancel_read','feed_cancel_again')
 foreach ($stage in $stages) {
     $log = Join-Path $testRoot "$stage.log"
     $ErrorActionPreference = 'Continue'
@@ -100,6 +107,9 @@ foreach ($stage in $stages) {
     if ($stage.StartsWith('animal_entity_')) { $testScript = 'animal_entity_test.gd' }
     if ($stage.StartsWith('station_status_')) { $testScript = 'station_status_test.gd' }
     if ($stage.StartsWith('crop_visual_')) { $testScript = 'crop_visual_test.gd' }
+    if ($stage.StartsWith('floating_')) { $testScript = 'floating_feedback_test.gd' }
+    if ($stage -eq 'hud_completion' -or $stage.StartsWith('calendar_')) { $testScript = 'hud_completion_test.gd' }
+    if ($stage.StartsWith('feed_')) { $testScript = 'feed_mill_test.gd' }
     & $Godot --headless --path $testRoot --script $testScript --quit-after 1800 -- $stage *> $log
     $ErrorActionPreference = $previousPreference
     $output = Get-Content -LiteralPath $log -Raw

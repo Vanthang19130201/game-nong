@@ -135,7 +135,7 @@ func run_checks() -> void:
 	root.push_input(motion,true)
 	await process_frame
 	var hint: Label = hud.storage_panel.get_node("Margin/Content/ItemHint")
-	check(hint.text.contains(root.get_node("Localization").display_name("wheat_seed")) and slot._get_tooltip(Vector2.ZERO).is_empty(),"item details use reserved row, no floating tooltip over buttons")
+	check(hint.text.contains(root.get_node("Localization").display_name("wheat_seed")) and slot._get_tooltip(Vector2.ZERO).contains(root.get_node("Localization").display_name("wheat_seed")),"inventory exposes item tooltip and keeps the reserved hint row")
 	check(hint.get_global_rect().end.y <= hud.storage_panel.get_node("Margin/Content/Footer").get_global_rect().position.y,"hint never overlaps footer")
 	hud.close_all_panels()
 	for item in snapshot:

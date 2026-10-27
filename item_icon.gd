@@ -80,6 +80,12 @@ func _draw() -> void:
 		draw_rect(Rect2(24,12,17,12),Color("f5f0d8"))
 		draw_rect(Rect2(23,10,19,6),Color("8caaba"))
 		draw_rect(Rect2(22,32,21,12),Color("9eb5be"))
+	elif id == "coins":
+		draw_circle(Vector2(32,33),22,INK)
+		draw_circle(Vector2(32,31),19,Color("e9bd57"))
+		draw_arc(Vector2(32,31),14,0,TAU,24,Color("b98434"),2,true)
+		draw_line(Vector2(35,21),Vector2(27,27),Color("fff0b4"),3,true)
+		draw_line(Vector2(27,27),Vector2(36,39),Color("fff0b4"),3,true)
 	elif id == "wood":
 		_poly([Vector2(10,39),Vector2(41,15),Vector2(56,31),Vector2(25,55)],Color("a97546"))
 		draw_circle(Vector2(19,46),12,Color("e0b374"))

@@ -6,6 +6,7 @@ const Progression = preload("res://progression_data.gd")
 const LandData = preload("res://land_data.gd")
 const DecorationData = preload("res://decoration_data.gd")
 const RockData = preload("res://rock_data.gd")
+const FeedData = preload("res://feed_mill_data.gd")
 var placed_decorations: Array = []
 var next_decoration_id: int = 1
 var unlocked_land_zones: Array[String] = ["farm_core"]
@@ -79,6 +80,9 @@ func default_station(id: String) -> Dictionary:
 		data["chicken_count"] = Inventory.chicken_count
 	elif id == "cow_shed":
 		data["cow_count"] = Inventory.cow_count
+	elif id == "feed_mill":
+		data["queue"] = []
+		data["outputs"] = []
 	return data
 
 
@@ -132,6 +136,9 @@ func save_game() -> bool:
 	if resetting:
 		return false
 	var data := ConfigFile.new()
+	var calendar: Dictionary = GameClock.get_save_data()
+	for key in calendar:
+		data.set_value("calendar", key, calendar[key])
 	data.set_value("decorations", "placed", placed_decorations)
 	data.set_value("decorations", "next_id", next_decoration_id)
 	data.set_value("land", "unlocked_land_zones", unlocked_land_zones)
@@ -222,6 +229,7 @@ func reset_game() -> bool:
 				return false
 
 	resetting = true
+	GameClock.restore({})
 	placed_decorations.clear()
 	next_decoration_id = 1
 	unlocked_land_zones = ["farm_core"]
@@ -288,6 +296,7 @@ func reset_game() -> bool:
 
 func _load_game() -> void:
 	var data: ConfigFile = _read_snapshot()
+	GameClock.restore({"day":data.get_value("calendar","day",1), "minutes":data.get_value("calendar","minutes",360.0), "season":data.get_value("calendar","season","spring")})
 	placed_decorations = DecorationData.restore(data.get_value("decorations","placed",[]))
 	next_decoration_id = _read_int(data,"decorations","next_id",1,1)
 	for record in placed_decorations:
@@ -397,6 +406,19 @@ func _read_int(data: ConfigFile, section: String, key: String, fallback: int, mi
 func _read_station(data: ConfigFile, id: String) -> Dictionary:
 	var result: Dictionary = default_station(id)
 	if not Inventory.owns_building(id):
+		return result
+	if id == "feed_mill":
+		result["state"] = data.get_value(id,"state","IDLE")
+		result["production_type"] = data.get_value(id,"production_type","")
+		result["started_at"] = _read_time(data,id,"started_at",0.0)
+		result["ready_at"] = _read_time(data,id,"ready_at",0.0)
+		if data.has_section_key(id,"queue") or data.has_section_key(id,"outputs"):
+			result["queue"] = data.get_value(id,"queue",[])
+			result["outputs"] = data.get_value(id,"outputs",[])
+		else:
+			result.erase("queue")
+			result.erase("outputs")
+		result.merge(FeedData.restore(result),true)
 		return result
 	var state = data.get_value(id, "state", result["state"])
 	if state not in ["PRODUCING", "READY"]:

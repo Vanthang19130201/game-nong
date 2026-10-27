@@ -7,6 +7,9 @@ var items: Array[String] = ["wheat_seed","corn_seed","carrot_seed","soybean_seed
 var selected_slot: int = 0
 var slots: Array[Button] = []
 var caption: Label
+var caption_tween: Tween
+var last_caption_item: String = ""
+var last_caption_slot: int = -1
 @onready var hud: Node = get_parent()
 
 func _ready() -> void:
@@ -66,6 +69,15 @@ func refresh() -> void:
 		slots[i].display(id,count,not hint.is_empty(),hint)
 		slots[i].highlight(i == selected_slot)
 	caption.text = tr("HOTBAR_SELECTED") % Localization.display_name(items[selected_slot])
+	if last_caption_item != items[selected_slot] or last_caption_slot != selected_slot:
+		last_caption_item = items[selected_slot]
+		last_caption_slot = selected_slot
+		if caption_tween != null and caption_tween.is_running():
+			caption_tween.kill()
+		caption.modulate.a = 1.0
+		caption_tween = create_tween()
+		caption_tween.tween_interval(1.25)
+		caption_tween.tween_property(caption, "modulate:a", 0.0, 0.25)
 
 func owned_count(id: String) -> int:
 	if id in ["axe","hammer"]:

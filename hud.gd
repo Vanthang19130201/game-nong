@@ -29,6 +29,7 @@ var item_hint_source: Control
 @onready var storage_panel: PanelContainer = $StoragePanel
 @onready var experience_bar: ProgressBar = $Layout/Experience/ExperienceBar
 @onready var experience_value: Label = $Layout/Experience/ExperienceValue
+@onready var floating_feedback: Control = $FloatingFeedback
 var rod_info: Label
 var rod_upgrade: Button
 
@@ -51,6 +52,8 @@ var pending_sale_animal: Node2D
 @onready var station_info: Label = $StationPanel/Margin/Content/ContentScroll/Body/Info
 @onready var produce_button: Button = $StationPanel/Margin/Content/ContentScroll/Body/ProduceButton
 @onready var collect_button: Button = $StationPanel/Margin/Content/ContentScroll/Body/CollectButton
+@onready var feed_queue: VBoxContainer = $StationPanel/Margin/Content/ContentScroll/Body/FeedQueue
+var station_layout: Node
 @onready var order_panel: PanelContainer = $OrderPanel
 @onready var order_cards: HBoxContainer = $OrderPanel/Margin/Content/Scroll/Orders
 @onready var order_message: Label = $OrderPanel/Margin/Content/Message
@@ -245,6 +248,14 @@ func show_transaction_feedback(text: String) -> void:
 	transaction_feedback.show_message(text)
 
 
+func show_floating_feedback(text: String) -> void:
+	floating_feedback.show_floating_feedback(text)
+
+
+func show_inventory_change(item_id: String, amount: int) -> void:
+	floating_feedback.show_inventory_change(item_id, amount)
+
+
 func show_harvest_feedback(crop: String) -> void:
 	show_transaction_feedback(tr("TRADE_ITEM") % [1, Localization.display_name(crop)] + "\n" + tr("HARVEST_EXP_FEEDBACK") % CropData.CROPS[crop]["harvest_exp"])
 
@@ -298,6 +309,8 @@ func _apply_ui_theme(node: Node) -> void:
 func _update_inventory() -> void:
 	save_status.text = ""
 	inventory_label.text = tr("HUD_COMPACT") % [Inventory.coins, Inventory.player_level]
+	$Layout/Materials/WoodCount.text = "%s: %d" % [Localization.display_name("wood"), Inventory.wood]
+	$Layout/Materials/StoneCount.text = "%s: %d" % [Localization.display_name("stone"), Inventory.stone]
 	experience_bar.max_value = Inventory.exp_to_next_level()
 	experience_bar.value = Inventory.player_exp
 	experience_value.text = "%d / %d" % [Inventory.player_exp, Inventory.exp_to_next_level()]
@@ -450,9 +463,11 @@ func open_station(station: Node) -> void:
 		return
 	_close_game_panels()
 	active_station = station
+	station_layout.preferred_size = Vector2(520,650) if station.station_id == "feed_mill" else Vector2(480,560)
 	active_station.state_changed.connect(_update_station_panel)
 	shop_button.text = tr("UI_SHOP_SHORT")
 	station_panel.show()
+	station_layout.fit()
 	_update_station_panel()
 
 
@@ -460,6 +475,7 @@ func close_station() -> void:
 	if is_instance_valid(active_station) and active_station.state_changed.is_connected(_update_station_panel):
 		active_station.state_changed.disconnect(_update_station_panel)
 	active_station = null
+	feed_queue.hide()
 	station_panel.hide()
 
 
@@ -468,21 +484,23 @@ func _update_station_panel() -> void:
 		return
 	var id: String = active_station.station_id
 	var is_mill: bool = id == "feed_mill"
+	station_info.add_theme_font_size_override("font_size",14 if is_mill else 16)
+	$StationPanel/Margin/Content/ContentScroll/Body.add_theme_constant_override("separation",6 if is_mill else 12)
 	recipe_selector.visible = is_mill
+	feed_queue.visible = is_mill
 	if is_mill:
 		var recipe: String = recipe_ids[maxi(0, recipe_selector.selected)]
 		var info: Dictionary = Progression.RECIPES[recipe]
-		station_info.text = tr("STATION_MILL_INFO") % [Localization.state(active_station.state), Localization.display_name(info["name"])]
+		station_info.text = tr("FEED_RECIPE_INFO") % info["time"]
 		for item in info["requirements"]:
 			station_info.text += tr("STATION_INGREDIENT") % [info["requirements"][item], Localization.display_name(item), Inventory.get(item)]
-		station_info.text += tr("STATION_TIME") % [info["time"], info["level"]]
-		if active_station.state != "IDLE":
-			station_info.text += tr("STATION_BATCH") + Localization.display_name(active_station.production_type)
 		for index in range(recipe_ids.size()):
 			recipe_selector.set_item_disabled(index, Inventory.player_level < Progression.RECIPES[recipe_ids[index]]["level"])
-		produce_button.text = tr("UI_PRODUCE")
-		collect_button.text = tr("UI_COLLECT_FEED")
+		produce_button.text = tr("FEED_ENQUEUE")
+		collect_button.text = tr("FEED_COLLECT_ALL")
 		produce_button.disabled = not active_station.can_produce(recipe) or not active_station.player_near
+		collect_button.disabled = active_station.outputs.is_empty() or active_station.collecting or not active_station.player_near
+		feed_queue.refresh(active_station)
 	else:
 		var product: Dictionary = Progression.PRODUCTS[id]
 		var animal: String = product["animal"]
@@ -491,7 +509,8 @@ func _update_station_panel() -> void:
 		produce_button.text = tr("UI_FEED_PREFIX") + Localization.display_name(info["name"])
 		collect_button.text = tr("UI_COLLECT_PREFIX") + Localization.display_name(product["item"])
 		produce_button.disabled = not active_station.can_produce() or not active_station.player_near
-	collect_button.disabled = active_station.state != "READY" or not active_station.player_near
+	if not is_mill:
+		collect_button.disabled = active_station.state != "READY" or not active_station.player_near
 
 func _produce() -> void:
 	if is_instance_valid(active_station) and active_station.player_near:
@@ -500,7 +519,9 @@ func _produce() -> void:
 
 func _collect() -> void:
 	if is_instance_valid(active_station) and active_station.player_near:
+		collect_button.disabled = true
 		active_station.collect()
+		_update_station_panel()
 
 
 func blocks_world_input() -> bool:
@@ -1022,6 +1043,8 @@ func _setup_cozy_ui() -> void:
 		menu.move_child(button,i)
 	for entry in [[station_panel,Vector2(480,560)],[house_panel,Vector2(460,460)],[fish_market_panel,Vector2(500,560)]]:
 		var layout = preload("res://popup_layout.gd").new()
+		if entry[0] == station_panel:
+			station_layout = layout
 		layout.preferred_size = entry[1]
 		entry[0].add_child(layout)
 	get_viewport().size_changed.connect(_fit_menu)
