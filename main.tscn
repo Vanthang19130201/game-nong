@@ -34,7 +34,7 @@ size = Vector2(260, 220)
 size = Vector2(150, 64)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_6rjdj"]
-size = Vector2(29, 26)
+size = Vector2(28, 50)
 
 [sub_resource type="RectangleShape2D" id="RiverUpperShape"]
 size = Vector2(140, 790)
@@ -209,12 +209,11 @@ position_smoothing_enabled = true
 script = ExtResource("96_camera")
 
 [node name="Icon" type="Sprite2D" parent="Player" unique_id=1308617484]
-position = Vector2(-1.0000162, 7.6293945e-06)
+position = Vector2(-1.5258789e-05, -0.9999924)
 scale = Vector2(1, 0.908)
 texture = ExtResource("102_fallback")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player" unique_id=1192634142]
-position = Vector2(-0.5, 1)
 shape = SubResource("RectangleShape2D_6rjdj")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Player" unique_id=410885356]

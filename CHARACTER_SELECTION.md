@@ -32,7 +32,16 @@ The SVG is 144 × 256 pixels, with 48 × 64 cells. A PNG may use any resolution
 with the same grid and proportions (for example 288 × 512, cells 96 × 128).
 Atlas regions scale to the PNG dimensions automatically. Use transparent
 backgrounds and consistent character/feet placement in every cell.
-Player height is fitted uniformly to 48 world pixels; speed and collision stay the same.
+Player height is fitted uniformly using **Target Character Height** on
+`Player/AnimatedSprite2D` (`target_character_height` in `character_visual.gd`).
+The default is **72 world pixels**; for example use 48 for small or 100 for large.
+This is the authoritative size setting: Transform Scale is calculated from it
+when the character loads or changes, so do not use Transform Scale to set size.
+The visible bottom is anchored to the existing collision center, accounting for
+transparent frame padding. Player root, speed, collision and camera stay the same.
+The height is scene configuration, not save data; New Game/Continue and switching
+appearances retain it. Runtime code can change `target_character_height` then
+call `refresh_character_size()`; no texture or size polling runs every frame.
 
 For a different sheet layout, edit that character's `frames.tres` in Godot's
 SpriteFrames editor. Replace its atlas/frame textures and preserve these names:

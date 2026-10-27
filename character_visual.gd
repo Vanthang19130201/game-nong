@@ -3,7 +3,7 @@ extends AnimatedSprite2D
 @export var fallback_paths: Array[NodePath] = []
 @export var presentation_enabled: bool = true
 @export var use_selected_character: bool = false
-@export var character_height: float = 48.0
+@export_range(1.0, 256.0, 1.0, "or_greater") var target_character_height: float = 72.0
 var facing: String = "down"
 
 func _ready() -> void:
@@ -13,12 +13,38 @@ func _ready() -> void:
 
 func refresh_character() -> void:
 	sprite_frames = preload("res://character_data.gd").frames_for(SaveManager.selected_character_id)
-	if sprite_frames != null and sprite_frames.has_animation("idle_down") and sprite_frames.get_frame_count("idle_down") > 0:
-		var texture := sprite_frames.get_frame_texture("idle_down", 0)
-		if texture != null and texture.get_height() > 0:
-			scale = Vector2.ONE * character_height / texture.get_height()
-			offset = Vector2(0, -texture.get_height() * 0.5 + 12.0 / scale.y)
+	refresh_character_size()
 	play("idle_" + facing)
+
+func refresh_character_size() -> void:
+	# Presentation only: fit once after loading/changing a character, never per frame.
+	if sprite_frames == null or not sprite_frames.has_animation("idle_down"):
+		return
+	if not is_finite(target_character_height) or target_character_height <= 0.0:
+		return
+	var texture: Texture2D = null
+	for index in range(sprite_frames.get_frame_count("idle_down")):
+		texture = sprite_frames.get_frame_texture("idle_down", index)
+		if texture != null and texture.get_height() > 0:
+			break
+	if texture == null or texture.get_height() <= 0:
+		return
+	var source_height: float = float(texture.get_height())
+	var factor: float = target_character_height / source_height
+	scale = Vector2(factor, factor)
+	# Pin the bottom of the visible artwork (including its ground shadow) to
+	# the existing collision center. Texture padding must not make feet float.
+	var ground_y: float = 0.0
+	var collision := get_parent().get_node_or_null("CollisionShape2D")
+	if collision is CollisionShape2D:
+		ground_y = collision.position.y
+	var bottom: float = source_height
+	var frame_image: Image = texture.get_image()
+	if frame_image != null:
+		var used: Rect2i = frame_image.get_used_rect()
+		if used.has_area():
+			bottom = float(used.end.y)
+	offset = Vector2(0, source_height * 0.5 - bottom + (ground_y - position.y) / factor)
 
 func _process(_delta: float) -> void:
 	var moving: bool = false
