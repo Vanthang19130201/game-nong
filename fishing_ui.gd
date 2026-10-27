@@ -36,7 +36,7 @@ func _ready() -> void:
 func _build_catch_card() -> void:
 	catch_card = PanelContainer.new()
 	catch_card.name = "CatchCard"
-	catch_card.custom_minimum_size = Vector2(410, 230)
+	catch_card.custom_minimum_size = Vector2(320, 205)
 	catch_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	catch_card.add_theme_stylebox_override(
 		"panel",
@@ -58,7 +58,7 @@ func _build_catch_card() -> void:
 	var heading := Label.new()
 	heading.text = "BẠN ĐÃ CÂU ĐƯỢC"
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	heading.add_theme_font_size_override("font_size", 17)
+	heading.add_theme_font_size_override("font_size", 14)
 	heading.add_theme_color_override(
 		"font_color",
 		Color("6b4a2e")
@@ -67,7 +67,7 @@ func _build_catch_card() -> void:
 
 	catch_title = Label.new()
 	catch_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	catch_title.add_theme_font_size_override("font_size", 25)
+	catch_title.add_theme_font_size_override("font_size", 22)
 	catch_title.add_theme_color_override(
 		"font_color",
 		Color("4f3828")
@@ -75,11 +75,11 @@ func _build_catch_card() -> void:
 	content.add_child(catch_title)
 
 	var icon_holder := CenterContainer.new()
-	icon_holder.custom_minimum_size.y = 88
+	icon_holder.custom_minimum_size.y = 72
 	content.add_child(icon_holder)
 
 	catch_icon = Control.new()
-	catch_icon.custom_minimum_size = Vector2(82, 82)
+	catch_icon.custom_minimum_size = Vector2(68, 68)
 	catch_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	catch_icon.set_script(preload("res://item_icon.gd"))
 	icon_holder.add_child(catch_icon)
@@ -111,6 +111,7 @@ func show_session(spot: Node) -> void:
 
 	panel.show()
 	fish_button.hide()
+	_set_panel_layout("waiting")
 
 	_show_fishing_controls()
 
@@ -312,6 +313,8 @@ func _show_catch(fish_id: String) -> void:
 	reel_button.hide()
 	close_button.hide()
 
+	panel.add_theme_stylebox_override("panel", _catch_panel_style())
+	_set_panel_layout("catch")
 	catch_card.show()
 
 	var fish_data: Dictionary = Inventory.FishingData.FISH[fish_id]
@@ -365,6 +368,7 @@ func _show_catch(fish_id: String) -> void:
 
 
 func _apply_waiting_style() -> void:
+	_set_panel_layout("waiting")
 	panel.add_theme_stylebox_override(
 		"panel",
 		_waiting_panel_style()
@@ -399,6 +403,7 @@ func _apply_waiting_style() -> void:
 
 
 func _apply_bite_style() -> void:
+	_set_panel_layout("bite")
 	panel.add_theme_stylebox_override(
 		"panel",
 		_bite_panel_style()
@@ -453,6 +458,7 @@ func _apply_bite_style() -> void:
 
 
 func _apply_failed_style() -> void:
+	_set_panel_layout("waiting")
 	panel.add_theme_stylebox_override(
 		"panel",
 		_waiting_panel_style()
@@ -472,6 +478,29 @@ func _apply_failed_style() -> void:
 
 	reel_button.hide()
 	reaction_bar.hide()
+
+
+func _set_panel_layout(mode: String) -> void:
+	# The scene uses a bottom-center anchored panel.
+	# Resize it per state so hidden controls do not leave an empty area.
+	match mode:
+		"bite":
+			panel.offset_left = -205.0
+			panel.offset_right = 205.0
+			panel.offset_top = -255.0
+			panel.offset_bottom = -28.0
+
+		"catch":
+			panel.offset_left = -175.0
+			panel.offset_right = 175.0
+			panel.offset_top = -255.0
+			panel.offset_bottom = -30.0
+
+		_:
+			panel.offset_left = -185.0
+			panel.offset_right = 185.0
+			panel.offset_top = -235.0
+			panel.offset_bottom = -30.0
 
 
 func _rarity_name(rarity: String) -> String:

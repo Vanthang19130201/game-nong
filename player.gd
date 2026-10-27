@@ -18,6 +18,7 @@ func _ready() -> void:
 	global_position = global_position.clamp(farm_bounds.position, farm_bounds.end)
 	$Camera2D.reset_smoothing()
 
+
 func _physics_process(_delta):
 	var direction = Input.get_vector(
 		"move_left",
@@ -25,13 +26,26 @@ func _physics_process(_delta):
 		"move_up",
 		"move_down"
 	)
-	if is_instance_valid(hud) and hud.blocks_world_input() and not hud.edit_farm.active:
+
+	var fishing_active: bool = (
+		is_instance_valid(hud)
+		and is_instance_valid(hud.fishing_ui)
+		and is_instance_valid(hud.fishing_ui.active_spot)
+	)
+
+	if fishing_active:
+		# While a fishing session is active the player stays at the dock.
+		# SPACE is reserved for reeling and ESC can still cancel the session.
+		direction = Vector2.ZERO
+	elif is_instance_valid(hud) and hud.blocks_world_input() and not hud.edit_farm.active:
 		direction = Vector2.ZERO
 
 	velocity = direction * speed
 	move_and_slide()
+
 	# Leave a 50-pixel margin between the player and each edge of the map.
 	global_position = global_position.clamp(farm_bounds.position, farm_bounds.end)
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
@@ -41,8 +55,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			interact_at_screen_position(event.position)
 		get_viewport().set_input_as_handled()
 		return
+
 	if not event.is_action_pressed("interact") or event.is_echo():
 		return
+
 	get_viewport().set_input_as_handled()
 	try_interact()
 
@@ -51,43 +67,57 @@ func _unhandled_input(event: InputEvent) -> void:
 func interact_at_screen_position(screen_position: Vector2) -> void:
 	if (is_instance_valid(hud) and hud.blocks_world_input()) or is_instance_valid(active_resource):
 		return
+
 	if is_instance_valid(hud) and is_instance_valid(hud.fishing_ui.active_spot):
 		return
+
 	var world_position: Vector2 = get_canvas_transform().affine_inverse() * screen_position
 	var target: Node2D = mouse_interaction.target_at(world_position)
+
 	if target != null:
 		try_interact(target)
 	else:
 		var zone = mouse_interaction.land_at(world_position)
 		if zone != null:
 			hud.open_land_purchase(zone.zone_id)
+
 	mouse_interaction.clear_hover()
 
 
 func can_interact_with(target: Node) -> bool:
 	if not is_instance_valid(target) or not target.is_in_group("farm_interactables") or not target.is_visible_in_tree():
 		return false
+
 	if (is_instance_valid(hud) and hud.blocks_world_input()) or is_instance_valid(active_resource):
 		return false
+
 	if is_instance_valid(hud) and is_instance_valid(hud.fishing_ui.active_spot):
 		return false
+
 	return target.can_interact()
 
 
 func try_interact(target: Node = null) -> void:
 	if is_instance_valid(hud) and hud.blocks_world_input():
 		return
+
 	var frame: int = Engine.get_process_frames()
+
 	if last_interaction_frame == frame:
 		return
+
 	if target == null and is_instance_valid(hud) and is_instance_valid(hud.fishing_ui.active_spot):
 		return
+
 	if is_instance_valid(active_resource):
 		return
+
 	if target == null:
 		target = _nearest_interactable()
+
 	if not can_interact_with(target):
 		return
+
 	# Keyboard and mouse share one dispatch, even if both arrive in one frame.
 	last_interaction_frame = frame
 	target.interact(self)
@@ -97,11 +127,18 @@ func _nearest_interactable() -> Node2D:
 	# A single dispatcher chooses one nearby target, regardless of scene order.
 	var nearest: Node2D = null
 	var best_distance: float = INF
+
 	for candidate in get_tree().get_nodes_in_group("farm_interactables"):
 		if can_interact_with(candidate):
-			var target_position: Vector2 = candidate.get_interaction_position() if candidate.has_method("get_interaction_position") else candidate.global_position
+			var target_position: Vector2 = (
+				candidate.get_interaction_position()
+				if candidate.has_method("get_interaction_position")
+				else candidate.global_position
+			)
 			var distance: float = global_position.distance_squared_to(target_position)
+
 			if distance < best_distance:
 				best_distance = distance
 				nearest = candidate
+
 	return nearest

@@ -22,6 +22,7 @@ var feedback: String = ""
 var player: Node2D
 var reserved_slot: bool = false
 var last_caught_fish: String = ""
+var fishing_visual: Node2D
 var rng := RandomNumberGenerator.new()
 
 @onready var label: Label = $Label
@@ -32,6 +33,7 @@ func _ready() -> void:
 	add_to_group("farm_interactables")
 	add_to_group("fishing_spots")
 	rng.randomize()
+	_setup_fishing_visual()
 	Inventory.inventory_changed.connect(_on_inventory_changed)
 
 
@@ -118,6 +120,7 @@ func _begin_cast() -> bool:
 	state = State.WAITING_FOR_BITE
 	deadline = now() + bite_delay
 	feedback = "Đang câu cá...\nHãy kiên nhẫn, chờ cá cắn mồi."
+	_set_visual_mode("WAITING")
 
 	return true
 
@@ -128,6 +131,7 @@ func _process(_delta: float) -> void:
 			cancel_session()
 			return
 
+	_update_fishing_visual()
 	_advance_state()
 
 	if state == State.IDLE:
@@ -168,6 +172,7 @@ func _advance_state() -> void:
 			state = State.BITE_WINDOW
 			deadline += bite_window
 			feedback = "CÁ CẮN MỒI!\nNhấn SPACE ngay!"
+			_set_visual_mode("BITE")
 
 			if now() >= deadline:
 				_fail(tr("FISHING_MISSED"))
@@ -233,6 +238,7 @@ func _catch_fish() -> void:
 		return
 
 	last_caught_fish = fish
+	_set_visual_mode("CAUGHT")
 
 	feedback = (
 		"Bạn đã câu được %s!"
@@ -267,6 +273,7 @@ func _fail(message: String) -> void:
 
 	last_caught_fish = ""
 	state = State.FAILED
+	_set_visual_mode("FAILED")
 	feedback = message + "\nBuổi câu đã kết thúc."
 	deadline = now() + Data.RESULT_TIME
 
@@ -284,6 +291,7 @@ func cancel_session() -> void:
 	deadline = 0.0
 	feedback = ""
 	last_caught_fish = ""
+	_set_visual_mode("HIDDEN")
 	player = null
 
 	_clear_ui()
@@ -305,6 +313,45 @@ func _on_inventory_changed() -> void:
 		and not _can_continue_session()
 	):
 		cancel_session()
+
+
+func _setup_fishing_visual() -> void:
+	fishing_visual = Node2D.new()
+	fishing_visual.name = "FishingVisual"
+	fishing_visual.set_script(preload("res://fishing_visual.gd"))
+	add_child(fishing_visual)
+
+
+func _update_fishing_visual() -> void:
+	if not is_instance_valid(fishing_visual):
+		return
+
+	if is_instance_valid(player):
+		# Convert the player's body position into FishingSpot local space.
+		# Slight upward offset makes the line look like it comes from the hands.
+		var origin := to_local(player.global_position) + Vector2(0, -14)
+		fishing_visual.set_cast_origin(origin)
+
+
+func _set_visual_mode(mode_name: String) -> void:
+	if not is_instance_valid(fishing_visual):
+		return
+
+	match mode_name:
+		"WAITING":
+			fishing_visual.set_mode(fishing_visual.Mode.WAITING)
+
+		"BITE":
+			fishing_visual.set_mode(fishing_visual.Mode.BITE)
+
+		"CAUGHT":
+			fishing_visual.set_mode(fishing_visual.Mode.CAUGHT)
+
+		"FAILED":
+			fishing_visual.set_mode(fishing_visual.Mode.FAILED)
+
+		_:
+			fishing_visual.set_mode(fishing_visual.Mode.HIDDEN)
 
 
 func _exit_tree() -> void:
