@@ -1090,6 +1090,8 @@ func _update_build_rows() -> void:
 			row["label"].text += "\n" + tr("UI_UPGRADE_MATERIALS_OWNED") % [Inventory.wood,cost["wood"],Inventory.stone,cost["stone"],Inventory.coins,cost["coins"]]
 			if cost.has("capacity"):
 				row["label"].text += tr("UI_CAPACITY_NEXT") % [Inventory.structure_capacity(id),cost["capacity"]]
+			elif cost.has("queue_capacity"):
+				row["label"].text += tr("UI_QUEUE_CAPACITY_NEXT") % [Inventory.production_queue_capacity(id),cost["queue_capacity"]]
 			elif id == "house":
 				row["label"].text += "\n" + tr("HOUSE_NEXT_STORAGE_BONUS") % Inventory.house_storage_bonus(current + 1)
 	dog_house_button.disabled = Inventory.has_dog_house

@@ -33,7 +33,7 @@ func interact(_player: Node2D = null) -> void:
 		hud.open_spinning_machine(self)
 
 func enqueue(item: String = "cotton_thread") -> bool:
-	if is_preview or not Inventory.owns_spinning_machine or not Data.RECIPES.has(item) or SaveManager.spinning_machine_queue.size() >= Data.QUEUE_LIMIT:
+	if is_preview or not Inventory.owns_spinning_machine or not Data.RECIPES.has(item) or SaveManager.spinning_machine_queue.size() >= Inventory.production_queue_capacity("spinning_machine"):
 		return Inventory.fail(tr("SPINNING_QUEUE_FULL"))
 	var recipe: Dictionary = Data.RECIPES[item]
 	if Inventory.player_level < recipe["level"]:
@@ -83,7 +83,7 @@ func refresh() -> void:
 			next_ready = minf(next_ready,entry["ready_at"])
 	if visible and is_finite(next_ready):
 		production_timer.start(maxf(0.01,next_ready-now))
-	$StatusLabel.text = tr("SPINNING_WORLD") % SaveManager.spinning_machine_queue.size()
+	$StatusLabel.text = tr("SPINNING_WORLD") % [SaveManager.spinning_machine_queue.size(), Inventory.production_queue_capacity("spinning_machine")]
 	state_changed.emit()
 
 func _finish_production() -> void:

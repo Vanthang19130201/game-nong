@@ -20,6 +20,10 @@ var wander_radius: float = 110.0
 var current_state: State = State.IDLE
 var greet_cooldown: float = 0.0
 var greet_check_cooldown: float = 0.0
+var vocal_cooldown: float = 0.0
+var hungry_whine_cooldown: float = 0.0
+var eating_sound_elapsed: float = 0.0
+var eating_sound_count: int = 0
 var rng := RandomNumberGenerator.new()
 
 @onready var decision_timer: Timer = $DecisionTimer
@@ -27,6 +31,7 @@ var rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	rng.randomize()
+	hungry_whine_cooldown = rng.randf_range(20.0, 42.0)
 	decision_timer.timeout.connect(_decide_next)
 	add_to_group("farm_pets")
 	add_to_group("farm_interactables")
@@ -47,10 +52,6 @@ func configure(profile_id: String, profile: Dictionary, home: Node2D, slot_index
 
 func set_home_point(point: Node2D) -> void:
 	home_point = point
-	if is_instance_valid(home_point) and global_position.distance_to(home_slot_position()) > wander_radius * 2.0:
-		global_position = home_slot_position()
-		walking = false
-		velocity = Vector2.ZERO
 
 func home_slot_position() -> Vector2:
 	var data: Dictionary = DogData.DOG_VARIANTS.get(variant_id, DogData.DOG_VARIANTS["shiba"])
@@ -62,6 +63,17 @@ func entrance_position() -> Vector2:
 		if is_instance_valid(entrance):
 			return entrance.global_position
 	return home_point.global_position + Vector2(0, 38) if is_instance_valid(home_point) else home_slot_position()
+
+func rest_position() -> Vector2:
+	# Pets always load into the open yard. The entrance remains reserved for a
+	# real exit/return animation, so a normal load never makes a healthy dog
+	# appear to be inside the lodge.
+	if is_instance_valid(home_point):
+		var marker_name := "DogRestShiba" if variant_id == "shiba" else "DogRestCream" if variant_id == "cream" else "DogRestBlackTan"
+		var rest_marker := home_point.get_node_or_null(marker_name) as Marker2D
+		if is_instance_valid(rest_marker):
+			return rest_marker.global_position
+	return home_slot_position()
 
 func food_wait_position() -> Vector2:
 	if is_instance_valid(home_point):
@@ -82,6 +94,8 @@ func is_hungry() -> bool:
 func _physics_process(delta: float) -> void:
 	greet_cooldown = maxf(0.0, greet_cooldown - delta)
 	greet_check_cooldown = maxf(0.0, greet_check_cooldown - delta)
+	vocal_cooldown = maxf(0.0, vocal_cooldown - delta)
+	hungry_whine_cooldown = maxf(0.0, hungry_whine_cooldown - delta)
 	if current_state != State.INSIDE_HOUSE:
 		var manager := _save_manager()
 		if is_instance_valid(manager):
@@ -93,6 +107,8 @@ func _physics_process(delta: float) -> void:
 		_move_to(food_wait_position(), State.RETURN_HOME)
 	if walking:
 		_move_toward_target(delta)
+	_update_eating_audio(delta)
+	_update_interaction_hint()
 	_update_depth()
 
 func _move_toward_target(delta: float) -> void:
@@ -115,9 +131,11 @@ func _arrive() -> void:
 		dog_visual.set_inside(true)
 		_set_state(State.INSIDE_HOUSE, rng.randf_range(5.0, 12.0))
 	elif current_state == State.GREET_PLAYER:
-		dog_visual.happy()
 		greet_cooldown = rng.randf_range(15.0, 25.0)
 		_set_state(State.IDLE, 1.5)
+		# Play the visual reward after state flow returns to idle, so the idle
+		# mapper cannot immediately replace the happy animation.
+		dog_visual.happy()
 	elif current_state == State.EATING:
 		walking = false
 		velocity = Vector2.ZERO
@@ -135,8 +153,8 @@ func _decide_next() -> void:
 		_set_state(State.IDLE, rng.randf_range(1.0, 2.0))
 		return
 	if current_state == State.EATING:
-		dog_visual.happy()
 		_set_state(State.IDLE, 2.0)
+		dog_visual.happy()
 		return
 	if is_hungry():
 		_move_to(food_wait_position(), State.RETURN_HOME)
@@ -150,11 +168,31 @@ func _decide_next() -> void:
 	elif roll < 0.94:
 		_set_state(State.SLEEP, rng.randf_range(3.0, 7.0))
 	else:
-		_move_to(entrance_position(), State.GO_INSIDE)
+		# Home is a real destination for hunger only. Healthy pets rest and
+		# wander across the player's owned farm instead of being pulled back to
+		# the Dog House by a random idle roll.
+		_set_state(State.IDLE, rng.randf_range(2.0, 4.0))
 
 func _wander() -> void:
-	for _attempt in range(8):
-		var point := home_slot_position() + Vector2.from_angle(rng.randf_range(0.0, TAU)) * sqrt(rng.randf()) * wander_radius
+	var manager := _save_manager()
+	if not is_instance_valid(manager):
+		_set_state(State.IDLE, 2.0)
+		return
+	var owned_zones: Array = manager.get("unlocked_land_zones")
+	for _attempt in range(16):
+		if owned_zones.is_empty():
+			break
+		var zone_id: String = str(owned_zones[rng.randi_range(0, owned_zones.size() - 1)])
+		var zone: Dictionary = LandData.ZONES.get(zone_id, {})
+		var area: Rect2 = zone.get("area", Rect2())
+		if area.size.x < 64.0 or area.size.y < 64.0:
+			continue
+		# An inset keeps paws away from the map edge while allowing any owned
+		# land, including west/south expansion zones, to be explored.
+		var point := Vector2(
+			rng.randf_range(area.position.x + 28.0, area.end.x - 28.0),
+			rng.randf_range(area.position.y + 28.0, area.end.y - 28.0)
+		)
 		if _safe_destination(point):
 			_move_to(point, State.WANDER)
 			return
@@ -164,7 +202,7 @@ func _safe_destination(point: Vector2) -> bool:
 	if not point.is_finite() or not wander_bounds.has_point(point) or point.x >= FarmData.RIVER_LEFT - 42.0:
 		return false
 	var manager := _save_manager()
-	return is_instance_valid(manager) and LandData.owns_rect(Rect2(point - Vector2(12, 8), Vector2(24, 16)), manager.unlocked_land_zones)
+	return is_instance_valid(manager) and LandData.owns_rect(Rect2(point - Vector2(12, 8), Vector2(24, 16)), manager.get("unlocked_land_zones"))
 
 
 func _save_manager() -> Node:
@@ -176,10 +214,13 @@ func _move_to(destination: Vector2, next_state: State) -> void:
 	_set_state(next_state, 0.0)
 
 func _set_state(next_state: State, wait_seconds: float) -> void:
+	var state_changed := current_state != next_state
 	current_state = next_state
 	walking = next_state in [State.WANDER, State.RETURN_HOME, State.GO_INSIDE, State.GREET_PLAYER]
 	if is_instance_valid(dog_visual):
 		dog_visual.set_state(State.keys()[next_state])
+	if state_changed:
+		_play_state_sound(next_state)
 	if wait_seconds > 0.0:
 		decision_timer.start(wait_seconds)
 	else:
@@ -190,7 +231,7 @@ func _check_player_greeting() -> void:
 		return
 	greet_check_cooldown = 1.0
 	var player := get_tree().get_first_node_in_group("farm_player") as Node2D
-	if not is_instance_valid(player) or not is_instance_valid(home_point) or player.global_position.distance_to(home_point.global_position) > 145.0:
+	if not is_instance_valid(player) or player.global_position.distance_to(global_position) > 145.0:
 		return
 	var chance: float = float(DogData.DOG_VARIANTS[variant_id]["greet_chance"])
 	if rng.randf() > chance * 0.24:
@@ -212,6 +253,8 @@ func begin_eating(fed_pet_id: String) -> void:
 	target = food_wait_position()
 	current_state = State.EATING
 	walking = true
+	eating_sound_elapsed = 0.10
+	eating_sound_count = 0
 	decision_timer.stop()
 	if is_instance_valid(dog_visual):
 		dog_visual.set_state("EATING")
@@ -219,9 +262,21 @@ func begin_eating(fed_pet_id: String) -> void:
 func interact(_player: Node2D = null) -> void:
 	if is_instance_valid(dog_visual):
 		dog_visual.show_name()
+		if not is_hungry() and not walking:
+			dog_visual.happy()
+			if rng.randf() <= 0.34:
+				_play_dog_sound(_happy_sound_id(), true, 5.0)
 	var hud := get_tree().get_first_node_in_group("farm_hud")
 	if is_instance_valid(hud) and not hud.blocks_world_input():
 		hud.show_transaction_feedback(tr("DOG_HUNGRY") if is_hungry() else tr("DOG_HAPPY") % custom_name)
+
+
+func _update_interaction_hint() -> void:
+	if not is_instance_valid(dog_visual):
+		return
+	var player := get_tree().get_first_node_in_group("farm_player") as Node2D
+	var nearby := current_state != State.INSIDE_HOUSE and is_instance_valid(player) and player.global_position.distance_to(global_position) <= 70.0
+	dog_visual.set_interaction_hint(nearby, custom_name)
 
 func can_interact() -> bool:
 	var player := get_tree().get_first_node_in_group("farm_player") as Node2D
@@ -230,3 +285,46 @@ func can_interact() -> bool:
 func _update_depth() -> void:
 	z_as_relative = false
 	z_index = clampi(floori(global_position.y / 8.0), 1, 600)
+
+
+func _play_state_sound(next_state: State) -> void:
+	if next_state == State.GREET_PLAYER:
+		# One friendly greeting on state entry, never once per movement frame.
+		_play_dog_sound(_bark_sound_id(), true, 8.0)
+	elif next_state == State.RETURN_HOME and hungry_whine_cooldown <= 0.0 and rng.randf() <= 0.28:
+		# Hunger is communicated sparingly so it is informative, never nagging.
+		_play_dog_sound("dog_whine_soft", true, 28.0)
+		hungry_whine_cooldown = rng.randf_range(25.0, 45.0)
+
+
+func _update_eating_audio(delta: float) -> void:
+	if current_state != State.EATING:
+		eating_sound_elapsed = 0.0
+		eating_sound_count = 0
+		return
+	if walking or eating_sound_count >= 3:
+		return
+	eating_sound_elapsed += delta
+	if eating_sound_elapsed < 0.34:
+		return
+	eating_sound_elapsed = 0.0
+	eating_sound_count += 1
+	_play_dog_sound("dog_lick" if eating_sound_count == 3 else "dog_eat", false)
+
+
+func _bark_sound_id() -> String:
+	return "dog_%s_bark" % variant_id
+
+
+func _happy_sound_id() -> String:
+	return "dog_%s_happy" % variant_id
+
+
+func _play_dog_sound(sound_id: String, vocal: bool = false, minimum_gap: float = 0.0) -> void:
+	if vocal and vocal_cooldown > 0.0:
+		return
+	var audio := get_node_or_null("/root/AudioManager")
+	if is_instance_valid(audio):
+		audio.play_random_sfx(sound_id, global_position)
+	if vocal:
+		vocal_cooldown = maxf(minimum_gap, 1.5)

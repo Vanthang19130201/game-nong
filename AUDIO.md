@@ -23,12 +23,22 @@ Use `AudioManager.play_sfx("plant_seed")` after a successful action. Pass a worl
 - Dig: `dig_hit`; reward/found treasure: `dig_find`.
 - Fishing state transitions: `fishing_cast`, `fishing_splash`, `fishing_bite`, `fish_caught`, `fishing_fail`, or `treasure_found`.
 - Feed, animal products, production, building placement, and upgrades use their matching `animal_*`, `collect_*`, `production_*`, `product_collect`, `building_place`, and `upgrade_success` cues.
-- Animal vocal cues use spatial playback and a shared cooldown.
+- Animal vocal cues use spatial playback and a shared cooldown. The three dog
+  breeds use that same pooled positional path: greeting cues are globally
+  spaced, while eating/lick sounds remain quiet and local.
 - WeatherManager controls the rain ambience fade. GameClock remains the only time source.
+
+## Dog sound set
+
+`assets/audio/sfx/animals/dogs/` contains original, reproducibly synthesized
+cozy cues for Shiba, Cream Dog, and Black Tan Dog. Each breed has its own soft
+bark pair and happy cue; shared files cover the rare hunger whine, eating,
+licking, sniffing, shake, sleep, and grass-paw details. `dog.gd` only triggers
+them on state entry or a short eating beat—never every frame.
 
 ## Music and settings
 
-The single `farm_day` original track runs on the Music bus through scene changes, preventing duplicate playback. Farm ambience and rain ambience are separate and subtle. Music and SFX/ambience have separate live toggles. Preferences and volumes are stored in `user://settings.cfg`, never in the farm save; new game and farm reset do not touch them. Initial linear volumes are 42% music and 62% SFX, with additional bus and per-effect attenuation for a softer mix. Existing saved volume preferences remain honored while the mix trims also soften them.
+The single `farm_day` original track runs on the Music bus through scene changes, preventing duplicate playback. Farm ambience and rain ambience are separate and subtle. Music and SFX/ambience have separate live toggles. Preferences and volumes are stored in `user://settings.cfg`, never in the farm save; new game and farm reset do not touch them. New profiles start at 38% music and 56% SFX, with additional bus and per-effect attenuation for a softer mix. Existing saved volume preferences remain honored while the mix trims also soften them.
 
 ## Copyright and adding sounds
 

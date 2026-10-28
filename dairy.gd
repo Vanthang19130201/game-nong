@@ -33,7 +33,7 @@ func interact(_player: Node2D = null) -> void:
 		hud.open_dairy(self)
 
 func enqueue(item: String) -> bool:
-	if is_preview or not Inventory.owns_dairy or not Data.RECIPES.has(item) or SaveManager.dairy_queue.size() >= Data.QUEUE_LIMIT:
+	if is_preview or not Inventory.owns_dairy or not Data.RECIPES.has(item) or SaveManager.dairy_queue.size() >= Inventory.production_queue_capacity("dairy"):
 		return Inventory.fail(tr("DAIRY_QUEUE_FULL"))
 	var recipe: Dictionary = Data.RECIPES[item]
 	if Inventory.player_level < recipe["level"]:
@@ -83,7 +83,7 @@ func refresh() -> void:
 			next_ready = minf(next_ready,entry["ready_at"])
 	if visible and is_finite(next_ready):
 		production_timer.start(maxf(0.01,next_ready-now))
-	$StatusLabel.text = tr("DAIRY_WORLD") % SaveManager.dairy_queue.size()
+	$StatusLabel.text = tr("DAIRY_WORLD") % [SaveManager.dairy_queue.size(), Inventory.production_queue_capacity("dairy")]
 	state_changed.emit()
 
 func _finish_production() -> void:

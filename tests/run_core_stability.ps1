@@ -94,7 +94,7 @@ $stages = @('size_core', 'size_write', 'size_read', 'character_core', 'character
     'floating_core','floating_write','floating_read',
     'hud_completion','calendar_write','calendar_read','calendar_legacy_write','calendar_legacy_read','calendar_invalid_write','calendar_invalid_read',
     'feed_core','feed_write','feed_read','feed_again','feed_offline_write','feed_offline_read','feed_legacy_write','feed_legacy_read','feed_reset_read',
-    'feed_cancel','feed_cancel_write','feed_cancel_read','feed_cancel_again','level_up',
+    'feed_cancel','feed_cancel_write','feed_cancel_read','feed_cancel_again','level_up','animal_output',
     'upgrade_treasure_core','upgrade_treasure_legacy_write','upgrade_treasure_legacy_read','dog_pet')
 $onlyStage = $env:GODOT_TEST_ONLY
 if (-not [string]::IsNullOrWhiteSpace($onlyStage)) {

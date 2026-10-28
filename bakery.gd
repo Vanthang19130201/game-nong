@@ -116,7 +116,7 @@ func enqueue(
 		not Inventory.owns_bakery
 		or not Data.RECIPES.has(item)
 		or SaveManager.bakery_queue.size()
-		>= Data.QUEUE_LIMIT
+		>= Inventory.production_queue_capacity("bakery")
 	):
 		return Inventory.fail(
 			tr("BAKERY_QUEUE_FULL")
@@ -339,7 +339,7 @@ func refresh() -> void:
 
 	$StatusLabel.text = (
 		tr("BAKERY_WORLD")
-		% SaveManager.bakery_queue.size()
+		% [SaveManager.bakery_queue.size(), Inventory.production_queue_capacity("bakery")]
 	)
 
 	state_changed.emit()

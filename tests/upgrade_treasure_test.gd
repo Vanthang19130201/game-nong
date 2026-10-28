@@ -3,9 +3,13 @@ extends SceneTree
 # Run only through run_core_stability.ps1 so SaveManager writes to test-save.cfg.
 const TreasureData = preload("res://treasure_data.gd")
 const Progression = preload("res://progression_data.gd")
+const BakeryData = preload("res://bakery_data.gd")
+const DairyData = preload("res://dairy_data.gd")
+const SpinningData = preload("res://spinning_machine_data.gd")
 
 var inv: Node
 var manager: Node
+var discovery: Node
 
 
 func _initialize() -> void:
@@ -51,6 +55,7 @@ func run_checks() -> void:
 	await process_frame
 	inv = root.get_node("Inventory")
 	manager = root.get_node("SaveManager")
+	discovery = root.get_node("DiscoveryManager")
 	check(manager.SAVE_PATH == "res://test-save.cfg", "isolated save required")
 	var stage := str(OS.get_cmdline_user_args()[0])
 	match stage:
@@ -71,6 +76,7 @@ func check_upgrade_and_treasure_core() -> void:
 	check_storage_upgrade_atomicity("silo")
 	check_storage_upgrade_atomicity("barn")
 	check_house_storage_bonus()
+	check_production_queue_upgrades()
 	check_treasure_data_and_transactions()
 
 
@@ -125,6 +131,55 @@ func check_house_storage_bonus() -> void:
 		check(inv.get(storage + "_capacity") == inv.storage_capacity_target(storage), storage + " preserves the House bonus after its own upgrade")
 
 
+func valid_queue(item: String, count: int) -> Array:
+	var start := Time.get_unix_time_from_system()
+	var result: Array = []
+	for index in range(count):
+		result.append({"item": item, "state": "QUEUED", "started_at": start + index, "ready_at": start + 60.0 + index})
+	return result
+
+
+func check_production_queue_upgrades() -> void:
+	check(manager.reset_game(), "reset production-upgrade fixture")
+	var specs: Array[Dictionary] = [
+		{"id": "bakery", "queue": "bakery_queue", "item": "bread"},
+		{"id": "dairy", "queue": "dairy_queue", "item": "cream"},
+		{"id": "spinning_machine", "queue": "spinning_machine_queue", "item": "cotton_thread"}
+	]
+	for spec in specs:
+		var id := str(spec["id"])
+		inv.set("owns_" + id, true)
+		var cost: Dictionary = inv.next_upgrade(id)
+		check(not cost.is_empty() and int(cost.get("queue_capacity", 0)) == 4, id + " has its first queue upgrade")
+		set_exact_cost(cost)
+		check(inv.upgrade_structure(id), id + " upgrades with its exact material cost")
+		check(inv.production_queue_capacity(id) == 4, id + " gains a fourth production slot")
+		var jobs := valid_queue(str(spec["item"]), 4)
+		var legacy_jobs: Array = []
+		var upgraded_jobs: Array = []
+		match id:
+			"bakery":
+				legacy_jobs = BakeryData.restore_queue(jobs, 3)
+				upgraded_jobs = BakeryData.restore_queue(jobs, inv.production_queue_capacity(id))
+			"dairy":
+				legacy_jobs = DairyData.restore_queue(jobs, 3)
+				upgraded_jobs = DairyData.restore_queue(jobs, inv.production_queue_capacity(id))
+			"spinning_machine":
+				legacy_jobs = SpinningData.restore_queue(jobs, 3)
+				upgraded_jobs = SpinningData.restore_queue(jobs, inv.production_queue_capacity(id))
+		check(legacy_jobs.size() == 3, id + " keeps the legacy three-slot guard")
+		check(upgraded_jobs.size() == 4, id + " accepts its upgraded fourth slot")
+		manager.set(str(spec["queue"]), jobs)
+		check(manager.save_game(), id + " upgraded queue saves")
+		manager._load_game()
+		check(inv.get(id + "_level") == 2 and inv.production_queue_capacity(id) == 4, id + " queue level survives reload")
+		var reloaded_jobs: Array = manager.get(str(spec["queue"]))
+		check(reloaded_jobs.size() == 4, id + " fourth queued job survives reload")
+		var second_cost: Dictionary = inv.next_upgrade(id)
+		set_exact_cost(second_cost)
+		check(inv.upgrade_structure(id) and inv.production_queue_capacity(id) == 5, id + " gains its fifth production slot")
+
+
 func check_treasure_data_and_transactions() -> void:
 	check(manager.reset_game(), "reset treasure fixture")
 	check(is_equal_approx(TreasureData.ANCIENT_GEM_CHANCE, 0.01), "Ancient Gem rare-container chance is one percent")
@@ -170,7 +225,7 @@ func check_treasure_data_and_transactions() -> void:
 		check(inv.coins == chest_coins_before + int(chest_reward["amount"]), "small chest coin reward is granted once")
 	else:
 		check(inv.get(chest_item) == chest_item_before + int(chest_reward["amount"]), "small chest item reward is granted once")
-		check(DiscoveryManager.has_discovered("treasures", chest_item) or chest_item.ends_with("_seed"), "small chest item reward is discoverable")
+		check(discovery.has_discovered("treasures", chest_item) or chest_item.ends_with("_seed"), "small chest item reward is discoverable")
 
 	var bottle_price: int = inv.sell_price("old_bottle")
 	var sale_coins_before: int = inv.coins

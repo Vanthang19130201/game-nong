@@ -1,80 +1,113 @@
 extends Node2D
 
+const DogData = preload("res://dog_data.gd")
+
 var base_scale: Vector2 = Vector2.ONE
+var base_sprite_position: Vector2 = Vector2.ZERO
 var state_name: String = "IDLE"
+var variant_id: String = "shiba"
 var phase: float = 0.0
 var texture_available: bool = false
 var name_time: float = 0.0
 var heart_time: float = 0.0
+var reaction_time: float = 0.0
 var state_tween: Tween
 var visibility_tween: Tween
+var idle_variant_until: float = 0.0
+var next_idle_variation: float = 0.0
+var rng := RandomNumberGenerator.new()
 
-@onready var sprite: Sprite2D = $Sprite
+@onready var sprite: AnimatedSprite2D = $Sprite
 @onready var name_label: Label = $NameLabel
 @onready var zzz_label: Label = $ZzzLabel
 @onready var thought_label: Label = $ThoughtLabel
+@onready var interact_label: Label = $InteractLabel
+
 
 func _ready() -> void:
+	rng.randomize()
 	name_label.theme = preload("res://assets/ui/ui_theme.tres")
 	zzz_label.theme = name_label.theme
 	thought_label.theme = name_label.theme
 	name_label.hide()
 	zzz_label.hide()
 	thought_label.hide()
+	interact_label.hide()
+	next_idle_variation = rng.randf_range(2.5, 6.0)
 
-func configure(variant_id: String, display_name: String) -> void:
-	# `_ready()` starts the idle pose before a saved profile has supplied its
-	# texture. Cancel that pre-configured tween: otherwise it can finish later
-	# and restore the sprite to scale 1, which is enormous for high-resolution
-	# dog artwork.
+
+func configure(next_variant_id: String, display_name: String) -> void:
+	# The gameplay node configures itself just after _ready. Never let a tween
+	# begun before the profile arrived restore a high-resolution source image to
+	# scale 1 (the old cause of the giant Black Tan).
 	if is_instance_valid(state_tween):
 		state_tween.kill()
 		state_tween = null
-	var texture := preload("res://dog_data.gd").texture_for_variant(variant_id)
-	texture_available = texture != null
-	sprite.texture = texture
-	if texture != null:
-		var size := texture.get_size()
-		var scale_factor := 64.0 / maxf(size.y, 1.0)
+	variant_id = next_variant_id
+	var frames := DogData.visual_frames_for_variant(variant_id)
+	texture_available = frames != null
+	sprite.sprite_frames = frames
+	if frames != null:
+		# Artwork occupies about 240 pixels inside a 313.5px atlas cell. This
+		# produces a 64px world dog while leaving room for ears and tail.
+		var scale_factor := DogData.TARGET_BODY_HEIGHT / 240.0
 		sprite.scale = Vector2.ONE * scale_factor
-		# Anchor texture feet on the parent origin without stretching it.
-		sprite.position.y = -size.y * scale_factor * 0.5
 		base_scale = sprite.scale
+		base_sprite_position = Vector2(0.0, (DogData.SHEET_FRAME_SIZE * 0.5 - DogData.SHEET_GROUND_Y) * scale_factor)
+		sprite.position = base_sprite_position
 	name_label.text = display_name
-	# Reapply the current pose from the newly calculated, fixed display scale.
 	set_state(state_name)
 	queue_redraw()
 
+
 func set_state(next_state: String) -> void:
 	state_name = next_state
+	idle_variant_until = 0.0
 	thought_label.visible = next_state == "WAIT_FOOD"
-	thought_label.text = "…" if thought_label.visible else ""
+	thought_label.text = "â€¦" if thought_label.visible else ""
 	zzz_label.visible = next_state == "SLEEP"
-	var target_scale := base_scale
-	var target_position := Vector2(0, sprite.position.y)
-	if next_state in ["LIE_DOWN", "SLEEP"]:
-		target_scale = base_scale * Vector2(1.05, 0.81)
-		target_position.y += 5.0
+	_play_state_animation()
+	if not texture_available:
+		return
 	if is_instance_valid(state_tween):
 		state_tween.kill()
 	state_tween = create_tween()
 	state_tween.set_parallel(true)
-	state_tween.tween_property(sprite, "scale", target_scale, 0.22).set_trans(Tween.TRANS_SINE)
-	state_tween.tween_property(sprite, "position", target_position, 0.22).set_trans(Tween.TRANS_SINE)
+	state_tween.tween_property(sprite, "scale", base_scale, 0.16).set_trans(Tween.TRANS_SINE)
+	state_tween.tween_property(sprite, "position", base_sprite_position, 0.16).set_trans(Tween.TRANS_SINE)
+
 
 func set_facing(right: bool) -> void:
+	# Only the animated art flips. Physics, shadow, label and status effects do
+	# not mirror or jump as the dog changes direction.
 	sprite.flip_h = not right
+
 
 func show_name(seconds: float = 2.5) -> void:
 	name_time = seconds
-	name_label.show()
+	# The nearby interaction prompt already includes the dog's name. Keeping
+	# this separate label hidden in that moment prevents two identical names.
+	if not interact_label.visible:
+		name_label.show()
+
 
 func happy() -> void:
 	show_name(2.0)
 	heart_time = 0.9
-	var tween := create_tween()
-	tween.tween_property(sprite, "position:y", sprite.position.y - 4.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(sprite, "position:y", sprite.position.y, 0.18).set_trans(Tween.TRANS_BOUNCE)
+	reaction_time = 0.55
+	if texture_available:
+		_play(&"happy", true)
+		idle_variant_until = 0.48
+
+
+func set_interaction_hint(show_hint: bool, display_name: String) -> void:
+	interact_label.visible = show_hint
+	if show_hint:
+		interact_label.text = "[E] " + display_name
+		name_label.hide()
+	elif name_time > 0.0:
+		name_label.show()
+
 
 func set_inside(inside: bool) -> void:
 	if is_instance_valid(visibility_tween):
@@ -86,30 +119,109 @@ func set_inside(inside: bool) -> void:
 	if inside:
 		visibility_tween.tween_callback(hide)
 
+
+func _play_state_animation() -> void:
+	if not texture_available:
+		return
+	match state_name:
+		"WANDER", "GO_INSIDE", "EXIT_HOUSE":
+			_play(&"walk")
+		"RETURN_HOME", "GREET_PLAYER":
+			_play(&"run")
+		"WAIT_FOOD":
+			_play(&"sit_idle")
+		"LIE_DOWN":
+			_play(&"lie_down")
+		"SLEEP":
+			_play(&"sleep")
+		"EATING":
+			_play(&"eat")
+		"INSIDE_HOUSE":
+			sprite.stop()
+		_:
+			_play(&"idle")
+
+
+func _play(animation_name: StringName, restart: bool = false) -> void:
+	if sprite.sprite_frames == null or not sprite.sprite_frames.has_animation(animation_name):
+		return
+	if restart or sprite.animation != animation_name:
+		sprite.play(animation_name)
+
+
 func _process(delta: float) -> void:
 	phase += delta
 	name_time = maxf(0.0, name_time - delta)
 	if name_time <= 0.0:
 		name_label.hide()
 	heart_time = maxf(0.0, heart_time - delta)
-	if state_name == "SLEEP":
-		zzz_label.text = "Z" if int(phase * 1.5) % 3 == 0 else "Zz" if int(phase * 1.5) % 3 == 1 else "Zzz"
-		zzz_label.position = Vector2(7, -52 - fmod(phase * 7.0, 11.0))
-		zzz_label.modulate.a = 0.55 + sin(phase * 2.0) * 0.25
-	elif state_name == "WANDER" or state_name == "GREET_PLAYER" or state_name == "RETURN_HOME":
-		sprite.rotation = sin(phase * 10.0) * 0.026
-		sprite.position.y = -sprite.texture.get_size().y * base_scale.y * 0.5 + sin(phase * 10.0) * 1.2 if sprite.texture != null else 0.0
-	else:
-		sprite.rotation = 0.0
-		if state_name == "IDLE":
-			sprite.position.y = -sprite.texture.get_size().y * base_scale.y * 0.5 + sin(phase * 2.0) * 0.7 if sprite.texture != null else 0.0
-		elif state_name == "EATING":
-			sprite.position.y = -sprite.texture.get_size().y * base_scale.y * 0.5 + absf(sin(phase * 9.0)) * 1.4 if sprite.texture != null else 0.0
+	var reaction_ended := reaction_time > 0.0 and reaction_time <= delta
+	reaction_time = maxf(0.0, reaction_time - delta)
+	if reaction_time > 0.0:
+		return
+	if reaction_ended:
+		_play_state_animation()
+	_update_idle_variation(delta)
+	_update_secondary_motion()
 	queue_redraw()
 
+
+func _update_idle_variation(delta: float) -> void:
+	if state_name != "IDLE" or not texture_available:
+		return
+	if idle_variant_until > 0.0:
+		idle_variant_until = maxf(0.0, idle_variant_until - delta)
+		if idle_variant_until <= 0.0:
+			_play(&"idle", true)
+		return
+	next_idle_variation -= delta
+	if next_idle_variation > 0.0:
+		return
+	# Visual-only personality beats. They never alter the dog state machine,
+	# hunger, movement, or save data.
+	var choices: Array[StringName] = [&"idle_blink", &"sniff", &"alert", &"sit_idle"]
+	var weights: Array[float] = [0.38, 0.25, 0.17, 0.20]
+	if variant_id == "cream":
+		weights = [0.32, 0.12, 0.08, 0.48]
+	elif variant_id == "blacktan":
+		weights = [0.27, 0.28, 0.31, 0.14]
+	var roll := rng.randf()
+	var sum := 0.0
+	var choice: StringName = &"idle_blink"
+	for index in choices.size():
+		sum += weights[index]
+		if roll <= sum:
+			choice = choices[index]
+			break
+	_play(choice, true)
+	idle_variant_until = 0.5 if choice == &"idle_blink" else rng.randf_range(1.0, 1.7)
+	next_idle_variation = rng.randf_range(8.0, 18.0)
+
+
+func _update_secondary_motion() -> void:
+	if not texture_available:
+		return
+	# Feeding begins while the dog walks to its bowl. Keep the existing EATING
+	# state intact, but show locomotion until its body has actually arrived.
+	if state_name == "EATING":
+		var body := get_parent() as CharacterBody2D
+		_play(&"walk" if is_instance_valid(body) and body.velocity.length_squared() > 1.0 else &"eat")
+	if state_name == "LIE_DOWN" and sprite.animation == &"lie_down" and not sprite.is_playing():
+		_play(&"lie_idle")
+	var bob := 0.0
+	if state_name in ["WANDER", "RETURN_HOME", "GO_INSIDE", "EXIT_HOUSE", "GREET_PLAYER"]:
+		bob = sin(phase * (11.0 if state_name in ["RETURN_HOME", "GREET_PLAYER"] else 8.0)) * 0.7
+		sprite.speed_scale = 1.15 if variant_id == "shiba" else 0.90 if variant_id == "cream" else 1.05
+	elif state_name == "SLEEP":
+		bob = sin(phase * 1.8) * 0.35
+		sprite.speed_scale = 0.92
+	else:
+		bob = sin(phase * (2.0 if variant_id != "blacktan" else 2.6)) * 0.28
+		sprite.speed_scale = 1.0
+	sprite.position = base_sprite_position + Vector2(0.0, bob)
+
+
 func _draw() -> void:
-	# Grounded fallback and shared shadow; the fallback dog is deliberately
-	# simple but never uses a farmer/character texture when an asset is missing.
 	var shadow_size := Vector2(24, 6) if state_name not in ["LIE_DOWN", "SLEEP"] else Vector2(30, 7)
 	draw_set_transform(Vector2(0, -2), 0.0, shadow_size)
 	draw_circle(Vector2.ZERO, 1.0, Color(0.08, 0.13, 0.08, 0.26))
@@ -119,4 +231,4 @@ func _draw() -> void:
 		draw_circle(Vector2(-9, -32), 6.0, Color("9f5c2d"))
 		draw_circle(Vector2(9, -32), 6.0, Color("9f5c2d"))
 	if heart_time > 0.0:
-		draw_string(ThemeDB.fallback_font, Vector2(-4, -54), "♥", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("e86d6d", heart_time / 0.9))
+		draw_string(ThemeDB.fallback_font, Vector2(-4, -54 - (1.0 - heart_time / 0.9) * 8.0), "â™¥", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("e86d6d", heart_time / 0.9))

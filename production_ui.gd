@@ -57,6 +57,7 @@ func _ready() -> void:
 	if queue_view == null:
 		queue_view = VBoxContainer.new()
 		queue_view.set_script(QueueView)
+		queue_view.machine_kind = machine_kind
 		status_column.add_child(queue_view)
 	else:
 		queue_view.reparent(status_column,false)
@@ -112,7 +113,7 @@ func ready_outputs() -> Array:
 func refresh() -> void:
 	if not is_instance_valid(machine):
 		return
-	var allowed: bool = not busy and machine.can_interact() and get_queue().size() < 3
+	var allowed: bool = not busy and machine.can_interact() and get_queue().size() < Inventory.production_queue_capacity(machine_kind)
 	if machine_kind == "feed_mill":
 		allowed = allowed and not machine.collecting
 	for card in cards.values():

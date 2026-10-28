@@ -42,6 +42,9 @@ public static class FarmAudioSynth {
     if(id.Contains("break")||id.Contains("hit")) d=.42;
     if(id=="ui_success"||id=="upgrade_success"||id=="fish_caught"||id=="dig_find"||id=="treasure_found") d=.72;
     if(id.Contains("moo")||id.Contains("baa")||id.Contains("oink")||id.Contains("cluck")) d=.75;
+    if(id.StartsWith("dog_")) d=.28;
+    if(id=="dog_whine_soft") d=.42;
+    if(id=="dog_sleep_breath"||id=="dog_sleep_snore_soft") d=.70;
     if(id=="production_ready") d=.8;
     return Generate(d,(t)=>{
       double n=(rng.NextDouble()*2-1);
@@ -73,6 +76,38 @@ public static class FarmAudioSynth {
         case "cow_moo": v=Tone(t,130,.68,.16,.07,.48, -20)+Tone(t,260,.6,.035,.1,.4,-25); break;
         case "pig_oink": v=Tone(t,230,.33,.12,.03,.24, -220)+.05*n*Math.Exp(-7*t); break;
         case "sheep_baa": v=Tone(t,280,.62,.13,.06,.45, -35)+Tone(t,560,.54,.04,.09,.42,-45); break;
+        // The dog cues are small, layered voiced sounds with soft noise and no
+        // sharp synthetic attack. Each breed uses a separate base timbre.
+        case "dog_shiba_bark":
+          v=Tone(t,640+variation*38,.17,.085,.008,.13,-780)+Tone(t,1280+variation*45,.115,.026,.014,.09,-1050)+.011*n*Env(t,d,.02,.13); break;
+        case "dog_shiba_happy":
+          v=Tone(t,780,.10,.060,.008,.08,560)+Tone(t-.105,920,.11,.047,.008,.09,380); break;
+        case "dog_cream_bark":
+          v=Tone(t,370+variation*24,.22,.105,.015,.17,-360)+Tone(t,740+variation*25,.15,.026,.025,.11,-440)+.009*n*Env(t,d,.03,.18); break;
+        case "dog_cream_happy":
+          v=Tone(t,460,.15,.065,.014,.12,230)+Tone(t-.13,610,.11,.035,.01,.09,160); break;
+        case "dog_blacktan_bark":
+          v=Tone(t,485+variation*32,.16,.096,.008,.12,-630)+Tone(t,970+variation*40,.10,.031,.016,.075,-870)+.010*n*Env(t,d,.018,.13); break;
+        case "dog_blacktan_happy":
+          v=Tone(t,600,.10,.062,.008,.08,420)+Tone(t-.10,730,.12,.042,.009,.10,330); break;
+        case "dog_whine_soft":
+          v=Tone(t,510,.38,.050,.045,.24,285)+Tone(t,765,.31,.019,.07,.20,180)+.006*n*Env(t,d,.05,.25); break;
+        case "dog_eat":
+          v=.030*n*Env(t,d,.006,.10)+Tone(t,130+variation*14,.075,.045,.004,.06)+Tone(t-.095,165+variation*15,.07,.032,.004,.06); break;
+        case "dog_lick":
+          v=Tone(t,245,.09,.034,.004,.07,-280)+.014*n*Env(t,d,.005,.08); break;
+        case "dog_sniff_soft":
+          v=.018*n*Env(t,d,.005,.11)+Tone(t,120,.09,.012,.003,.08); break;
+        case "dog_scratch_soft":
+          v=.023*n*Env(t,d,.005,.12)+Tone(t,310,.07,.012,.004,.06); break;
+        case "dog_shake_fur":
+          v=.038*n*Env(t,d,.008,.18)+Tone(t,95,.16,.014,.006,.14); break;
+        case "dog_sleep_breath":
+          v=Tone(t,105,.56,.012,.12,.28)+.003*n*Env(t,d,.10,.32); break;
+        case "dog_sleep_snore_soft":
+          v=Tone(t,94,.56,.018,.10,.28,-20)+Tone(t,188,.48,.006,.15,.24); break;
+        case "dog_paw_grass":
+          v=.019*n*Env(t,d,.003,.08)+Tone(t,88+variation*9,.055,.012,.002,.05); break;
         default: v=Tone(t,440,.10,.08,.003,.08); break;
       }
       return v*.72;
@@ -124,6 +159,21 @@ public static class FarmAudioSynth {
     Write(Path.Combine(root,"music","farm_day.wav"),BlendLoop(Music()));
     Write(Path.Combine(root,"ambience","farm_ambience.wav"),Ambience(false));
     Write(Path.Combine(root,"ambience","rain_loop.wav"),Ambience(true));
+    // Generate dog assets last so adding a new dog sound never changes the
+    // deterministic seed or waveform of an established music/ambience asset.
+    string[] dogs={
+      "dog_shiba_bark_01","dog_shiba_bark_02","dog_shiba_happy_01",
+      "dog_cream_bark_01","dog_cream_bark_02","dog_cream_happy_01",
+      "dog_blacktan_bark_01","dog_blacktan_bark_02","dog_blacktan_happy_01",
+      "dog_whine_soft","dog_eat_01","dog_eat_02","dog_lick_01","dog_sniff_soft",
+      "dog_scratch_soft","dog_shake_fur","dog_sleep_breath","dog_sleep_snore_soft",
+      "dog_paw_grass_01","dog_paw_grass_02"
+    };
+    foreach(string name in dogs) {
+      string id=name; int variation=0;
+      string[] parts=name.Split('_'); if(parts.Length>2 && int.TryParse(parts[parts.Length-1],out variation)) { id=String.Join("_",parts,0,parts.Length-1); variation--; }
+      Write(Path.Combine(s,"animals","dogs",name+".wav"),Sfx(id,variation));
+    }
   }
 }
 '@

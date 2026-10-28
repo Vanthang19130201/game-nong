@@ -81,6 +81,7 @@ const MESSAGES: Dictionary = {
 	"HOUSE_STORAGE_BONUS": "Storage bonus: +%d",
 	"HOUSE_NEXT_STORAGE_BONUS": "Next-level storage bonus: +%d",
 	"UI_CAPACITY_NEXT": "\nCapacity: %d → %d",
+	"UI_QUEUE_CAPACITY_NEXT": "\nQueue slots: %d → %d",
 	"ITEM_MUSHROOM": "Mushroom",
 	"ITEM_COTTON_CLOTH": "Cotton Cloth",
 	"ITEM_WOOL_YARN": "Wool Yarn",

@@ -96,7 +96,7 @@ var has_dog: bool = false
 var cow_feed: int = 0
 var milk: int = 0
 var silo_capacity: int = 30
-var barn_capacity: int = 40
+var barn_capacity: int = 20
 var owns_feed_mill: bool = false
 var owns_chicken_coop: bool = false
 var owns_cow_shed: bool = false
@@ -115,6 +115,9 @@ var sheep_barn_level: int = 1
 var house_level: int = 1
 var silo_level: int = 1
 var barn_level: int = 1
+var bakery_level: int = 1
+var dairy_level: int = 1
+var spinning_machine_level: int = 1
 var has_dog_house: bool = false
 var has_axe: bool = false
 var has_hammer: bool = false
@@ -895,7 +898,7 @@ func base_storage_capacity(storage: String, level: int = -1) -> int:
 	)
 
 	if resolved_level <= 1:
-		return 30 if storage == "silo" else 40
+		return 30 if storage == "silo" else 20
 
 	var upgrades: Dictionary = Progression.UPGRADES[storage]
 	var data: Dictionary = upgrades.get(resolved_level, {})
@@ -903,7 +906,7 @@ func base_storage_capacity(storage: String, level: int = -1) -> int:
 	return int(
 		data.get(
 			"capacity",
-			30 if storage == "silo" else 40
+			30 if storage == "silo" else 20
 		)
 	)
 
@@ -916,6 +919,16 @@ func storage_capacity_target(storage: String, level: int = -1, for_house_level: 
 func next_storage_capacity(storage: String) -> int:
 	var upgrade: Dictionary = next_upgrade(storage)
 	return storage_capacity_target(storage, get(storage + "_level") + 1) if not upgrade.is_empty() else get(storage + "_capacity")
+
+
+func production_queue_capacity(id: String) -> int:
+	# Only buildings with a live persisted queue opt into production upgrades.
+	if id not in ["bakery", "dairy", "spinning_machine"]:
+		return 3
+	var level: int = clampi(get(id + "_level"), 1, Progression.UPGRADES[id].size() + 1)
+	if level <= 1:
+		return 3
+	return int(Progression.UPGRADES[id].get(level, {}).get("queue_capacity", 3))
 
 
 func reconcile_storage_capacities() -> void:

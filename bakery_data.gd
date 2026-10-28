@@ -11,12 +11,12 @@ const RECIPES: Dictionary = {
 	"meat_pie": {"name":"Meat Pie","level":13,"time":55.0,"price":540,"order_price":648,"requirements":{"wheat":1,"pork":1}}
 }
 
-static func restore_queue(value: Variant) -> Array:
+static func restore_queue(value: Variant, limit: int = QUEUE_LIMIT) -> Array:
 	var result: Array = []
 	if not value is Array:
 		return result
 	for entry in value:
-		if result.size() == QUEUE_LIMIT:
+		if result.size() >= maxi(0, limit):
 			break
 		if not entry is Dictionary or not RECIPES.has(entry.get("item", "")):
 			continue

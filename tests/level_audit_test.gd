@@ -134,6 +134,8 @@ func audit_core() -> void:
 		check(disk().get_value("inventory",resource.resource_type) == before+earned, "gather autosaved")
 	# Missing any one resource must leave the entire balance and level unchanged.
 	for id in inv.Progression.UPGRADES:
+		if id in inv.Progression.BUILDINGS and not inv.owns_building(id):
+			inv.set("owns_" + id, true)
 		while not inv.next_upgrade(id).is_empty():
 			var cost: Dictionary = inv.next_upgrade(id)
 			var before_level: int = inv.get(id+"_level")

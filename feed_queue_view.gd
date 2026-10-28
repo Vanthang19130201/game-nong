@@ -10,6 +10,10 @@ var queue_empty: Label
 var output_empty: Label
 var output_hint: Label
 var is_feed: bool = true
+var machine_kind: String = "feed_mill"
+var queue_row: HBoxContainer
+var output_row: GridContainer
+var slot_capacity: int = 3
 
 func _ready() -> void:
 	add_theme_constant_override("separation",6)
@@ -22,13 +26,9 @@ func _ready() -> void:
 	queue_empty.add_theme_font_size_override("font_size",13)
 	queue_empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(queue_empty)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation",6)
-	add_child(row)
-	for index in range(3):
-		slots.append(_make_slot(row,tr("FEED_SLOT_TITLE") % (index+1)))
-		var cancel: Button = slots[index]["cancel"]
-		cancel.pressed.connect(_cancel_slot.bind(index))
+	queue_row = HBoxContainer.new()
+	queue_row.add_theme_constant_override("separation",6)
+	add_child(queue_row)
 	output_title = Label.new()
 	output_title.add_theme_font_size_override("font_size",14)
 	add_child(output_title)
@@ -37,17 +37,32 @@ func _ready() -> void:
 	output_empty.add_theme_font_size_override("font_size",13)
 	output_empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(output_empty)
-	var output_row := HBoxContainer.new()
-	output_row.add_theme_constant_override("separation",6)
+	output_row = GridContainer.new()
+	output_row.columns = 3
+	output_row.add_theme_constant_override("h_separation",6)
+	output_row.add_theme_constant_override("v_separation",6)
 	add_child(output_row)
-	for index in range(3):
-		output_slots.append(_make_slot(output_row,""))
 	output_hint = Label.new()
 	output_hint.text = tr("PRODUCTION_READY_IN_QUEUE")
 	output_hint.add_theme_font_size_override("font_size",12)
 	output_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(output_hint)
+	_ensure_slot_capacity(_queue_capacity())
 	set_process(false)
+
+func _queue_capacity() -> int:
+	return Inventory.production_queue_capacity(machine_kind)
+
+func _ensure_slot_capacity(capacity: int) -> void:
+	capacity = clampi(capacity, 3, 5)
+	while slots.size() < capacity:
+		var index := slots.size()
+		slots.append(_make_slot(queue_row, tr("FEED_SLOT_TITLE") % (index + 1)))
+		var cancel: Button = slots[index]["cancel"]
+		cancel.pressed.connect(_cancel_slot.bind(index))
+	while output_slots.size() < capacity:
+		output_slots.append(_make_slot(output_row, ""))
+	slot_capacity = capacity
 
 func _make_slot(parent: Control, title: String) -> Dictionary:
 	var card := PanelContainer.new()
@@ -134,14 +149,19 @@ func refresh(value: Node) -> void:
 func refresh_entries(queue: Array, outputs: Array, value: Node, feed: bool) -> void:
 	station = value
 	is_feed = feed
+	_ensure_slot_capacity(_queue_capacity() if not feed else 3)
 	show()
 	queue_empty.visible = queue.is_empty()
 	output_empty.visible = outputs.is_empty()
 	output_hint.visible = not feed and not outputs.is_empty()
-	for index in range(3):
+	for index in range(slot_capacity):
 		_display(slots[index],queue[index] if index < queue.size() else {})
 		_display(output_slots[index],outputs[index] if index < outputs.size() else {})
+		slots[index]["card"].visible = true
 		output_slots[index]["card"].visible = index < outputs.size()
+	for index in range(slot_capacity, slots.size()):
+		slots[index]["card"].hide()
+		output_slots[index]["card"].hide()
 	output_title.text = tr("PRODUCTION_OUTPUT") % outputs.size()
 
 func _display(view: Dictionary, entry: Dictionary) -> void:

@@ -658,13 +658,15 @@ func _load_game() -> void:
 	unlocked_land_zones = LandData.restore_unlocked(data.get_value("land", "unlocked_land_zones", []))
 	var bakery_owned = data.get_value("buildings", "owns_bakery", false)
 	Inventory.owns_bakery = bakery_owned if bakery_owned is bool else false
-	bakery_queue = Inventory.BakeryData.restore_queue(data.get_value("bakery", "bakery_queue", [])) if Inventory.owns_bakery else []
+	# Retain every valid job until structure upgrades have been restored below.
+	# Legacy saves use three slots; upgraded saves may legally contain up to five.
+	bakery_queue = Inventory.BakeryData.restore_queue(data.get_value("bakery", "bakery_queue", []), 5) if Inventory.owns_bakery else []
 	var dairy_owned = data.get_value("buildings", "owns_dairy", false)
 	Inventory.owns_dairy = dairy_owned if dairy_owned is bool else false
-	dairy_queue = Inventory.DairyData.restore_queue(data.get_value("dairy","dairy_queue",[])) if Inventory.owns_dairy else []
+	dairy_queue = Inventory.DairyData.restore_queue(data.get_value("dairy","dairy_queue",[]), 5) if Inventory.owns_dairy else []
 	var spinning_owned = data.get_value("buildings","owns_spinning_machine",false)
 	Inventory.owns_spinning_machine = spinning_owned if spinning_owned is bool else false
-	spinning_machine_queue = Inventory.SpinningData.restore_queue(data.get_value("spinning_machine","spinning_machine_queue",[])) if Inventory.owns_spinning_machine else []
+	spinning_machine_queue = Inventory.SpinningData.restore_queue(data.get_value("spinning_machine","spinning_machine_queue",[]), 5) if Inventory.owns_spinning_machine else []
 	var loom_owned = data.get_value("buildings","owns_loom",false)
 	Inventory.owns_loom = loom_owned if loom_owned is bool else false
 	loom_queue = LoomData.restore_queue(data.get_value("loom","queue",[])) if Inventory.owns_loom else []
@@ -725,18 +727,23 @@ func _load_game() -> void:
 	for id in Progression.UPGRADES:
 		var max_level: int = Progression.UPGRADES[id].size() + 1
 		Inventory.set(id + "_level", mini(max_level, _read_int(data, "upgrades", id + "_level", 1, 1)))
+	# Now that levels are authoritative, apply the corresponding queue limit. This
+	# both preserves upgraded queues and safely trims malformed legacy data.
+	bakery_queue = Inventory.BakeryData.restore_queue(bakery_queue, Inventory.production_queue_capacity("bakery"))
+	dairy_queue = Inventory.DairyData.restore_queue(dairy_queue, Inventory.production_queue_capacity("dairy"))
+	spinning_machine_queue = Inventory.SpinningData.restore_queue(spinning_machine_queue, Inventory.production_queue_capacity("spinning_machine"))
 	var dog_house = data.get_value("buildings", "has_dog_house", false)
 	Inventory.has_dog_house = dog_house if dog_house is bool else false
 	for id in RESOURCE_IDS:
 		saved_resources[id] = _read_resource(data.get_value("resources", id, 0.0))
 	Inventory.silo_capacity = maxi(30, _read_int(data, "storage", "silo_capacity", 30, 1))
 	Inventory.barn_capacity = maxi(
-	40,
+	20,
 	_read_int(
 		data,
 		"storage",
 		"barn_capacity",
-		40,
+		20,
 		1
 	)
 )
@@ -865,8 +872,10 @@ func _read_station(data: ConfigFile, id: String) -> Dictionary:
 	if not product.is_empty():
 		var animal_type: String = product["animal"]
 		var participants: Array[String] = []
-		var participants_raw: Variant = data.get_value(id, "participant_animal_ids", null)
-		if participants_raw is Array:
+		# Use an empty array rather than null as ConfigFile's fallback. Passing null
+		# is treated as "no default" and logs an error for valid pre-snapshot saves.
+		var participants_raw: Variant = data.get_value(id, "participant_animal_ids", [])
+		if data.has_section_key(id, "participant_animal_ids") and participants_raw is Array:
 			for animal_id in participants_raw:
 				if animal_id is String and _roster_has_id(animal_type, animal_id) and animal_id not in participants:
 					participants.append(animal_id)

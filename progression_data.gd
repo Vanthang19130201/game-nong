@@ -175,6 +175,18 @@ const UPGRADES: Dictionary = {
 		3: {"wood": 60, "stone": 30, "coins": 1500},
 		4: {"wood": 100, "stone": 50, "coins": 3500}
 	},
+	"bakery": {
+		2: {"wood": 25, "stone": 15, "coins": 900, "queue_capacity": 4},
+		3: {"wood": 50, "stone": 30, "coins": 2200, "queue_capacity": 5}
+	},
+	"dairy": {
+		2: {"wood": 45, "stone": 30, "coins": 2600, "queue_capacity": 4},
+		3: {"wood": 80, "stone": 55, "coins": 5200, "queue_capacity": 5}
+	},
+	"spinning_machine": {
+		2: {"wood": 50, "stone": 35, "coins": 3000, "queue_capacity": 4},
+		3: {"wood": 90, "stone": 60, "coins": 6000, "queue_capacity": 5}
+	},
 	"silo": {
 		2: {"wood": 10, "stone": 5, "coins": 200, "capacity": 50},
 		3: {"wood": 25, "stone": 15, "coins": 850, "capacity": 80},
@@ -186,25 +198,25 @@ const UPGRADES: Dictionary = {
 		"wood": 12,
 		"stone": 10,
 		"coins": 350,
-		"capacity": 80
+		"capacity": 40
 	},
 	3: {
 		"wood": 30,
 		"stone": 20,
 		"coins": 1300,
-		"capacity": 120
+		"capacity": 70
 	},
 	4: {
 		"wood": 58,
 		"stone": 38,
 		"coins": 3000,
-		"capacity": 160
+		"capacity": 110
 	},
 	5: {
 		"wood": 95,
 		"stone": 60,
 		"coins": 6200,
-		"capacity": 200
+		"capacity": 160
 	}
 }
 }

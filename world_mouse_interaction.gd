@@ -36,6 +36,11 @@ func update_hover(screen_position: Vector2) -> void:
 			hovered.modulate = original_modulate * Color(1.15, 1.15, 1.05)
 			Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND)
 	if is_instance_valid(hovered):
+		# Dogs own the nearby world-space [E] label in DogVisual. Do not render a
+		# second screen-space pet prompt while hovering them.
+		if hovered.is_in_group("farm_pets"):
+			hint.hide()
+			return
 		hint.text = tr("MOUSE_INTERACT_HINT") % _display_name(hovered)
 		hint.reset_size()
 		hint.position = (screen_position + Vector2(16, 20)).clamp(Vector2.ZERO, (get_viewport().get_visible_rect().size - hint.size).max(Vector2.ZERO))
@@ -81,6 +86,8 @@ func _contains_point(node: Node, world_position: Vector2) -> bool:
 	return false
 
 func _display_name(target: Node) -> String:
+	if target.is_in_group("farm_pets"):
+		return "[E] " + str(target.get("custom_name"))
 	if target.name == "MarketStall":
 		return tr("BUILDING_MARKET_STALL")
 	if target.is_in_group("farm_animals"):

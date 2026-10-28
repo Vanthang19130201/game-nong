@@ -7,12 +7,14 @@ const MUSIC_ROOT := "res://assets/audio/music/"
 const AMBIENCE_ROOT := "res://assets/audio/ambience/"
 const SFX_POOL_SIZE := 12
 const SPATIAL_POOL_SIZE := 4
-const DEFAULT_MUSIC_VOLUME := 0.42
-const DEFAULT_SFX_VOLUME := 0.62
-const DEFAULT_AMBIENCE_VOLUME := 0.34
-const MUSIC_MIX_TRIM_DB := -1.5
-const SFX_MIX_TRIM_DB := -1.5
-const AMBIENCE_MIX_TRIM_DB := -1.5
+const DEFAULT_MUSIC_VOLUME := 0.38
+const DEFAULT_SFX_VOLUME := 0.56
+const DEFAULT_AMBIENCE_VOLUME := 0.30
+# Keep player preferences intact, but make a fresh farm noticeably gentler than
+# the previous mix. Important feedback still has a per-effect trim below.
+const MUSIC_MIX_TRIM_DB := -2.5
+const SFX_MIX_TRIM_DB := -2.0
+const AMBIENCE_MIX_TRIM_DB := -2.5
 const DEFAULT_SFX_TRIM_DB := -2.5
 const SFX_TRIM_DB := {
 	"ui_click": -3.5, "ui_success": -2.5, "ui_error": -4.5, "coin": -3.5,
@@ -23,6 +25,13 @@ const SFX_TRIM_DB := {
 	"fishing_cast": -2.0, "fishing_splash": -3.0, "fishing_bite": -2.5,
 	"fishing_reel_tick": -4.5, "fish_caught": -2.5, "fishing_fail": -3.5, "treasure_found": -2.5,
 	"chicken_cluck": -5.0, "cow_moo": -5.5, "pig_oink": -5.0, "sheep_baa": -5.5,
+	"dog_shiba_bark": -12.0, "dog_shiba_happy": -13.0,
+	"dog_cream_bark": -12.5, "dog_cream_happy": -13.5,
+	"dog_blacktan_bark": -12.0, "dog_blacktan_happy": -13.0,
+	"dog_whine_soft": -15.0, "dog_eat": -15.5, "dog_lick": -16.0,
+	"dog_sniff_soft": -18.0, "dog_scratch_soft": -17.0, "dog_shake_fur": -15.0,
+	"dog_sleep_breath": -20.0, "dog_sleep_snore_soft": -21.0,
+	"dog_paw_grass": -19.0,
 	"animal_feed": -3.0, "collect_egg": -2.5, "collect_milk": -3.0, "collect_wool": -3.0, "item_collect": -3.0,
 	"production_start": -3.5, "production_ready": -4.0, "product_collect": -3.0,
 	"building_place": -3.0, "upgrade_success": -3.0, "footstep_soft": -4.0
@@ -62,6 +71,21 @@ const SOUND_FILES := {
 	"treasure_found": ["fishing/treasure_found.wav"],
 	"chicken_cluck": ["animals/chicken_cluck.wav"], "cow_moo": ["animals/cow_moo.wav"],
 	"pig_oink": ["animals/pig_oink.wav"], "sheep_baa": ["animals/sheep_baa.wav"],
+	"dog_shiba_bark": ["animals/dogs/dog_shiba_bark_01.wav", "animals/dogs/dog_shiba_bark_02.wav"],
+	"dog_shiba_happy": ["animals/dogs/dog_shiba_happy_01.wav"],
+	"dog_cream_bark": ["animals/dogs/dog_cream_bark_01.wav", "animals/dogs/dog_cream_bark_02.wav"],
+	"dog_cream_happy": ["animals/dogs/dog_cream_happy_01.wav"],
+	"dog_blacktan_bark": ["animals/dogs/dog_blacktan_bark_01.wav", "animals/dogs/dog_blacktan_bark_02.wav"],
+	"dog_blacktan_happy": ["animals/dogs/dog_blacktan_happy_01.wav"],
+	"dog_whine_soft": ["animals/dogs/dog_whine_soft.wav"],
+	"dog_eat": ["animals/dogs/dog_eat_01.wav", "animals/dogs/dog_eat_02.wav"],
+	"dog_lick": ["animals/dogs/dog_lick_01.wav"],
+	"dog_sniff_soft": ["animals/dogs/dog_sniff_soft.wav"],
+	"dog_scratch_soft": ["animals/dogs/dog_scratch_soft.wav"],
+	"dog_shake_fur": ["animals/dogs/dog_shake_fur.wav"],
+	"dog_sleep_breath": ["animals/dogs/dog_sleep_breath.wav"],
+	"dog_sleep_snore_soft": ["animals/dogs/dog_sleep_snore_soft.wav"],
+	"dog_paw_grass": ["animals/dogs/dog_paw_grass_01.wav", "animals/dogs/dog_paw_grass_02.wav"],
 	"animal_feed": ["animals/animal_feed.wav"], "collect_egg": ["animals/collect_egg.wav"],
 	"collect_milk": ["animals/collect_milk.wav"], "collect_wool": ["animals/collect_wool.wav"],
 	"item_collect": ["animals/item_collect.wav"],
@@ -305,6 +329,9 @@ func _on_clock_changed() -> void:
 func _cooldown_key(sound_id: String) -> String:
 	if sound_id.begins_with("chicken_") or sound_id.begins_with("cow_") or sound_id.begins_with("pig_") or sound_id.begins_with("sheep_"):
 		return "animal_vocal"
+	if sound_id in ["dog_shiba_bark", "dog_shiba_happy", "dog_cream_bark", "dog_cream_happy", "dog_blacktan_bark", "dog_blacktan_happy"]:
+		# The global spacing keeps three nearby pets from turning into a chorus.
+		return "dog_vocal"
 	if sound_id == "production_ready":
 		return "production_ready_global"
 	return sound_id
@@ -313,6 +340,10 @@ func _cooldown_for(sound_id: String) -> float:
 	if sound_id == "ui_click": return 0.045
 	if sound_id in ["axe_hit_wood", "hammer_hit_rock", "harvest_crop", "footstep_soft"]: return 0.10
 	if _cooldown_key(sound_id) == "animal_vocal": return randf_range(8.0, 20.0)
+	if _cooldown_key(sound_id) == "dog_vocal": return 1.25
+	if sound_id in ["dog_eat", "dog_lick", "dog_paw_grass"]: return 0.16
+	if sound_id in ["dog_sniff_soft", "dog_scratch_soft", "dog_shake_fur"]: return 1.2
+	if sound_id in ["dog_sleep_breath", "dog_sleep_snore_soft"]: return 8.0
 	if sound_id == "production_ready": return 3.5
 	if sound_id == "fishing_reel_tick": return 0.8
 	return 0.0

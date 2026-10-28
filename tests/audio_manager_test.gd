@@ -21,8 +21,8 @@ func run_checks() -> void:
 		check(audio.music_enabled == bool(previous_settings.get_value("audio", "music_enabled", true)) and audio.sfx_enabled == bool(previous_settings.get_value("audio", "sfx_enabled", true)), "saved audio preferences load")
 	else:
 		check(audio.music_enabled and audio.sfx_enabled, "first-run audio defaults on")
-		check(is_equal_approx(audio.music_volume, 0.42) and is_equal_approx(audio.sfx_volume, 0.62), "default mix is softer at 42% music and 62% SFX")
-	check(audio.SOUND_FILES.size() >= 30, "core sound library registered")
+		check(is_equal_approx(audio.music_volume, 0.38) and is_equal_approx(audio.sfx_volume, 0.56), "default mix is a softer 38% music and 56% SFX")
+	check(audio.SOUND_FILES.size() >= 40, "core sound library and dog sound set are registered")
 	for sound_id in audio.SOUND_FILES:
 		for relative_path in audio.SOUND_FILES[sound_id]:
 			check(ResourceLoader.exists(audio.SFX_ROOT + relative_path), "registered SFX file exists: " + str(relative_path))
@@ -30,12 +30,21 @@ func run_checks() -> void:
 	check(music != null and music.get_length() >= 60.0 and music.get_length() <= 120.0, "original Farm Day music is a long loop")
 	await create_timer(0.8).timeout # Let the intentional crossfade switch tracks.
 	check(audio.get_node_or_null("MusicPlayer") != null and audio.get_node("MusicPlayer").stream != null, "one persistent music player is loaded")
+	audio.set_sfx_enabled(true)
 	audio.play_sfx("ui_click")
 	await create_timer(0.01).timeout
 	var heard_sfx := false
 	for player in audio._sfx_players:
 		heard_sfx = heard_sfx or player.playing
 	check(heard_sfx, "SFX pool plays a registered clip")
+	for dog_sound in ["dog_shiba_bark", "dog_shiba_happy", "dog_cream_bark", "dog_cream_happy", "dog_blacktan_bark", "dog_blacktan_happy", "dog_eat", "dog_lick", "dog_whine_soft"]:
+		check(audio.SOUND_FILES.has(dog_sound), "dog SFX registry contains " + dog_sound)
+	audio.play_sfx("dog_shiba_bark", Vector2(96, 96), false)
+	await create_timer(0.01).timeout
+	var heard_positional_dog := false
+	for player in audio._spatial_players:
+		heard_positional_dog = heard_positional_dog or player.playing
+	check(heard_positional_dog, "dog bark uses the existing positional SFX pool")
 	var weather: Node = root.get_node("WeatherManager")
 	weather.current_weather = "rain"
 	weather.changed.emit("rain")
@@ -51,7 +60,10 @@ func run_checks() -> void:
 	check(not audio.music_enabled and not audio.get_node("MusicPlayer").playing and AudioServer.is_bus_mute(AudioServer.get_bus_index("SFX")), "Music toggle fades/stops music independently of SFX")
 	audio.set_sfx_enabled(true)
 	var settings := ConfigFile.new()
-	check(settings.load(audio.SETTINGS_PATH) == OK and not settings.get_value("audio", "music_enabled", true) and settings.get_value("audio", "sfx_enabled", false), "music and SFX preferences persist independently in ConfigFile")
+	var settings_loaded := settings.load(audio.SETTINGS_PATH) == OK
+	var saved_music := bool(settings.get_value("audio", "music_enabled", true))
+	var saved_sfx := bool(settings.get_value("audio", "sfx_enabled", false))
+	check(settings_loaded and saved_music == audio.music_enabled and saved_sfx == audio.sfx_enabled, "music and SFX preferences persist independently in ConfigFile (saved %s/%s runtime %s/%s)" % [saved_music, saved_sfx, audio.music_enabled, audio.sfx_enabled])
 	audio.set_music_enabled(true)
 	var menu: Control = load("res://start_menu.tscn").instantiate()
 	root.add_child(menu)
@@ -69,5 +81,5 @@ func run_checks() -> void:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(audio.SETTINGS_PATH))
 	audio.queue_free()
 	await process_frame
-	print("PASS: AudioManager core, bus mutes, original music, registered assets, and settings persistence")
+	print("PASS: audio_core")
 	quit()
