@@ -59,6 +59,7 @@ const RockData = preload("res://rock_data.gd")
 const FeedData = preload("res://feed_mill_data.gd")
 const LoomData = preload("res://loom_data.gd")
 const AnimalData = preload("res://animal_data.gd")
+const DogData = preload("res://dog_data.gd")
 var placed_decorations: Array = []
 var next_decoration_id: int = 1
 var unlocked_land_zones: Array[String] = ["farm_core"]
@@ -86,6 +87,8 @@ var spinning_machine_queue: Array = []
 var loom_queue: Array = []
 var animal_rosters: Dictionary = {"chicken": [], "cow": [], "pig": [], "sheep": []}
 var next_animal_ids: Dictionary = {"chicken": 1, "cow": 1, "pig": 1, "sheep": 1}
+# Primitive, save-safe pet profiles. Runtime Dog nodes are reconstructed by Farm.
+var pet_dogs: Dictionary = {}
 var saved_dig_spots: Array = []
 var saved_dig_spots_day_key: int = -1
 var hidden_treasure_claimed: bool = false
@@ -97,7 +100,7 @@ var pending_fishing_reward_claimable: bool = false
 var treasure_open_sequence: int = 0
 var PLOT_IDS: Array[String] = FarmData.plot_ids()
 var INVENTORY_DEFAULTS: Dictionary = CropData.inventory_defaults().merged({
-	"coins": 500, "chicken_feed": 0, "cow_feed": 0, "pig_feed": 0, "sheep_feed": 0, "egg": 0, "milk": 0, "pork": 0, "wool": 0, "wool_yarn": 0, "cotton_cloth": 0, "wool_cloth": 0, "meat_pie": 0, "wood": 0, "stone": 0,
+	"coins": 500, "chicken_feed": 0, "cow_feed": 0, "pig_feed": 0, "sheep_feed": 0, "dog_food": 0, "egg": 0, "milk": 0, "pork": 0, "wool": 0, "wool_yarn": 0, "cotton_cloth": 0, "wool_cloth": 0, "meat_pie": 0, "wood": 0, "stone": 0,
 	"small_fish": 0, "river_fish": 0, "golden_fish": 0, "moon_fish": 0,
 	"old_bottle": 0, "old_boot": 0, "coin_pouch": 0, "small_chest": 0, "lost_lure": 0, "ancient_coin": 0, "map_fragment": 0, "ancient_gem": 0,
 	"bread": 0, "corn_bread": 0, "carrot_pie": 0,
@@ -117,6 +120,101 @@ var building_positions: Dictionary = {}
 
 func animal_records(animal_type: String) -> Array:
 	return animal_rosters.get(animal_type, [])
+
+func dog_profiles() -> Dictionary:
+	return pet_dogs.duplicate(true)
+
+func dog_profile(pet_id: String) -> Dictionary:
+	return pet_dogs.get(pet_id, {}).duplicate(true)
+
+func dog_hunger(pet_id: String) -> float:
+	return clampf(float(pet_dogs.get(pet_id, {}).get("hunger", 100.0)), 0.0, 100.0)
+
+func adopt_dog(variant_id: String) -> bool:
+	var pet_id := DogData.pet_id_for_variant(variant_id)
+	if pet_id.is_empty() or pet_dogs.has(pet_id) or not Inventory.has_dog_house:
+		return false
+	var data: Dictionary = DogData.DOG_VARIANTS[variant_id]
+	if Inventory.player_level < int(data.get("unlock_level", 1)):
+		return false
+	var price: int = int(data["price"])
+	if Inventory.coins < price:
+		return false
+	var previous_coins: int = Inventory.coins
+	Inventory.coins -= price
+	pet_dogs[pet_id] = DogData.default_profile(variant_id)
+	Inventory.has_dog = true # legacy compatibility mirrors pet ownership.
+	if not save_game():
+		pet_dogs.erase(pet_id)
+		Inventory.coins = previous_coins
+		Inventory.has_dog = not pet_dogs.is_empty()
+		return false
+	Inventory.inventory_changed.emit()
+	return true
+
+func rename_dog(pet_id: String, requested_name: String) -> bool:
+	if not pet_dogs.has(pet_id):
+		return false
+	var profile: Dictionary = pet_dogs[pet_id]
+	var fallback := str(DogData.variant_for_pet(pet_id).get("default_name", "Dog"))
+	var name := DogData.normalized_name(requested_name, "")
+	if name.is_empty():
+		return false
+	var previous := str(profile.get("name", fallback))
+	profile["name"] = name
+	pet_dogs[pet_id] = profile
+	if not save_game():
+		profile["name"] = previous
+		pet_dogs[pet_id] = profile
+		return false
+	Inventory.inventory_changed.emit()
+	return true
+
+func buy_dog_food(amount: int = 1) -> bool:
+	# Keep the two panel purchases atomic: no partial Buy 5 when Barn space is low.
+	if amount not in [1, 5]:
+		return false
+	var total_price := DogData.DOG_FOOD_PRICE * amount
+	if Inventory.coins < total_price or not Inventory.can_add_item("dog_food", amount):
+		return false
+	var old_coins := Inventory.coins
+	Inventory.coins -= total_price
+	Inventory.dog_food += amount
+	if not save_game():
+		Inventory.coins = old_coins
+		Inventory.dog_food -= amount
+		return false
+	Inventory.inventory_changed.emit()
+	return true
+
+func feed_dog(pet_id: String) -> bool:
+	if not pet_dogs.has(pet_id) or Inventory.dog_food <= 0:
+		return false
+	var profile: Dictionary = pet_dogs[pet_id]
+	if float(profile.get("hunger", 100.0)) >= 99.9:
+		return false
+	var old_food := Inventory.dog_food
+	var old_hunger: float = float(profile.get("hunger", 100.0))
+	Inventory.dog_food -= 1
+	profile["hunger"] = minf(100.0, old_hunger + 70.0)
+	profile["last_hunger_update_at"] = Time.get_unix_time_from_system()
+	pet_dogs[pet_id] = profile
+	if not save_game():
+		Inventory.dog_food = old_food
+		profile["hunger"] = old_hunger
+		pet_dogs[pet_id] = profile
+		return false
+	Inventory.inventory_changed.emit()
+	get_tree().call_group("farm_pets", "begin_eating", pet_id)
+	return true
+
+func tick_dog_hunger(pet_id: String, delta: float) -> void:
+	if not pet_dogs.has(pet_id) or delta <= 0.0:
+		return
+	var profile: Dictionary = pet_dogs[pet_id]
+	profile["hunger"] = maxf(0.0, float(profile.get("hunger", 100.0)) - DogData.HUNGER_PER_SECOND * delta)
+	profile["last_hunger_update_at"] = Time.get_unix_time_from_system()
+	pet_dogs[pet_id] = profile
 
 
 func get_pending_fishing_reward() -> Dictionary:
@@ -382,6 +480,7 @@ func save_game() -> bool:
 	data.set_value("player", "last_rewarded_level", Inventory.last_rewarded_level)
 	data.set_value("player", "selected_crop", Inventory.selected_crop)
 	data.set_value("player", "has_dog", Inventory.has_dog)
+	data.set_value("pets", "dogs", pet_dogs.duplicate(true))
 	for id in Inventory.ToolData.TOOLS:
 		data.set_value("tools", "has_" + id, Inventory.get("has_" + id))
 		data.set_value("tools", id + "_level", Inventory.get(id + "_level"))
@@ -470,6 +569,7 @@ func reset_game() -> bool:
 	for animal_type in ["chicken", "cow", "pig", "sheep"]:
 		animal_rosters[animal_type] = []
 		next_animal_ids[animal_type] = 1
+	pet_dogs.clear()
 	Inventory.has_fishing_rod = false
 	Inventory.fishing_rod_level = 0
 	Inventory.fishing_attempts_used = 0
@@ -665,8 +765,15 @@ func _load_game() -> void:
 	_restore_animal_rosters(data)
 	var selected = data.get_value("player", "selected_crop", "WHEAT")
 	Inventory.selected_crop = "WHEAT"
-	var owned = data.get_value("player", "has_dog", false)
-	Inventory.has_dog = owned if owned is bool else false
+	# Pet profiles supersede the former single bool. Migrate one existing dog
+	# once, for free, so old farms retain their companion without duplication.
+	pet_dogs = _restore_pet_dogs(data.get_value("pets", "dogs", {}))
+	var legacy_dog = data.get_value("player", "has_dog", false)
+	if pet_dogs.is_empty() and legacy_dog is bool and legacy_dog:
+		var migrated_dog: Dictionary = DogData.default_profile("shiba")
+		migrated_dog["name"] = "Cún"
+		pet_dogs["dog_shiba"] = migrated_dog
+	Inventory.has_dog = not pet_dogs.is_empty()
 	if selected == "MYSTERY" or (selected is String and Inventory.is_unlocked(selected)):
 		Inventory.selected_crop = selected
 	for id in PLOT_IDS:
@@ -686,6 +793,27 @@ func _load_game() -> void:
 	# Also persist newly generated orders for old saves and brand-new games.
 	save_game.call_deferred()
 
+func _restore_pet_dogs(raw: Variant) -> Dictionary:
+	var result: Dictionary = {}
+	if not raw is Dictionary:
+		return result
+	var now := Time.get_unix_time_from_system()
+	for pet_id in DogData.DOG_IDS:
+		var source: Variant = raw.get(pet_id, {})
+		if not source is Dictionary:
+			continue
+		var variant: Dictionary = DogData.variant_for_pet(pet_id)
+		if variant.is_empty() or str(source.get("variant", "")) != str(variant["id"]):
+			continue
+		var profile := DogData.default_profile(str(variant["id"]), now)
+		profile["name"] = DogData.normalized_name(source.get("name", ""), str(variant["default_name"]))
+		var hunger := clampf(float(source.get("hunger", 100.0)), 0.0, 100.0)
+		var last: float = float(source.get("last_hunger_update_at", now))
+		var elapsed := clampf(now - last, 0.0, DogData.MAX_OFFLINE_HUNGER_LOSS / DogData.HUNGER_PER_SECOND)
+		profile["hunger"] = maxf(0.0, hunger - minf(DogData.MAX_OFFLINE_HUNGER_LOSS, elapsed * DogData.HUNGER_PER_SECOND))
+		profile["last_hunger_update_at"] = now
+		result[pet_id] = profile
+	return result
 
 func _read_int(data: ConfigFile, section: String, key: String, fallback: int, minimum: int = 0) -> int:
 	var value = data.get_value(section, key, fallback)

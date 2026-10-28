@@ -72,8 +72,8 @@ func run_checks() -> void:
 		menu.selection.select_character("farmer_03")
 		menu.selection.confirm_button.pressed.emit()
 		await wait_farm()
-		check(sprite.target_character_height == 72.0, "New Game uses default Target Character Height 72")
-		assert_height(72.0)
+		check(sprite.target_character_height == 88.0, "New Game uses default Target Character Height 88")
+		assert_height(88.0)
 		var collision: CollisionShape2D = player.get_node("CollisionShape2D")
 		var original_transform := collision.transform
 		var original_shape := collision.shape
@@ -139,7 +139,7 @@ func run_checks() -> void:
 		sprite.sprite_frames = real_frames
 		sprite.refresh_character_size()
 		check(manager.reset_game(), "size fixture reset")
-		check(sprite.target_character_height == 72.0, "reset does not change scene presentation setting")
+		check(sprite.target_character_height == 88.0, "reset does not change scene presentation setting")
 	elif stage == "size_write":
 		check(manager.start_new_game("farmer_04"), "save skin for Continue")
 		# Change scene configuration only in the isolated project, not in save data.

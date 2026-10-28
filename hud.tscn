@@ -528,12 +528,6 @@ columns = 3
 theme_override_constants/h_separation = 12
 theme_override_constants/v_separation = 12
 
-[node name="DogBuyButton" type="Button" parent="ShopBuildPanel/Margin/Content/Tabs/AnimalPanel/Margin/Content/Scroll/Cards"]
-custom_minimum_size = Vector2(0, 32)
-layout_mode = 2
-focus_mode = 0
-text = "DEFAULT_BUY_DOG"
-
 [node name="ToolsUnlocked" type="AcceptDialog" parent="."]
 theme = ExtResource("99_theme")
 title = "TOOLS_UNLOCKED"

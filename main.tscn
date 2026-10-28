@@ -227,6 +227,7 @@ animation = &"idle_down"
 script = ExtResource("92_anim")
 fallback_paths = Array[NodePath]([NodePath("../Icon")])
 use_selected_character = true
+target_character_height = 88.0
 
 [node name="SoilPlot" parent="." unique_id=610237959 instance=ExtResource("12_plot")]
 position = Vector2(1100, 520)

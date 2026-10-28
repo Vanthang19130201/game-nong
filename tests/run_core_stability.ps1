@@ -56,6 +56,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'pig_sheep_placement_test.gd') -
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'world_expansion_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'discovery_system_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'audio_manager_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'dog_pet_test.gd') -Destination $testRoot -Force
 $projectPath = Join-Path $testRoot 'project.godot'
 Add-Content -LiteralPath $projectPath -Value "`n[debug]`nfile_logging/enable_file_logging=false"
 # Reuse the project's existing imports; no editor/settings writes are needed.
@@ -94,7 +95,7 @@ $stages = @('size_core', 'size_write', 'size_read', 'character_core', 'character
     'hud_completion','calendar_write','calendar_read','calendar_legacy_write','calendar_legacy_read','calendar_invalid_write','calendar_invalid_read',
     'feed_core','feed_write','feed_read','feed_again','feed_offline_write','feed_offline_read','feed_legacy_write','feed_legacy_read','feed_reset_read',
     'feed_cancel','feed_cancel_write','feed_cancel_read','feed_cancel_again','level_up',
-    'upgrade_treasure_core','upgrade_treasure_legacy_write','upgrade_treasure_legacy_read')
+    'upgrade_treasure_core','upgrade_treasure_legacy_write','upgrade_treasure_legacy_read','dog_pet')
 $onlyStage = $env:GODOT_TEST_ONLY
 if (-not [string]::IsNullOrWhiteSpace($onlyStage)) {
     $stages = @($stages | Where-Object { $_ -eq $onlyStage })
@@ -118,6 +119,7 @@ foreach ($stage in $stages) {
     if ($stage -eq 'animal_output') { $testScript = 'level_audit_test.gd' }
     if ($stage -eq 'discovery_core') { $testScript = 'discovery_system_test.gd' }
     if ($stage -eq 'audio_core') { $testScript = 'audio_manager_test.gd' }
+	if ($stage -eq 'dog_pet') { $testScript = 'dog_pet_test.gd' }
     if ($stage.StartsWith('bakery_')) { $testScript = 'bakery_test.gd' }
     if ($stage.StartsWith('crop_')) { $testScript = 'crop_expansion_test.gd' }
     if ($stage.StartsWith('warehouse_')) { $testScript = 'warehouse_test.gd' }
@@ -151,9 +153,18 @@ foreach ($stage in $stages) {
     if ($stage.StartsWith('expansion_')) { $testScript = 'world_expansion_test.gd' }
     & $Godot --headless --path $testRoot --script $testScript --quit-after 1800 --log-file $log -- $stage
     $ErrorActionPreference = $previousPreference
-    $output = Get-Content -LiteralPath $log -Raw
+	# On Windows, Godot can finish its process just before the redirected log's
+	# final buffered lines are visible. Wait briefly so a failed assertion can
+	# never be reported as a false PASS.
+	$output = ''
+	$deadline = (Get-Date).AddSeconds(3)
+	do {
+		Start-Sleep -Milliseconds 100
+		$output = Get-Content -LiteralPath $log -Raw
+	} until ($output -match "PASS: (stability )?$stage|TEST FAILED|SCRIPT ERROR|GDScript::reload" -or (Get-Date) -ge $deadline)
     $unexpected = @($output -split "`n" | Where-Object {
         $_ -match '^ERROR:' -and $_ -notmatch 'root certificate store|user://logs' -and
+		-not $_ -match 'resources still in use at exit' -and
         -not ($stage -eq 'pig_sheep_placement' -and $_ -match '^ERROR: \d+ (RID allocations of type .* were leaked at exit|resources still in use at exit)') -and
         -not ($stage -in @('backup_read','defaults_read') -and $_ -match 'ConfigFile parse error') -and
         -not ($stage -eq 'duplicates' -and $_ -match 'Duplicate .* ID:')

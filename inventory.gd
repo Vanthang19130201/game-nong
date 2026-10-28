@@ -16,12 +16,12 @@ const SpinningData = preload("res://spinning_machine_data.gd")
 const LoomData = preload("res://loom_data.gd")
 const AnimalData = preload("res://animal_data.gd")
 const TreasureData = preload("res://treasure_data.gd")
-const DOG_PRICE: int = 300
+const DOG_PRICE: int = 350 # legacy UI compatibility; DogData is authoritative.
 const EGG_PRICE: int = 18
 const MILK_PRICE: int = 30
 const Progression = preload("res://progression_data.gd")
 var SILO_ITEMS: Array[String] = CropData.silo_items()
-const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "pig_feed", "sheep_feed", "egg", "milk", "pork", "wool", "wool_yarn", "cotton_cloth", "wool_cloth", "meat_pie", "small_fish", "river_fish", "golden_fish", "moon_fish", "bread", "corn_bread", "carrot_pie", "egg_cake", "milk_cake", "pancake", "cream", "butter", "cheese", "cotton_thread", "old_bottle", "old_boot", "coin_pouch", "small_chest", "lost_lure", "ancient_coin", "map_fragment", "ancient_gem"]
+const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "pig_feed", "sheep_feed", "dog_food", "egg", "milk", "pork", "wool", "wool_yarn", "cotton_cloth", "wool_cloth", "meat_pie", "small_fish", "river_fish", "golden_fish", "moon_fish", "bread", "corn_bread", "carrot_pie", "egg_cake", "milk_cake", "pancake", "cream", "butter", "cheese", "cotton_thread", "old_bottle", "old_boot", "coin_pouch", "small_chest", "lost_lure", "ancient_coin", "map_fragment", "ancient_gem"]
 var owns_spinning_machine: bool = false
 var owns_loom: bool = false
 var cotton_thread: int = 0
@@ -90,6 +90,7 @@ var player_level: int = 1
 var last_rewarded_level: int = 1
 var selected_crop: String = "WHEAT"
 var chicken_feed: int = 0
+var dog_food: int = 0
 var egg: int = 0
 var has_dog: bool = false
 var cow_feed: int = 0
@@ -125,13 +126,8 @@ var fishing_unlocked: bool = false
 
 
 func buy_dog() -> bool:
-	if has_dog or coins < DOG_PRICE:
-		return false
-	coins -= DOG_PRICE
-	has_dog = true
-	inventory_changed.emit()
-	AudioManager.play_sfx("ui_success")
-	return true
+	# Compatibility entry point for old callers/tests: a first dog is Shiba.
+	return SaveManager.adopt_dog("shiba")
 
 
 func sell_egg() -> bool:

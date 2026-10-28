@@ -43,6 +43,7 @@ const NAME_KEYS: Dictionary = {
 	"cow feed": "ITEM_COW_FEED",
 	"pig feed": "ITEM_PIG_FEED",
 	"sheep feed": "ITEM_SHEEP_FEED",
+	"dog food": "DOG_FOOD",
 	"egg": "ITEM_EGG",
 	"milk": "ITEM_MILK",
 	"pork": "ITEM_PORK",
@@ -114,18 +115,30 @@ func _enter_tree() -> void:
 	for locale in CATALOGS:
 		var translation := Translation.new()
 		translation.locale = locale
-		var messages: Dictionary = CATALOGS[locale].MESSAGES
+		var messages: Dictionary = _catalog_messages(locale)
 		for key in messages:
 			translation.add_message(key, messages[key])
 		# English copy is still being expanded.  A complete Vietnamese fallback is
 		# preferable to exposing an untranslated raw key in a live UI.
 		if locale == "en":
-			var vietnamese: Dictionary = CATALOGS["vi"].MESSAGES
+			var vietnamese: Dictionary = _catalog_messages("vi")
 			for key in vietnamese:
 				if not messages.has(key):
 					translation.add_message(key, vietnamese[key])
 		TranslationServer.add_translation(translation)
 	TranslationServer.set_locale("vi")
+
+
+func _catalog_messages(locale: String) -> Dictionary:
+	# A Script retrieved from a Dictionary is dynamically typed. In Godot 4.7,
+	# accessing its static constant directly (Script.MESSAGES) is a parse error.
+	# Instantiate the tiny RefCounted catalog and read the constant dynamically.
+	var catalog_script: Script = CATALOGS.get(locale, null)
+	if catalog_script == null:
+		return {}
+	var catalog: RefCounted = catalog_script.new()
+	var messages: Variant = catalog.get("MESSAGES")
+	return messages if messages is Dictionary else {}
 
 
 func display_name(value: String) -> String:

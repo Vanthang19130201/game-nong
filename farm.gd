@@ -11,7 +11,8 @@ const Placement = preload("res://building_placement.gd")
 const FishingWaterZone = preload("res://fishing_water_zone.gd")
 const WATER_AMBIENCE_SCRIPT = preload("res://pond_ambience.gd")
 
-var dog: CharacterBody2D
+var dog: CharacterBody2D # legacy alias: points at Shiba when owned.
+var dogs_by_id: Dictionary = {}
 var decoration_manager: Node
 var animal_groups: Dictionary = {}
 
@@ -353,30 +354,29 @@ func _update_pets() -> void:
 		else dog_home
 	)
 
-	if Inventory.has_dog:
-		if not is_instance_valid(dog):
-			dog = DOG_SCENE.instantiate()
-
-			dog.home_point = home
-			dog.position = home.position
-
-			if home == dog_house:
-				dog.position.y += 52.0
-
-			add_child(dog)
-
-		elif dog.home_point != home:
-			dog.set_home_point(home)
-
-	elif is_instance_valid(dog):
-		remove_child(dog)
-		dog.queue_free()
-		dog = null
-
-	if is_instance_valid(dog):
-		dog.wander_bounds = (
-			$Player.farm_bounds
-		)
+	var profiles: Dictionary = SaveManager.dog_profiles()
+	for pet_id in dogs_by_id.keys():
+		if profiles.has(pet_id) and is_instance_valid(dogs_by_id[pet_id]):
+			continue
+		var stale: Node = dogs_by_id[pet_id]
+		if is_instance_valid(stale):
+			stale.queue_free()
+		dogs_by_id.erase(pet_id)
+	for pet_id in profiles:
+		var runtime: CharacterBody2D = dogs_by_id.get(pet_id)
+		var slot: int = preload("res://dog_data.gd").DOG_IDS.find(pet_id)
+		if not is_instance_valid(runtime):
+			runtime = DOG_SCENE.instantiate()
+			runtime.name = pet_id.capitalize()
+			add_child(runtime)
+			runtime.wander_bounds = $Player.farm_bounds
+			runtime.configure(pet_id, profiles[pet_id], home, maxi(slot, 0))
+			runtime.global_position = runtime.entrance_position()
+			dogs_by_id[pet_id] = runtime
+		else:
+			runtime.set_home_point(home)
+			runtime.wander_bounds = $Player.farm_bounds
+	dog = dogs_by_id.get("dog_shiba") if dogs_by_id.has("dog_shiba") else (dogs_by_id.values()[0] if not dogs_by_id.is_empty() else null)
 
 
 func _create_farm_grid() -> void:

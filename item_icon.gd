@@ -54,7 +54,7 @@ const COLORS: Dictionary = {
 	"milk":Color("dcecf0"), "cream":Color("fff0cc"), "butter":Color("f0cc5e"), "cheese":Color("f3b95e"),
 	"pork":Color("d88378"), "wool":Color("efe7d5"), "wool_yarn":Color("d9c4ad"),
 	"cotton_thread":Color("f5f2e9"), "cotton_cloth":Color("d6e4df"), "wool_cloth":Color("d5b993"),
-	"chicken_feed":Color("dfb24b"), "cow_feed":Color("79a95e"), "pig_feed":Color("d98477"), "sheep_feed":Color("b99bdb"),
+	"chicken_feed":Color("dfb24b"), "cow_feed":Color("79a95e"), "pig_feed":Color("d98477"), "sheep_feed":Color("b99bdb"), "dog_food":Color("d66c4d"),
 	"bread":Color("dc9f4c"), "corn_bread":Color("e8bc48"), "carrot_pie":Color("de7e45"),
 	"egg_cake":Color("f1c86c"), "milk_cake":Color("f3dfbb"), "pancake":Color("d99c57"), "meat_pie":Color("a85e49")
 }
@@ -284,13 +284,20 @@ func _draw() -> void:
 		draw_rect(Rect2(18,47,28,5),Color("c49a62"),true)
 		for x in range(22,45,5):
 			draw_line(Vector2(x,21),Vector2(x-2,46),Color("efe0bd"),2,true)
-	elif id in ["chicken_feed", "cow_feed", "pig_feed", "sheep_feed"]:
+	elif id in ["chicken_feed", "cow_feed", "pig_feed", "sheep_feed", "dog_food"]:
 		# Feed bags have a unique animal badge instead of the same blank sack.
 		var feed_color: Color = COLORS[id]
 		draw_style_box(_rounded(Color("b98758")),Rect2(15,17,34,39))
 		draw_rect(Rect2(18,14,28,7),Color("805638"))
 		draw_style_box(_rounded(Color("f5e5bc")),Rect2(21,28,22,18))
-		if id == "chicken_feed":
+		if id == "dog_food":
+			# A red bowl-and-paw badge makes Dog Food distinct at hotbar size.
+			draw_circle(Vector2(32,37),7,feed_color)
+			draw_circle(Vector2(27,31),2.2,INK)
+			draw_circle(Vector2(32,29),2.2,INK)
+			draw_circle(Vector2(37,31),2.2,INK)
+			draw_circle(Vector2(32,36),3.4,INK)
+		elif id == "chicken_feed":
 			draw_circle(Vector2(29,36),5,feed_color)
 			draw_circle(Vector2(36,34),5,feed_color)
 			draw_line(Vector2(39,37),Vector2(45,39),Color("d77b3f"),2,true)

@@ -54,7 +54,6 @@ var coin_count_label: Label
 @onready var animal_sale_confirmation: ConfirmationDialog = $AnimalSaleConfirmation
 var pending_sale_animal: Node2D
 @onready var egg_sell_button: Button = $ShopBuildPanel/Margin/Content/Tabs/ShopPanel/Margin/Scroll/ShopContent/EggSellButton
-@onready var dog_buy_button: Button = $ShopBuildPanel/Margin/Content/Tabs/AnimalPanel/Margin/Content/Scroll/Cards/DogBuyButton
 @onready var station_panel: PanelContainer = $StationPanel
 @onready var station_info: Label = $StationPanel/Margin/Content/ContentScroll/Body/Info
 @onready var produce_button: Button = $StationPanel/Margin/Content/ContentScroll/Body/ProduceButton
@@ -93,7 +92,7 @@ var debug_panel: PanelContainer
 @onready var recipe_selector: OptionButton = $StationPanel/Margin/Content/ContentScroll/Body/RecipeSelector
 @onready var animal_panel: PanelContainer = $ShopBuildPanel/Margin/Content/Tabs/AnimalPanel
 @onready var animal_cards_grid: GridContainer = $ShopBuildPanel/Margin/Content/Tabs/AnimalPanel/Margin/Content/Scroll/Cards
-var dog_status_label: Label
+var dog_house_panel: PanelContainer
 
 
 func _ready() -> void:
@@ -108,6 +107,11 @@ func _ready() -> void:
 	land_panel.name = "LandPurchasePanel"
 	land_panel.set_script(preload("res://land_purchase_panel.gd"))
 	add_child(land_panel)
+	dog_house_panel = PanelContainer.new()
+	dog_house_panel.name = "DogHousePanel"
+	dog_house_panel.set_script(preload("res://dog_house_panel.gd"))
+	dog_house_panel.hud = self
+	add_child(dog_house_panel)
 	edit_farm = Node.new()
 	edit_farm.name = "FarmEditMode"
 	edit_farm.set_script(preload("res://farm_edit_mode.gd"))
@@ -148,7 +152,7 @@ func _ready() -> void:
 		debug_panel.set_script(preload("res://dev_debug_panel.gd"))
 		add_child(debug_panel)
 		debug_panel.visibility_changed.connect(_on_main_panel_visibility_changed)
-	for panel in [collection_book, market_stall_panel, wandering_merchant_panel, land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel, reset_confirmation, animal_sale_confirmation, plot_purchase, tools_unlock_popup, fishing_ui.panel, level_up_popup]:
+	for panel in [collection_book, dog_house_panel, market_stall_panel, wandering_merchant_panel, land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel, reset_confirmation, animal_sale_confirmation, plot_purchase, tools_unlock_popup, fishing_ui.panel, level_up_popup]:
 		panel.visibility_changed.connect(_on_main_panel_visibility_changed)
 	DiscoveryManager.discovery_found.connect(_on_discovery_found)
 	crop_ids = CropData.CROPS.keys()
@@ -222,7 +226,6 @@ func _ready() -> void:
 	plot_purchase.get_cancel_button().theme_type_variation = &"PlotCancelButton"
 	crop_selector.item_selected.connect(_select_crop)
 	egg_sell_button.pressed.connect(_sell_egg)
-	dog_buy_button.pressed.connect(_buy_dog)
 	produce_button.pressed.connect(_produce)
 	collect_button.pressed.connect(_collect)
 	$StationPanel/Margin/Content/Footer/CloseButton.pressed.connect(close_station)
@@ -445,8 +448,6 @@ func _update_inventory() -> void:
 	_update_rod_row()
 	_show_tool_unlock_if_needed.call_deferred()
 	egg_sell_button.text = tr("UI_SELL_EGG") % Inventory.EGG_PRICE
-	dog_buy_button.disabled = Inventory.has_dog
-	dog_buy_button.text = tr("UI_OWNED") if Inventory.has_dog else tr("UI_BUY_DOG") % Inventory.DOG_PRICE
 	for i in range(crop_ids.size()):
 		var crop: String = crop_ids[i]
 		var info: Dictionary = CropData.CROPS[crop]
@@ -582,14 +583,6 @@ func _sell_egg() -> void:
 		show_transaction_feedback(tr("TRADE_NO_ITEM"))
 
 
-func _buy_dog() -> void:
-	if _trade(Inventory.buy_dog, "dog", 1):
-		message_label.text = tr("MSG_DOG_BOUGHT")
-	else:
-		message_label.text = tr("MSG_DOG_OWNED") if Inventory.has_dog else tr("MSG_NEED_COINS") % Inventory.DOG_PRICE
-		show_transaction_feedback(tr("MSG_DOG_OWNED") if Inventory.has_dog else tr("TRADE_NO_COINS"))
-
-
 func open_station(station: Node) -> void:
 	if _native_dialog_open() or not is_instance_valid(station) or not station.can_interact():
 		return
@@ -687,7 +680,7 @@ func _collect() -> void:
 
 
 func blocks_world_input() -> bool:
-	return level_up_popup.visible or collection_book.visible or market_stall_panel.visible or wandering_merchant_panel.visible or animal_sale_confirmation.visible or land_panel.visible or edit_farm.active or bakery_panel.visible or dairy_panel.visible or spinning_machine_panel.visible or settings_panel.visible or shop_build_panel.visible or storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or station_panel.visible or order_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
+	return level_up_popup.visible or collection_book.visible or market_stall_panel.visible or wandering_merchant_panel.visible or animal_sale_confirmation.visible or land_panel.visible or (is_instance_valid(dog_house_panel) and dog_house_panel.visible) or edit_farm.active or bakery_panel.visible or dairy_panel.visible or spinning_machine_panel.visible or settings_panel.visible or shop_build_panel.visible or storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or station_panel.visible or order_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
 
 
 func _input(event: InputEvent) -> void:
@@ -743,6 +736,8 @@ func close_current_panel() -> void:
 		return
 	elif collection_book.visible:
 		collection_book.close()
+	elif is_instance_valid(dog_house_panel) and dog_house_panel.visible:
+		dog_house_panel.close()
 	elif animal_sale_confirmation.visible:
 		animal_sale_confirmation.hide()
 	elif reset_confirmation.visible:
@@ -789,6 +784,8 @@ func close_current_panel() -> void:
 
 func _close_game_panels() -> void:
 	collection_book.close()
+	if is_instance_valid(dog_house_panel):
+		dog_house_panel.close()
 	market_stall_panel.close()
 	wandering_merchant_panel.close()
 	animal_sale_confirmation.hide()
@@ -829,6 +826,12 @@ func open_warehouse(warehouse: Node) -> void:
 	if not is_instance_valid(warehouse) or blocks_world_input() or not warehouse.can_interact():
 		return
 	_toggle_storage()
+
+func open_dog_house(dog_house: Node) -> void:
+	if not is_instance_valid(dog_house) or not dog_house.can_interact() or blocks_world_input():
+		return
+	_close_game_panels()
+	dog_house_panel.open()
 
 
 func _toggle_storage() -> void:
@@ -872,13 +875,13 @@ func close_all_panels() -> void:
 func _on_main_panel_visibility_changed() -> void:
 	clear_item_hint(item_hint_source)
 	# A HUD dropdown must not stack over an existing modal or fishing session.
-	crop_selector.disabled = _native_dialog_open() or fishing_ui.panel.visible or [collection_book, market_stall_panel, wandering_merchant_panel, land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel].any(func(panel): return panel.visible) or (is_instance_valid(debug_panel) and debug_panel.visible)
+	crop_selector.disabled = _native_dialog_open() or fishing_ui.panel.visible or [collection_book, dog_house_panel, market_stall_panel, wandering_merchant_panel, land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel].any(func(panel): return panel.visible) or (is_instance_valid(debug_panel) and debug_panel.visible)
 	if is_instance_valid(hotbar):
 		hotbar.visible = not crop_selector.disabled
 	$ModalBackdrop.visible = crop_selector.disabled and not edit_farm.active and not fishing_ui.panel.visible and not level_up_popup.visible
 	# z_index controls drawing, not GUI picking. Keep the active panel after
 	# the backdrop and hotbar in tree order so its tabs/buttons receive clicks.
-	for panel in [collection_book,market_stall_panel,wandering_merchant_panel,land_panel,bakery_panel,dairy_panel,spinning_machine_panel,settings_panel,shop_build_panel,station_panel,house_panel,order_panel,fish_market_panel,storage_panel,debug_panel,level_up_popup]:
+	for panel in [collection_book,dog_house_panel,market_stall_panel,wandering_merchant_panel,land_panel,bakery_panel,dairy_panel,spinning_machine_panel,settings_panel,shop_build_panel,station_panel,house_panel,order_panel,fish_market_panel,storage_panel,debug_panel,level_up_popup]:
 		if is_instance_valid(panel) and panel.visible:
 			move_child(panel,get_child_count()-1)
 	transaction_feedback.set_popup_mode($ModalBackdrop.visible)
@@ -1071,10 +1074,6 @@ func _update_build_rows() -> void:
 			row["label"].text += tr("UI_COLLECT_BEFORE_TRADE")
 		row["buy"].disabled = locked or busy or count >= Inventory.animal_capacity(animal)
 		row["buy"].text = tr("UI_LOCKED_LEVEL") % info["level"] if locked else tr("UI_BUY_COMPACT") % info["buy"]
-	if is_instance_valid(dog_status_label):
-		dog_status_label.text = tr("UI_OWNED") if Inventory.has_dog else tr("UI_PRICE_COINS") % Inventory.DOG_PRICE
-
-
 	for id in upgrade_rows:
 		var row: Dictionary = upgrade_rows[id]
 		var current: int = Inventory.get(id + "_level")
@@ -1411,11 +1410,6 @@ func _setup_animal_cards() -> void:
 		var card = _card(animal_cards_grid, id, Localization.display_name(id))
 		_use_card_label(card, animal_buttons[id]["label"])
 		card.add_action(animal_buttons[id]["buy"])
-	var dog_card = _card(animal_cards_grid, "dog", Localization.display_name("dog"))
-	dog_status_label = Label.new()
-	dog_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_use_card_label(dog_card, dog_status_label)
-	dog_card.add_action(dog_buy_button)
 	catalog_grids.append(animal_cards_grid)
 
 

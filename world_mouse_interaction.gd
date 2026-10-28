@@ -100,7 +100,7 @@ func _display_name(target: Node) -> String:
 		return tr("MOUSE_TREE") if target.resource_type == "wood" else tr("MOUSE_ROCK")
 	if target.get("station_id") != null:
 		return Localization.display_name(Inventory.Progression.BUILDINGS[target.station_id]["name"])
-	var names: Dictionary = {"House": "BUILDING_HOUSE", "Warehouse": "BUILDING_BARN", "OrderBoard": "WORLD_ORDER_BOARD", "FishMarket": "TITLE_FISH_MARKET", "FishingSpot": "WORLD_FISHING_SPOT", "Bakery": "BUILDING_BAKERY", "Bridge": "WORLD_FISHING_AREA"}
+	var names: Dictionary = {"House": "BUILDING_HOUSE", "Warehouse": "BUILDING_BARN", "OrderBoard": "WORLD_ORDER_BOARD", "FishMarket": "TITLE_FISH_MARKET", "FishingSpot": "WORLD_FISHING_SPOT", "Bakery": "BUILDING_BAKERY", "Bridge": "WORLD_FISHING_AREA", "DogHouse": "DOG_HOUSE"}
 	return tr(names.get(str(target.name), "MOUSE_SOIL_PLOT"))
 
 func _exit_tree() -> void:

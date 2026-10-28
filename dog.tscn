@@ -1,49 +1,57 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://character_visual.gd" id="92_anim"]
-[ext_resource type="SpriteFrames" path="res://assets/characters/directional_frames.tres" id="93_frames"]
+[ext_resource type="Script" path="res://dog.gd" id="1_dog"]
+[ext_resource type="Script" path="res://dog_visual.gd" id="2_visual"]
 
-[ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
-
-[ext_resource type="Script" path="res://dog.gd" id="1"]
-
-[sub_resource type="RectangleShape2D" id="DogShape"]
-size = Vector2(28, 20)
+[sub_resource type="CircleShape2D" id="DogShape"]
+radius = 13.0
 
 [node name="Dog" type="CharacterBody2D"]
 collision_layer = 0
 collision_mask = 0
 motion_mode = 1
-script = ExtResource("1")
+script = ExtResource("1_dog")
 
-[node name="BodyColor" type="ColorRect" parent="."]
-offset_left = -24.0
-offset_top = -14.0
-offset_right = 24.0
-offset_bottom = 14.0
-color = Color(0.7, 0.55, 0.3, 1)
-mouse_filter = 2
+[node name="DogVisual" type="Node2D" parent="."]
+script = ExtResource("2_visual")
 
-[node name="Visual" type="Label" parent="."]
-theme_override_font_sizes/font_size = 12
-offset_left = -26.0
-offset_top = -14.0
-offset_right = 26.0
-offset_bottom = 14.0
+[node name="Sprite" type="Sprite2D" parent="DogVisual"]
+texture_filter = 1
+
+[node name="NameLabel" type="Label" parent="DogVisual"]
+offset_left = -48.0
+offset_top = -72.0
+offset_right = 48.0
+offset_bottom = -50.0
 horizontal_alignment = 1
-vertical_alignment = 1
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.96, 0.82, 1)
+theme_override_colors/font_outline_color = Color(0.20, 0.13, 0.09, 1)
+theme_override_constants/outline_size = 3
 mouse_filter = 2
-text = "WORLD_DOG"
+
+[node name="ZzzLabel" type="Label" parent="DogVisual"]
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.91, 0.95, 1, 0.95)
+theme_override_colors/font_outline_color = Color(0.17, 0.22, 0.32, 1)
+theme_override_constants/outline_size = 2
+mouse_filter = 2
+
+[node name="ThoughtLabel" type="Label" parent="DogVisual"]
+offset_left = -16.0
+offset_top = -54.0
+offset_right = 16.0
+offset_bottom = -34.0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(1, 0.88, 0.55, 1)
+theme_override_colors/font_outline_color = Color(0.22, 0.15, 0.09, 1)
+theme_override_constants/outline_size = 2
+mouse_filter = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -13)
 shape = SubResource("DogShape")
 
-[node name="IdleTimer" type="Timer" parent="."]
+[node name="DecisionTimer" type="Timer" parent="."]
 one_shot = true
-[node name="Visuals" type="Node2D" parent="."]
-
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
-sprite_frames = ExtResource("93_frames")
-animation = &"idle_down"
-script = ExtResource("92_anim")
-fallback_paths = Array[NodePath]([NodePath("../BodyColor"), NodePath("../Visual")])

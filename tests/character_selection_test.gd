@@ -68,10 +68,11 @@ func visual_checks(farm: Node) -> void:
 	var position: Vector2 = shape.position
 	var mask: int = player.collision_mask
 	var camera: Camera2D = player.get_node("Camera2D")
-	inv.coins = 300
+	inv.has_dog_house = true
+	inv.coins = 500
 	check(inv.buy_dog(), "dog visual fixture")
-	var dog_sprite: AnimatedSprite2D = farm.dog.get_node("AnimatedSprite2D")
-	var dog_frames := dog_sprite.sprite_frames
+	var dog_sprite: Sprite2D = farm.dog.get_node("DogVisual/Sprite")
+	var dog_texture := dog_sprite.texture
 	player.set_physics_process(false)
 	for id in Data.CHARACTERS:
 		check(manager.set_selected_character(id, false), "apply selected visual " + id)
@@ -86,7 +87,7 @@ func visual_checks(farm: Node) -> void:
 			check(sprite.animation == "idle_" + facing and sprite.is_playing(), "idle keeps last facing " + id + facing)
 		check(player.speed == speed and shape.shape.size == size and shape.position == position and player.collision_mask == mask, "appearance preserves speed and collision " + id)
 		check(camera.get_parent() == player, "same player camera " + id)
-		check(dog_sprite.sprite_frames == dog_frames and not dog_sprite.use_selected_character, "dog never inherits the selected farmer " + id)
+		check(dog_sprite.texture == dog_texture and dog_sprite.texture != Data.frames_for(id).get_frame_texture("idle_down", 0), "dog never inherits the selected farmer " + id)
 	check(not player.get_node("Icon").visible, "legacy placeholder hidden")
 	player.velocity = Vector2.ZERO
 	player.set_physics_process(true)
@@ -144,6 +145,8 @@ func run_checks() -> void:
 			start.selection.cancelled.emit()
 			check(start.menu.visible and not start.selection.visible, "cancel returns without altering save")
 			start.show_character_select()
+			start.selection.select_character("farmer_03")
+			start.selection.name_input.text = "Test Farmer"
 			start.selection.confirm_button.pressed.emit()
 			await wait_scene("Main")
 			check(manager.selected_character_id == "farmer_03" and not manager.character_selection_pending, "confirmed Farmer 3 starts farm")
