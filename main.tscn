@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dowldrfhoky1g"]
 
 [ext_resource type="Script" uid="uid://rhxig8gxyrdc" path="res://player.gd" id="1_0xm2m"]
-[ext_resource type="Texture2D" path="res://assets/buildings/house/house_cozy_v2.png" id="4_getpj"]
+[ext_resource type="Texture2D" uid="uid://bj4pvscqk6ixm" path="res://assets/buildings/house/house_cozy_v2.png" id="4_getpj"]
 [ext_resource type="PackedScene" path="res://hud.tscn" id="4_hud"]
 [ext_resource type="Script" uid="uid://cv4b8aubh8cw0" path="res://farm.gd" id="5_farm"]
 [ext_resource type="PackedScene" path="res://feed_mill.tscn" id="6_mill"]
@@ -30,9 +30,9 @@
 [ext_resource type="Script" uid="uid://c6sx67bddbs0w" path="res://building_ground_visual.gd" id="104_ground"]
 [ext_resource type="Script" uid="uid://ccggn62pxy12b" path="res://world_lighting.gd" id="105_world_lighting"]
 [ext_resource type="Script" uid="uid://0o5r3v7e3g8q" path="res://weather_visual.gd" id="106_weather_visual"]
-[ext_resource type="Script" path="res://forest_visual.gd" id="107_forest_visual"]
-[ext_resource type="Script" path="res://world_ambient.gd" id="108_ambient"]
-[ext_resource type="Script" path="res://world_depth.gd" id="109_depth"]
+[ext_resource type="Script" uid="uid://bmlnjuy47oip4" path="res://forest_visual.gd" id="107_forest_visual"]
+[ext_resource type="Script" uid="uid://7s24immld8wd" path="res://world_ambient.gd" id="108_ambient"]
+[ext_resource type="Script" uid="uid://bohsovlht5202" path="res://world_depth.gd" id="109_depth"]
 
 [sub_resource type="RectangleShape2D" id="HouseInteractionShape"]
 size = Vector2(260, 220)
@@ -69,7 +69,6 @@ script = ExtResource("106_weather_visual")
 [node name="Ground" type="ColorRect" parent="." unique_id=2031795690]
 z_index = -10
 offset_left = -600.0
-offset_top = 0.0
 offset_right = 2400.0
 offset_bottom = 3400.0
 mouse_filter = 2
@@ -102,11 +101,11 @@ color = Color(0.35, 0.48, 0.28, 1)
 z_index = -8
 script = ExtResource("99_landscape")
 
-[node name="WorldAmbient" type="Node2D" parent="."]
+[node name="WorldAmbient" type="Node2D" parent="." unique_id=206173726]
 z_index = -7
 script = ExtResource("108_ambient")
 
-[node name="WorldDepth" type="Node" parent="."]
+[node name="WorldDepth" type="Node" parent="." unique_id=168982564]
 script = ExtResource("109_depth")
 
 [node name="House" type="Node2D" parent="." unique_id=1872630608]
@@ -211,7 +210,6 @@ limit_right = 2400
 limit_bottom = 3400
 position_smoothing_enabled = true
 script = ExtResource("96_camera")
-min_zoom = 0.65
 
 [node name="Icon" type="Sprite2D" parent="Player" unique_id=1308617484]
 position = Vector2(-1.5258789e-05, -0.9999924)
@@ -282,71 +280,71 @@ position = Vector2(1480, 343)
 scale = Vector2(0.8, 0.8)
 resource_id = "tree_5"
 
-[node name="ForestTree01" parent="." instance=ExtResource("10_resource")]
+[node name="ForestTree01" parent="." unique_id=587901122 instance=ExtResource("10_resource")]
 position = Vector2(180, 145)
 scale = Vector2(0.72, 0.72)
 resource_id = "forest_tree_01"
 tree_species = "pine"
 
-[node name="ForestTree02" parent="." instance=ExtResource("10_resource")]
+[node name="ForestTree02" parent="." unique_id=1578340037 instance=ExtResource("10_resource")]
 position = Vector2(320, 115)
 scale = Vector2(0.68, 0.68)
 resource_id = "forest_tree_02"
 
-[node name="ForestTree03" parent="." instance=ExtResource("10_resource")]
+[node name="ForestTree03" parent="." unique_id=289363506 instance=ExtResource("10_resource")]
 position = Vector2(585, 130)
 scale = Vector2(0.78, 0.78)
 resource_id = "forest_tree_03"
 tree_species = "blossom"
 
-[node name="ForestTree04" parent="." instance=ExtResource("10_resource")]
+[node name="ForestTree04" parent="." unique_id=536461017 instance=ExtResource("10_resource")]
 position = Vector2(850, 115)
 scale = Vector2(0.7, 0.7)
 resource_id = "forest_tree_04"
 tree_species = "pine"
 
-[node name="ForestTree05" parent="." instance=ExtResource("10_resource")]
+[node name="ForestTree05" parent="." unique_id=1310051488 instance=ExtResource("10_resource")]
 position = Vector2(1150, 130)
 scale = Vector2(0.78, 0.78)
 resource_id = "forest_tree_05"
 tree_species = "autumn"
 
-[node name="ForestTree06" parent="." instance=ExtResource("10_resource")]
+[node name="ForestTree06" parent="." unique_id=384882388 instance=ExtResource("10_resource")]
 position = Vector2(1630, 145)
 scale = Vector2(0.72, 0.72)
 resource_id = "forest_tree_06"
 tree_species = "blossom"
 
-[node name="ForestTree07" parent="." instance=ExtResource("10_resource")]
+[node name="ForestTree07" parent="." unique_id=80132417 instance=ExtResource("10_resource")]
 position = Vector2(160, 255)
 scale = Vector2(0.74, 0.74)
 resource_id = "forest_tree_07"
 tree_species = "autumn"
 
-[node name="ForestTree08" parent="." instance=ExtResource("10_resource")]
+[node name="ForestTree08" parent="." unique_id=1970502046 instance=ExtResource("10_resource")]
 position = Vector2(315, 268)
 scale = Vector2(0.66, 0.66)
 resource_id = "forest_tree_08"
 tree_species = "pine"
 
-[node name="ForestTree09" parent="." instance=ExtResource("10_resource")]
+[node name="ForestTree09" parent="." unique_id=677547605 instance=ExtResource("10_resource")]
 position = Vector2(600, 260)
 scale = Vector2(0.72, 0.72)
 resource_id = "forest_tree_09"
 
-[node name="ForestTree10" parent="." instance=ExtResource("10_resource")]
+[node name="ForestTree10" parent="." unique_id=1640546097 instance=ExtResource("10_resource")]
 position = Vector2(860, 255)
 scale = Vector2(0.7, 0.7)
 resource_id = "forest_tree_10"
 tree_species = "blossom"
 
-[node name="ForestTree11" parent="." instance=ExtResource("10_resource")]
+[node name="ForestTree11" parent="." unique_id=1532666479 instance=ExtResource("10_resource")]
 position = Vector2(1150, 260)
 scale = Vector2(0.74, 0.74)
 resource_id = "forest_tree_11"
 tree_species = "pine"
 
-[node name="ForestTree12" parent="." instance=ExtResource("10_resource")]
+[node name="ForestTree12" parent="." unique_id=87448682 instance=ExtResource("10_resource")]
 position = Vector2(1660, 250)
 scale = Vector2(0.7, 0.7)
 resource_id = "forest_tree_12"
@@ -377,25 +375,25 @@ position = Vector2(1480, 2100)
 scale = Vector2(0.8, 0.8)
 resource_id = "tree_8"
 
-[node name="FarmTree01" parent="." instance=ExtResource("10_resource")]
+[node name="FarmTree01" parent="." unique_id=19399069 instance=ExtResource("10_resource")]
 position = Vector2(160, 350)
 scale = Vector2(0.72, 0.72)
 resource_id = "farm_tree_01"
 tree_species = "blossom"
 
-[node name="FarmTree02" parent="." instance=ExtResource("10_resource")]
+[node name="FarmTree02" parent="." unique_id=2098033047 instance=ExtResource("10_resource")]
 position = Vector2(250, 820)
 scale = Vector2(0.78, 0.78)
 resource_id = "farm_tree_02"
 tree_species = "pine"
 
-[node name="FarmTree03" parent="." instance=ExtResource("10_resource")]
+[node name="FarmTree03" parent="." unique_id=929969256 instance=ExtResource("10_resource")]
 position = Vector2(150, 1450)
 scale = Vector2(0.7, 0.7)
 resource_id = "farm_tree_03"
 tree_species = "autumn"
 
-[node name="FarmTree04" parent="." instance=ExtResource("10_resource")]
+[node name="FarmTree04" parent="." unique_id=1211519322 instance=ExtResource("10_resource")]
 position = Vector2(1680, 1450)
 scale = Vector2(0.74, 0.74)
 resource_id = "farm_tree_04"
@@ -500,7 +498,6 @@ position = Vector2(1800, 0)
 
 [node name="Placeholder" type="ColorRect" parent="River" unique_id=1528152808]
 offset_right = 140.0
-offset_top = 0.0
 offset_bottom = 3400.0
 mouse_filter = 2
 color = Color(0.12, 0.4, 0.6, 1)
@@ -535,7 +532,6 @@ plot_id = "soil_08"
 [node name="FishingArea" type="ColorRect" parent="." unique_id=1039074349]
 z_index = -9
 offset_left = 1940.0
-offset_top = 0.0
 offset_right = 2400.0
 offset_bottom = 3400.0
 mouse_filter = 2

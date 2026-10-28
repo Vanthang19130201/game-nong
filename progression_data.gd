@@ -71,15 +71,68 @@ static func reward_for_level(level: int) -> Dictionary:
 		coins += 100
 	return {"coins": coins}
 const BUILDINGS: Dictionary = {
-	"feed_mill": {"name": "Feed Mill", "level": 4, "price": 500},
-	"chicken_coop": {"name": "Chicken Coop", "level": 5, "price": 800},
-	"cow_shed": {"name": "Cow Shed", "level": 8, "price": 1500},
-	"pig_pen": {"name": "Pig Pen", "level": 11, "price": 2500, "placement_required": true},
-	"sheep_barn": {"name": "Sheep Barn", "level": 13, "price": 2100, "placement_required": true},
-	"bakery": {"name": "Bakery", "level": 3, "price": 400},
-	"dairy": {"name": "Dairy", "level": 15, "price": 4500, "placement_required": true},
-	"spinning_machine": {"name":"Spinning Machine","level":17,"price":5000,"placement_required":true},
-	"loom": {"name":"Loom","level":18,"price":6000,"placement_required":true}
+	"feed_mill": {
+		"name": "Feed Mill",
+		"level": 4,
+		"price": 500,
+		"placement_required": true
+	},
+
+	"chicken_coop": {
+		"name": "Chicken Coop",
+		"level": 5,
+		"price": 800,
+		"placement_required": true
+	},
+
+	"cow_shed": {
+		"name": "Cow Shed",
+		"level": 8,
+		"price": 1500,
+		"placement_required": true
+	},
+
+	"pig_pen": {
+		"name": "Pig Pen",
+		"level": 11,
+		"price": 2500,
+		"placement_required": true
+	},
+
+	"sheep_barn": {
+		"name": "Sheep Barn",
+		"level": 13,
+		"price": 2100,
+		"placement_required": true
+	},
+
+	"bakery": {
+		"name": "Bakery",
+		"level": 3,
+		"price": 400,
+		"placement_required": true
+	},
+
+	"dairy": {
+		"name": "Dairy",
+		"level": 15,
+		"price": 4500,
+		"placement_required": true
+	},
+
+	"spinning_machine": {
+		"name": "Spinning Machine",
+		"level": 17,
+		"price": 5000,
+		"placement_required": true
+	},
+
+	"loom": {
+		"name": "Loom",
+		"level": 18,
+		"price": 6000,
+		"placement_required": true
+	}
 }
 const ANIMALS: Dictionary = {
 	"chicken": {"name": "Chicken", "building": "chicken_coop", "level": 6, "capacity": 3, "buy": 150, "sell": 100},
@@ -129,11 +182,31 @@ const UPGRADES: Dictionary = {
 		5: {"wood": 75, "stone": 50, "coins": 4800, "capacity": 180}
 	},
 	"barn": {
-		2: {"wood": 12, "stone": 10, "coins": 350, "capacity": 40},
-		3: {"wood": 30, "stone": 20, "coins": 1300, "capacity": 70},
-		4: {"wood": 58, "stone": 38, "coins": 3000, "capacity": 110},
-		5: {"wood": 95, "stone": 60, "coins": 6200, "capacity": 160}
+	2: {
+		"wood": 12,
+		"stone": 10,
+		"coins": 350,
+		"capacity": 80
+	},
+	3: {
+		"wood": 30,
+		"stone": 20,
+		"coins": 1300,
+		"capacity": 120
+	},
+	4: {
+		"wood": 58,
+		"stone": 38,
+		"coins": 3000,
+		"capacity": 160
+	},
+	5: {
+		"wood": 95,
+		"stone": 60,
+		"coins": 6200,
+		"capacity": 200
 	}
+}
 }
 const DOG_HOUSE_COST: Dictionary = {"wood": 5, "stone": 0, "coins": 0}
 # Cumulative capacity granted by the existing House level. This is deliberately

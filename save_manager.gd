@@ -630,7 +630,16 @@ func _load_game() -> void:
 	for id in RESOURCE_IDS:
 		saved_resources[id] = _read_resource(data.get_value("resources", id, 0.0))
 	Inventory.silo_capacity = maxi(30, _read_int(data, "storage", "silo_capacity", 30, 1))
-	Inventory.barn_capacity = maxi(20, _read_int(data, "storage", "barn_capacity", 20, 1))
+	Inventory.barn_capacity = maxi(
+	40,
+	_read_int(
+		data,
+		"storage",
+		"barn_capacity",
+		40,
+		1
+	)
+)
 	for storage in ["silo", "barn"]:
 		var level: int = Inventory.get(storage + "_level")
 		if level > 1:

@@ -95,7 +95,7 @@ var has_dog: bool = false
 var cow_feed: int = 0
 var milk: int = 0
 var silo_capacity: int = 30
-var barn_capacity: int = 20
+var barn_capacity: int = 40
 var owns_feed_mill: bool = false
 var owns_chicken_coop: bool = false
 var owns_cow_shed: bool = false
@@ -628,26 +628,157 @@ func owns_building(id: String) -> bool:
 	return Progression.BUILDINGS.has(id) and get("owns_" + id)
 
 
-func buy_building(id: String, placement_source: Node2D = null, position: Vector2 = Vector2.ZERO) -> bool:
+func buy_building(
+	id: String,
+	placement_source: Node2D = null,
+	position: Vector2 = Vector2.ZERO
+) -> bool:
+
 	if not Progression.BUILDINGS.has(id):
 		return false
+
+	if not FarmData.BUILDINGS.has(id):
+		return false
+
 	var info: Dictionary = Progression.BUILDINGS[id]
+
 	if owns_building(id):
-		return fail(tr("ERROR_BUILDING_OWNED"))
-	if player_level < info["level"]:
-		return fail(tr("ERROR_LEVEL") % info["level"])
-	if coins < info["price"]:
-		return fail(tr("ERROR_COINS"))
-	if info.get("placement_required",false):
-		if not is_instance_valid(placement_source) or placement_source.get_meta("placement_building_id","") != id or not preload("res://building_placement.gd").can_place(placement_source,position):
-			return fail(tr("ERROR_PLACEMENT"))
-		SaveManager.building_positions[id] = position
-		var building = SaveManager.buildings.get(id)
+		return fail(
+			tr("ERROR_BUILDING_OWNED")
+		)
+
+	if player_level < int(info["level"]):
+		return fail(
+			tr("ERROR_LEVEL") % int(info["level"])
+		)
+
+	var price: int = int(info["price"])
+
+	if coins < price:
+		return fail(
+			tr("ERROR_COINS")
+		)
+
+	var placement_required: bool = bool(
+		info.get(
+			"placement_required",
+			false
+		)
+	)
+
+	# ==============================================
+	# VALIDATE PLACEMENT
+	# ==============================================
+
+	if placement_required:
+
+		if not is_instance_valid(
+			placement_source
+		):
+			return fail(
+				tr("ERROR_PLACEMENT")
+			)
+
+		if (
+			placement_source.get_meta(
+				"placement_building_id",
+				""
+			)
+			!= id
+		):
+			return fail(
+				tr("ERROR_PLACEMENT")
+			)
+
+		if not preload(
+			"res://building_placement.gd"
+		).can_place(
+			placement_source,
+			position
+		):
+			return fail(
+				tr("ERROR_PLACEMENT")
+			)
+
+	# ==============================================
+	# BACKUP TRƯỚC KHI COMMIT
+	# ==============================================
+
+	var previous_coins: int = coins
+
+	var previous_owned: bool = bool(
+		get(
+			"owns_" + id
+		)
+	)
+
+	var previous_position: Vector2 = (
+		SaveManager.building_positions.get(
+			id,
+			FarmData.BUILDINGS[id]["position"]
+		)
+	)
+
+	var building: Node2D = (
+		SaveManager.buildings.get(id)
+		as Node2D
+	)
+
+	# ==============================================
+	# COMMIT PURCHASE
+	# ==============================================
+
+	coins -= price
+
+	set(
+		"owns_" + id,
+		true
+	)
+
+	if placement_required:
+
+		SaveManager.building_positions[id] = (
+			position
+		)
+
 		if is_instance_valid(building):
-			building.position = position
-	coins -= info["price"]
-	set("owns_" + id, true)
+			building.global_position = position
+
+	# ==============================================
+	# SAVE
+	# ==============================================
+
+	if not SaveManager.save_game():
+
+		# Rollback Coins
+		coins = previous_coins
+
+		# Rollback ownership
+		set(
+			"owns_" + id,
+			previous_owned
+		)
+
+		# Rollback position
+		SaveManager.building_positions[id] = (
+			previous_position
+		)
+
+		if is_instance_valid(building):
+			building.position = (
+				previous_position
+			)
+
+		return fail(
+			tr("ERROR_SAVE_FAILED")
+		)
+
+	# ==============================================
+	# SUCCESS
+	# ==============================================
+
 	inventory_changed.emit()
+
 	return true
 
 
@@ -760,14 +891,25 @@ func house_storage_bonus(level: int = house_level) -> int:
 func base_storage_capacity(storage: String, level: int = -1) -> int:
 	if storage not in ["silo", "barn"]:
 		return 0
-	var resolved_level: int = get(storage + "_level") if level < 0 else level
+
+	var resolved_level: int = (
+		get(storage + "_level")
+		if level < 0
+		else level
+	)
+
 	if resolved_level <= 1:
-		return 30 if storage == "silo" else 20
-	# Older saves can carry an unexpected level. Keep this lookup explicitly
-	# typed so a missing row never turns a save migration into an error.
+		return 30 if storage == "silo" else 40
+
 	var upgrades: Dictionary = Progression.UPGRADES[storage]
 	var data: Dictionary = upgrades.get(resolved_level, {})
-	return int(data.get("capacity", 30 if storage == "silo" else 20))
+
+	return int(
+		data.get(
+			"capacity",
+			30 if storage == "silo" else 40
+		)
+	)
 
 
 func storage_capacity_target(storage: String, level: int = -1, for_house_level: int = -1) -> int:
