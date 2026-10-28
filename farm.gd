@@ -378,6 +378,7 @@ func _update_pets() -> void:
 		else:
 			runtime.set_home_point(home)
 			runtime.wander_bounds = $Player.farm_bounds
+			runtime.refresh_profile(profiles[pet_id])
 	dog = dogs_by_id.get("dog_shiba") if dogs_by_id.has("dog_shiba") else (dogs_by_id.values()[0] if not dogs_by_id.is_empty() else null)
 
 

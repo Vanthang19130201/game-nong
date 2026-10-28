@@ -11,13 +11,15 @@ var texture_available: bool = false
 var name_time: float = 0.0
 var heart_time: float = 0.0
 var reaction_time: float = 0.0
+var reaction_duration: float = 0.0
 var state_tween: Tween
 var visibility_tween: Tween
 var idle_variant_until: float = 0.0
 var next_idle_variation: float = 0.0
 var rng := RandomNumberGenerator.new()
 
-@onready var sprite: AnimatedSprite2D = $Sprite
+@onready var motion_root: Node2D = $MotionRoot
+@onready var sprite: AnimatedSprite2D = $MotionRoot/Sprite
 @onready var name_label: Label = $NameLabel
 @onready var zzz_label: Label = $ZzzLabel
 @onready var thought_label: Label = $ThoughtLabel
@@ -34,6 +36,7 @@ func _ready() -> void:
 	thought_label.hide()
 	interact_label.hide()
 	next_idle_variation = rng.randf_range(2.5, 6.0)
+	sprite.frame_changed.connect(_on_sprite_frame_changed)
 
 
 func configure(next_variant_id: String, display_name: String) -> void:
@@ -44,40 +47,48 @@ func configure(next_variant_id: String, display_name: String) -> void:
 		state_tween.kill()
 		state_tween = null
 	variant_id = next_variant_id
+	motion_root.position = Vector2.ZERO
+	motion_root.rotation = 0.0
 	var frames := DogData.visual_frames_for_variant(variant_id)
 	texture_available = frames != null
 	sprite.sprite_frames = frames
 	if frames != null:
-		# The full original illustration is used as one compact world sprite.
-		# Fit by source height so no high-resolution artwork overwhelms the farm.
-		var source_texture: Texture2D = DogData.texture_for_variant(variant_id)
-		var source_height: float = float(source_texture.get_height()) if source_texture != null else 1200.0
-		var scale_factor := DogData.TARGET_BODY_HEIGHT / source_height
-		sprite.scale = Vector2.ONE * scale_factor
+		var pose_sheet: Texture2D = DogData.visual_sheet_for_variant(variant_id)
+		if pose_sheet != null:
+			# Normal path: each animation uses AtlasTexture frames cut from its
+			# own pose board. Scale and baseline live in DogData per breed.
+			sprite.scale = Vector2.ONE * DogData.visual_scale_for_variant(variant_id)
+			base_sprite_position = Vector2(0.0, DogData.visual_ground_offset_for_variant(variant_id, pose_sheet))
+		else:
+			# Emergency fallback only; never reached while the valid pose sheet is
+			# present. It keeps a corrupted install playable without giant artwork.
+			var source_texture: Texture2D = DogData.texture_for_variant(variant_id)
+			var source_height: float = float(source_texture.get_height()) if source_texture != null else 1200.0
+			var fallback_scale := 56.0 / source_height
+			sprite.scale = Vector2.ONE * fallback_scale
+			base_sprite_position = Vector2(0.0, -source_height * fallback_scale * 0.47)
 		base_scale = sprite.scale
-		# The source art is centered, with paws near the lower edge.
-		base_sprite_position = Vector2(0.0, -source_height * scale_factor * 0.47)
 		sprite.position = base_sprite_position
 	name_label.text = display_name
 	set_state(state_name)
+	_apply_frame_anchor()
 	queue_redraw()
 
 
 func set_state(next_state: String) -> void:
 	state_name = next_state
 	idle_variant_until = 0.0
-	thought_label.visible = next_state == "WAIT_FOOD"
-	thought_label.text = "â€¦" if thought_label.visible else ""
+	_refresh_hungry_badge()
 	zzz_label.visible = next_state == "SLEEP"
+	if not zzz_label.visible:
+		zzz_label.text = ""
 	_play_state_animation()
-	if not texture_available:
-		return
-	if is_instance_valid(state_tween):
-		state_tween.kill()
-	state_tween = create_tween()
-	state_tween.set_parallel(true)
-	state_tween.tween_property(sprite, "scale", base_scale, 0.16).set_trans(Tween.TRANS_SINE)
-	state_tween.tween_property(sprite, "position", base_sprite_position, 0.16).set_trans(Tween.TRANS_SINE)
+	if texture_available:
+		# Base placement is configured once. Frame alignment is exclusively kept
+		# in Sprite2D.offset, while MotionRoot owns intentional bob/tilt.
+		sprite.scale = base_scale
+		sprite.position = base_sprite_position
+		_apply_frame_anchor()
 
 
 func set_facing(right: bool) -> void:
@@ -95,20 +106,38 @@ func show_name(seconds: float = 2.5) -> void:
 
 
 func happy() -> void:
-	heart_time = 0.9
-	reaction_time = 0.55
+	heart_time = 1.1
+	reaction_duration = 0.8 if variant_id == "shiba" else 1.0 if variant_id == "cream" else 0.85
+	reaction_time = reaction_duration
 	if texture_available:
 		_play(&"happy", true)
 		idle_variant_until = 0.48
 
 
+func wake() -> void:
+	# Wake is visual-only: dog.gd keeps ownership, hunger and state authority.
+	reaction_duration = 0.62 if variant_id != "cream" else 0.72
+	reaction_time = reaction_duration
+	if texture_available:
+		_play(&"wake_up", true)
+
+
 func set_interaction_hint(show_hint: bool, display_name: String) -> void:
 	interact_label.visible = show_hint
 	if show_hint:
-		interact_label.text = "[E] " + display_name
+		interact_label.text = display_name
+	_refresh_hungry_badge()
 	# The interact prompt is the one consistent name presentation in-world.
 	# A separate floating name can otherwise linger after the player moves away.
 	name_label.hide()
+
+
+func _refresh_hungry_badge() -> void:
+	var waiting_for_food := state_name == "WAIT_FOOD"
+	# The prompt is more actionable at close range. Hiding the badge there keeps
+	# the two labels from covering one another; it returns immediately on exit.
+	thought_label.visible = waiting_for_food and not interact_label.visible
+	thought_label.text = tr("DOG_HUNGRY_BADGE") if waiting_for_food else ""
 
 
 func set_inside(inside: bool) -> void:
@@ -149,6 +178,24 @@ func _play(animation_name: StringName, restart: bool = false) -> void:
 		return
 	if restart or sprite.animation != animation_name:
 		sprite.play(animation_name)
+	_apply_frame_anchor()
+
+
+func _on_sprite_frame_changed() -> void:
+	_apply_frame_anchor()
+
+
+func _apply_frame_anchor() -> void:
+	var sheet: Texture2D = DogData.visual_sheet_for_variant(variant_id)
+	if sheet == null or sprite.sprite_frames == null:
+		sprite.offset = Vector2.ZERO
+		return
+	var source_cell := DogData.cell_for_animation_frame(variant_id, sprite.animation, sprite.frame)
+	var source_anchor := DogData.cell_anchor_for_variant(variant_id, source_cell)
+	var target_anchor := DogData.target_anchor_for_variant(variant_id, sheet)
+	# offset is in unscaled texture pixels. Sprite.scale applies it once, so the
+	# body root, collision, ground shadow and labels remain completely stable.
+	sprite.offset = target_anchor - source_anchor
 
 
 func _process(delta: float) -> void:
@@ -157,11 +204,15 @@ func _process(delta: float) -> void:
 	if name_time <= 0.0:
 		name_label.hide()
 	heart_time = maxf(0.0, heart_time - delta)
+	_update_zzz()
 	var reaction_ended := reaction_time > 0.0 and reaction_time <= delta
 	reaction_time = maxf(0.0, reaction_time - delta)
 	if reaction_time > 0.0:
+		_update_reaction_motion()
 		return
 	if reaction_ended:
+		motion_root.rotation = 0.0
+		motion_root.position = Vector2.ZERO
 		_play_state_animation()
 	_update_idle_variation(delta)
 	_update_secondary_motion()
@@ -220,7 +271,39 @@ func _update_secondary_motion() -> void:
 	else:
 		bob = sin(phase * (2.0 if variant_id != "blacktan" else 2.6)) * 0.28
 		sprite.speed_scale = 1.0
-	sprite.position = base_sprite_position + Vector2(0.0, bob)
+	motion_root.position = Vector2(0.0, bob)
+	motion_root.rotation = 0.0
+
+
+func _update_zzz() -> void:
+	if state_name != "SLEEP":
+		return
+	var sequence := ["Z", "Zz", "Zzz"]
+	zzz_label.text = sequence[posmod(int(floor(phase * 1.35)), sequence.size())]
+	zzz_label.position = Vector2(20.0, -70.0 - fmod(phase * 7.0, 14.0))
+	zzz_label.modulate.a = 0.55 + fmod(phase * 0.8, 0.35)
+
+
+func _update_reaction_motion() -> void:
+	var progress := 1.0 - reaction_time / maxf(0.01, reaction_duration)
+	var arc := sin(progress * PI)
+	var lift := 4.0 if variant_id == "shiba" else 2.8 if variant_id == "cream" else 3.4
+	var tilt := deg_to_rad(1.5 if variant_id == "shiba" else 0.8 if variant_id == "cream" else 1.2)
+	motion_root.position = Vector2(0.0, -arc * lift)
+	motion_root.rotation = sin(progress * TAU) * tilt
+
+
+func _draw_clean_heart() -> void:
+	var progress := 1.0 - heart_time / 1.1
+	var alpha := 1.0 if progress < 0.60 else clampf(1.0 - (progress - 0.60) / 0.40, 0.0, 1.0)
+	var heart := String.chr(0x2665)
+	var pop := lerpf(0.75, 1.12, minf(progress / 0.16, 1.0))
+	draw_set_transform(Vector2(-12, -54 - progress * 18.0), 0.0, Vector2.ONE * pop)
+	draw_string(ThemeDB.fallback_font, Vector2.ZERO, heart, HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color(1.0, 0.33, 0.42, alpha))
+	var delayed_progress := maxf(0.0, (progress - 0.10) / 0.90)
+	draw_set_transform(Vector2(5, -48 - delayed_progress * 16.0), 0.0, Vector2.ONE * (pop * 0.86))
+	draw_string(ThemeDB.fallback_font, Vector2.ZERO, heart, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1.0, 0.55, 0.62, alpha))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
 func _draw() -> void:
@@ -233,4 +316,4 @@ func _draw() -> void:
 		draw_circle(Vector2(-9, -32), 6.0, Color("9f5c2d"))
 		draw_circle(Vector2(9, -32), 6.0, Color("9f5c2d"))
 	if heart_time > 0.0:
-		draw_string(ThemeDB.fallback_font, Vector2(-4, -54 - (1.0 - heart_time / 0.9) * 8.0), "â™¥", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("e86d6d", heart_time / 0.9))
+		_draw_clean_heart()

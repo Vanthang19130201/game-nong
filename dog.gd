@@ -24,6 +24,7 @@ var vocal_cooldown: float = 0.0
 var hungry_whine_cooldown: float = 0.0
 var eating_sound_elapsed: float = 0.0
 var eating_sound_count: int = 0
+var interaction_lock: float = 0.0
 var rng := RandomNumberGenerator.new()
 
 @onready var decision_timer: Timer = $DecisionTimer
@@ -47,6 +48,18 @@ func configure(profile_id: String, profile: Dictionary, home: Node2D, slot_index
 	speed = float(data["speed"])
 	wander_radius = float(data["wander_radius"])
 	set_home_point(home)
+	if is_instance_valid(dog_visual):
+		dog_visual.configure(variant_id, custom_name)
+
+
+func refresh_profile(profile: Dictionary) -> void:
+	# Farm refreshes an existing runtime after a rename. Do not recreate the dog
+	# or touch its position/state: only its presentation data is refreshed.
+	var data: Dictionary = DogData.DOG_VARIANTS.get(variant_id, DogData.DOG_VARIANTS["shiba"])
+	var next_name := DogData.normalized_name(profile.get("name", ""), str(data["default_name"]))
+	if next_name == custom_name:
+		return
+	custom_name = next_name
 	if is_instance_valid(dog_visual):
 		dog_visual.configure(variant_id, custom_name)
 
@@ -108,6 +121,7 @@ func _physics_process(delta: float) -> void:
 	greet_check_cooldown = maxf(0.0, greet_check_cooldown - delta)
 	vocal_cooldown = maxf(0.0, vocal_cooldown - delta)
 	hungry_whine_cooldown = maxf(0.0, hungry_whine_cooldown - delta)
+	interaction_lock = maxf(0.0, interaction_lock - delta)
 	if current_state != State.INSIDE_HOUSE:
 		var manager := _save_manager()
 		if is_instance_valid(manager):
@@ -156,6 +170,9 @@ func _arrive() -> void:
 		_set_state(State.IDLE, rng.randf_range(2.0, 5.0))
 
 func _decide_next() -> void:
+	if interaction_lock > 0.0:
+		decision_timer.start(interaction_lock)
+		return
 	if current_state == State.INSIDE_HOUSE:
 		dog_visual.set_inside(false)
 		global_position = entrance_position()
@@ -239,7 +256,7 @@ func _set_state(next_state: State, wait_seconds: float) -> void:
 		decision_timer.stop()
 
 func _check_player_greeting() -> void:
-	if greet_check_cooldown > 0.0 or greet_cooldown > 0.0 or current_state not in [State.IDLE, State.LIE_DOWN, State.SLEEP, State.INSIDE_HOUSE]:
+	if interaction_lock > 0.0 or greet_check_cooldown > 0.0 or greet_cooldown > 0.0 or current_state not in [State.IDLE, State.LIE_DOWN, State.SLEEP, State.INSIDE_HOUSE]:
 		return
 	greet_check_cooldown = 1.0
 	var player := get_tree().get_first_node_in_group("farm_player") as Node2D
@@ -272,26 +289,81 @@ func begin_eating(fed_pet_id: String) -> void:
 		dog_visual.set_state("EATING")
 
 func interact(_player: Node2D = null) -> void:
-	if is_instance_valid(dog_visual):
-		if not is_hungry() and not walking:
-			dog_visual.happy()
-			if rng.randf() <= 0.34:
-				_play_dog_sound(_happy_sound_id(), true, 5.0)
+	if current_state == State.EATING or interaction_lock > 0.0:
+		return
+	var player := _player if is_instance_valid(_player) else get_tree().get_first_node_in_group("farm_player") as Node2D
+	if is_instance_valid(player) and is_instance_valid(dog_visual):
+		dog_visual.set_facing(player.global_position.x >= global_position.x)
 	var hud := get_tree().get_first_node_in_group("farm_hud")
-	if is_instance_valid(hud) and not hud.blocks_world_input():
-		hud.show_transaction_feedback(tr("DOG_HUNGRY") if is_hungry() else tr("DOG_HAPPY") % custom_name)
+	if not is_instance_valid(hud) or hud.blocks_world_input():
+		return
+	if is_hungry():
+		var manager := _save_manager()
+		if is_instance_valid(manager) and manager.feed_dog(pet_id):
+			hud.show_transaction_feedback(tr("DOG_FEED_SUCCESS"))
+		else:
+			hud.show_transaction_feedback(tr("DOG_FOOD_NONE"))
+		return
+	if current_state == State.SLEEP:
+		interaction_lock = 0.72 if variant_id == "cream" else 0.62
+		_set_state(State.IDLE, interaction_lock)
+		if is_instance_valid(dog_visual):
+			dog_visual.wake()
+		hud.show_transaction_feedback(tr("DOG_HAPPY") % custom_name)
+		return
+	interaction_lock = _pet_reaction_duration()
+	decision_timer.start(interaction_lock)
+	if is_instance_valid(dog_visual):
+		dog_visual.happy()
+	if rng.randf() <= _happy_sound_chance():
+		_play_dog_sound(_happy_sound_id(), true, 5.0)
+	hud.show_transaction_feedback(tr("DOG_HAPPY") % custom_name)
 
 
 func _update_interaction_hint() -> void:
 	if not is_instance_valid(dog_visual):
 		return
 	var player := get_tree().get_first_node_in_group("farm_player") as Node2D
-	var nearby := current_state != State.INSIDE_HOUSE and is_instance_valid(player) and player.global_position.distance_to(global_position) <= 70.0
-	dog_visual.set_interaction_hint(nearby, custom_name)
+	var nearby := is_instance_valid(player) and can_interact() and _is_closest_prompt_dog(player)
+	dog_visual.set_interaction_hint(nearby, interaction_prompt())
 
 func can_interact() -> bool:
 	var player := get_tree().get_first_node_in_group("farm_player") as Node2D
-	return current_state != State.INSIDE_HOUSE and is_instance_valid(player) and player.global_position.distance_to(global_position) <= 70.0
+	return interaction_lock <= 0.0 and current_state not in [State.INSIDE_HOUSE, State.EATING] and is_instance_valid(player) and player.global_position.distance_to(global_position) <= 70.0
+
+
+func interaction_prompt() -> String:
+	if current_state == State.EATING:
+		return tr("DOG_INTERACT_EATING") % custom_name
+	if is_hungry():
+		return tr("DOG_INTERACT_FEED") % custom_name
+	if current_state == State.SLEEP:
+		return tr("DOG_INTERACT_WAKE") % custom_name
+	return tr("DOG_INTERACT_PET") % custom_name
+
+
+func _is_closest_prompt_dog(player: Node2D) -> bool:
+	var best: Node2D
+	var best_distance := INF
+	for candidate in get_tree().get_nodes_in_group("farm_pets"):
+		var candidate_dog := candidate as Node2D
+		if not is_instance_valid(candidate_dog) or not candidate_dog.has_method("can_interact"):
+			continue
+		if not bool(candidate_dog.call("can_interact")):
+			continue
+		var distance := player.global_position.distance_squared_to(candidate_dog.global_position)
+		if distance < best_distance:
+			best = candidate_dog
+			best_distance = distance
+	return best == self
+
+
+func _pet_reaction_duration() -> float:
+	return 0.8 if variant_id == "shiba" else 1.0 if variant_id == "cream" else 0.85
+
+
+func _happy_sound_chance() -> float:
+	return 0.50 if variant_id == "shiba" else 0.20 if variant_id == "cream" else 0.36
 
 func _update_depth() -> void:
 	z_as_relative = false

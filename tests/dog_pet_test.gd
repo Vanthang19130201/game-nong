@@ -26,6 +26,27 @@ func set_hunger(pet_id: String, value: float) -> void:
 	profile["hunger"] = value
 	manager.pet_dogs[pet_id] = profile
 
+
+func distinct_atlas_regions(frames: SpriteFrames, animation_name: StringName) -> int:
+	var regions: Array[Rect2] = []
+	for frame_index in range(frames.get_frame_count(animation_name)):
+		var frame_texture := frames.get_frame_texture(animation_name, frame_index)
+		if not frame_texture is AtlasTexture:
+			return 0
+		var region := (frame_texture as AtlasTexture).region
+		if not regions.has(region):
+			regions.append(region)
+	return regions.size()
+
+
+func effective_frame_anchor(sprite: AnimatedSprite2D, variant_id: String) -> Vector2:
+	var sheet := DogData.visual_sheet_for_variant(variant_id)
+	var data: Dictionary = DogData.DOG_VARIANTS[variant_id]
+	var source_cell := DogData.cell_for_animation_frame(variant_id, sprite.animation, sprite.frame)
+	var source_anchor := DogData.cell_anchor_for_variant(variant_id, source_cell)
+	var cell_center := Vector2(float(sheet.get_width()) / int(data["sheet_columns"]) * 0.5, float(sheet.get_height()) / int(data["sheet_rows"]) * 0.5)
+	return sprite.position + (sprite.offset + source_anchor - cell_center) * sprite.scale
+
 func run_checks() -> void:
 	await process_frame
 	manager = root.get_node("SaveManager")
@@ -99,29 +120,76 @@ func run_checks() -> void:
 		runtime_dogs.append(runtime)
 	await process_frame
 	var dog: CharacterBody2D = runtime_dogs[0]
-	var shiba_sprite: AnimatedSprite2D = dog.get_node("DogVisual/Sprite")
+	var shiba_sprite: AnimatedSprite2D = dog.get_node("DogVisual/MotionRoot/Sprite")
 	check(shiba_sprite.sprite_frames == DogData.visual_frames_for_variant("shiba"), "runtime dog uses cached Shiba animation frames")
 	for runtime in runtime_dogs:
-		var sprite: AnimatedSprite2D = runtime.get_node("DogVisual/Sprite")
+		var sprite: AnimatedSprite2D = runtime.get_node("DogVisual/MotionRoot/Sprite")
+		var visual: Node = runtime.get_node("DogVisual")
 		var required_animations: Array[StringName] = [&"idle", &"idle_blink", &"walk", &"run", &"sit", &"sit_idle", &"lie_down", &"lie_idle", &"sleep", &"wake_up", &"eat", &"happy", &"sniff", &"scratch", &"shake", &"alert"]
 		check(sprite.sprite_frames != null and required_animations.all(func(animation_name: StringName) -> bool: return sprite.sprite_frames.has_animation(animation_name)), "runtime dog has the complete animation set")
 		for animation_name in required_animations:
 			check(sprite.sprite_frames.get_frame_count(animation_name) > 0, "every dog animation has frames: " + animation_name)
 			for frame_index in range(sprite.sprite_frames.get_frame_count(animation_name)):
-				check(sprite.sprite_frames.get_frame_texture(animation_name, frame_index) != null, "every dog animation frame is a valid texture: %s/%d" % [animation_name, frame_index])
-		check(sprite.scale.y > 0.0 and sprite.scale.y < 0.1, "runtime dog art is compact relative to its source illustration")
+				var frame_texture := sprite.sprite_frames.get_frame_texture(animation_name, frame_index)
+				check(frame_texture != null and frame_texture is AtlasTexture, "every normal dog frame is an atlas pose: %s/%d" % [animation_name, frame_index])
+		check(distinct_atlas_regions(sprite.sprite_frames, &"walk") >= 4, "walk uses at least four distinct verified pose-sheet cells")
+		check(distinct_atlas_regions(sprite.sprite_frames, &"run") >= 2, "run uses multiple real pose-sheet cells instead of a static image")
+		check(distinct_atlas_regions(sprite.sprite_frames, &"wake_up") >= 3, "wake-up has a real pose transition")
+		check(sprite.scale.y > 0.15 and sprite.scale.y < 0.30, "runtime dog art uses the compact calibrated pose-sheet scale")
+		for animation_name in required_animations:
+			sprite.play(animation_name)
+			for frame_index in range(sprite.sprite_frames.get_frame_count(animation_name)):
+				sprite.frame = frame_index
+				visual._apply_frame_anchor()
+				check(effective_frame_anchor(sprite, runtime.variant_id).length() <= 0.05, "every pose frame shares the stable ground anchor: %s/%s/%d" % [runtime.variant_id, animation_name, frame_index])
+		check(sprite.get_parent().name == "MotionRoot" and visual.get_node("InteractLabel").get_parent() == visual, "only artwork receives visual motion; labels remain anchored to DogVisual")
 	var visual: Node = dog.get_node("DogVisual")
 	for mapping in [["IDLE", &"idle"], ["WANDER", &"walk"], ["RETURN_HOME", &"run"], ["WAIT_FOOD", &"sit_idle"], ["LIE_DOWN", &"lie_down"], ["SLEEP", &"sleep"], ["GO_INSIDE", &"walk"], ["EXIT_HOUSE", &"walk"], ["GREET_PLAYER", &"run"], ["EATING", &"eat"]]:
 		visual.set_state(mapping[0])
 		check(shiba_sprite.animation == mapping[1], "state %s maps to animation %s" % [mapping[0], mapping[1]])
 	visual.happy()
 	check(shiba_sprite.animation == &"happy", "pet interaction starts a happy animation")
-	visual.set_interaction_hint(true, "MÃ­t")
-	check(visual.get_node("InteractLabel").visible and "[E]" in visual.get_node("InteractLabel").text, "nearby dog shows an E interaction prompt")
+	visual.set_interaction_hint(true, "[E] Pet TestDog")
+	check(visual.get_node("InteractLabel").visible, "nearby dog shows an E interaction prompt")
 	check(not visual.get_node("NameLabel").visible, "nearby dog uses one prompt instead of duplicating its name")
-	visual.set_interaction_hint(false, "MÃ­t")
+	visual.set_interaction_hint(false, "")
 	check(dog.rest_position() == home.get_node("DogRestShiba").global_position and dog.rest_position() != dog.entrance_position(), "dog loads in the open Dog House yard rather than at the entrance")
 	check(not visual.get_node("NameLabel").visible, "dog name never lingers after the nearby prompt closes")
+	visual.set_interaction_hint(false, "")
+	visual.set_state("WAIT_FOOD")
+	var hungry_badge: Label = visual.get_node("ThoughtLabel")
+	check(hungry_badge.visible and hungry_badge.text == tr("DOG_HUNGRY_BADGE"), "waiting dog shows the localized hungry badge instead of a placeholder")
+	visual.set_interaction_hint(true, "Pet")
+	check(not hungry_badge.visible, "hungry badge hides while the nearby interaction prompt is shown")
+	visual.set_interaction_hint(false, "Pet")
+	check(hungry_badge.visible and hungry_badge.text == tr("DOG_HUNGRY_BADGE"), "hungry badge returns after the prompt closes")
+	var test_player := Node2D.new()
+	test_player.add_to_group("farm_player")
+	root.add_child(test_player)
+	test_player.global_position = Vector2(0, 0)
+	runtime_dogs[0].global_position = Vector2(22, 0)
+	runtime_dogs[1].global_position = Vector2(48, 0)
+	runtime_dogs[2].global_position = Vector2(120, 0)
+	for runtime in runtime_dogs:
+		runtime._set_state(runtime.State.IDLE, 0.0)
+	set_hunger("dog_shiba", 100.0)
+	set_hunger("dog_cream", 20.0)
+	set_hunger("dog_blacktan", 100.0)
+	check(runtime_dogs[0]._is_closest_prompt_dog(test_player), "only the closest eligible dog owns the nearby prompt")
+	check(not runtime_dogs[1]._is_closest_prompt_dog(test_player), "second dog does not duplicate the nearby prompt")
+	runtime_dogs[0]._update_interaction_hint()
+	runtime_dogs[1]._update_interaction_hint()
+	check(runtime_dogs[0].get_node("DogVisual/InteractLabel").visible and not runtime_dogs[1].get_node("DogVisual/InteractLabel").visible, "three dogs never stack E prompts")
+	check("[E]" in runtime_dogs[0].interaction_prompt() and not "Bear" in runtime_dogs[0].interaction_prompt(), "healthy prompt is localized and does not hardcode another dog's name")
+	check("[E]" in runtime_dogs[1].interaction_prompt() and runtime_dogs[1].is_hungry(), "hungry dog exposes its own direct-feed prompt")
+	manager.rename_dog("dog_shiba", "Dau")
+	runtime_dogs[0].refresh_profile(manager.dog_profile("dog_shiba"))
+	check("Dau" in runtime_dogs[0].interaction_prompt(), "renamed pet prompt refreshes from its saved custom name")
+	runtime_dogs[0]._set_state(runtime_dogs[0].State.SLEEP, 0.0)
+	check("[E]" in runtime_dogs[0].interaction_prompt(), "sleeping dog exposes the wake interaction")
+	for runtime in runtime_dogs:
+		runtime.get_node("DogVisual").set_interaction_hint(false, "")
+	test_player.queue_free()
 	check(runtime_dogs[0].rest_position().distance_to(runtime_dogs[1].rest_position()) >= 70.0 and runtime_dogs[1].rest_position().distance_to(runtime_dogs[2].rest_position()) >= 70.0, "new dogs use separated Dog House yard positions")
 	check(dog.food_wait_position() == home.get_node("FoodSpotShiba").global_position, "dog uses Dog House food slot")
 	check(runtime_dogs[0].food_wait_position() != runtime_dogs[1].food_wait_position() and runtime_dogs[1].food_wait_position() != runtime_dogs[2].food_wait_position(), "three hungry dogs use separate food slots")
@@ -145,13 +213,22 @@ func run_checks() -> void:
 	set_hunger("dog_shiba", 10.0)
 	dog._decide_next()
 	check(dog.current_state == dog.State.RETURN_HOME and dog.target == dog.food_wait_position(), "only a hungry dog returns to the Dog House food spot")
+	dog.global_position = dog.food_wait_position()
+	dog._move_toward_target(0.1)
+	check(dog.current_state == dog.State.WAIT_FOOD and hungry_badge.visible, "hungry dog arrives at its own food spot with a clear badge")
+	set_hunger("dog_shiba", 100.0)
+	dog.begin_eating("dog_shiba")
+	dog.global_position = dog.food_wait_position()
+	dog._move_toward_target(0.1)
+	dog._decide_next()
+	check(dog.current_state == dog.State.IDLE and not hungry_badge.visible, "feeding clears the hungry badge as the dog returns to idle")
 	for runtime in runtime_dogs:
 		runtime.queue_free()
 	home.queue_free()
 	check(manager.save_game(), "save multi-dog profile")
 	manager.pet_dogs.clear()
 	manager._load_game()
-	check(manager.pet_dogs.size() == 3 and manager.dog_profile("dog_shiba").get("name") == "Mít", "save/load preserves names and all profiles")
+	check(manager.pet_dogs.size() == 3 and manager.dog_profile("dog_shiba").get("name") == "Dau", "save/load preserves names and all profiles")
 	var config := save_data()
 	config.erase_section("pets")
 	config.set_value("player", "has_dog", true)
