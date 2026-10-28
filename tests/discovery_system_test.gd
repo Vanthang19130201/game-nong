@@ -47,6 +47,14 @@ func run_checks() -> void:
 	events.restore(saved_event)
 	check(events.current_event_id == event_before, "event remains fixed for saved day")
 	check(events.merchant_stock == merchant_stock_before, "merchant appearance and stock remain fixed for saved day")
+	var merchant_rng := RandomNumberGenerator.new()
+	merchant_rng.seed = 20261028
+	var generated_merchant_stock: Array = events._make_merchant_stock(merchant_rng)
+	var generated_exchange_count := 0
+	for offer in generated_merchant_stock:
+		if str(offer.get("kind", "buy")) == "exchange":
+			generated_exchange_count += 1
+	check(generated_merchant_stock.size() <= 5 and generated_exchange_count == 3, "daily merchant keeps three exchanges within its five visible rows")
 	check(event_before.is_empty() or not discovery.has_discovered("special_events", event_before), "rolling/restoring an event does not auto-discover it")
 	var day_key: int = save_manager.saved_dig_spots_day_key
 	var spot_count: int = manager.spots.size()
@@ -128,6 +136,41 @@ func run_checks() -> void:
 	check(events.buy_merchant_stock(0), "merchant purchase succeeds as one transaction")
 	check(inventory.coins == coins_before_merchant - 1 and inventory.mystery_seed == 1, "merchant purchase charges and grants once")
 	check(events.merchant_stock[0]["quantity"] == 0, "merchant remaining stock is updated")
+	# Exchanges live in the same daily stock and are fully transactional. They
+	# must never reroll or consume a treasure item when their reward cannot fit.
+	events.merchant_stock = [
+		{"kind":"exchange", "exchange_id":"lost_lure_river_fish", "display_item":"lost_lure", "quantity":1},
+		{"kind":"exchange", "exchange_id":"river_relic_bundle", "display_item":"old_bottle", "quantity":1},
+		{"kind":"exchange", "exchange_id":"ancient_coin_treasure", "display_item":"ancient_coin", "quantity":1}
+	]
+	inventory.lost_lure = 1
+	inventory.river_fish = 0
+	check(events.can_exchange_stock(0), "Lost Lure exchange is available only with its required treasure and storage")
+	check(events.exchange_merchant_stock(0), "Lost Lure exchange commits atomically")
+	check(inventory.lost_lure == 0 and inventory.river_fish == 1 and events.merchant_stock[0]["quantity"] == 0, "Lost Lure exchange consumes once and grants one River Fish")
+	check(not events.exchange_merchant_stock(0), "spent exchange cannot be claimed twice")
+	events.merchant_stock[0]["quantity"] = 1
+	inventory.lost_lure = 1
+	var capacity_before_full_exchange: int = inventory.barn_capacity
+	var reservation_before_full_exchange: int = inventory.reserved_barn_slots
+	inventory.barn_capacity = inventory.storage_used("barn")
+	inventory.reserved_barn_slots = 1
+	check(not events.can_exchange_stock(0) and inventory.lost_lure == 1 and events.merchant_stock[0]["quantity"] == 1, "full Barn leaves exchange input and stock untouched")
+	inventory.barn_capacity = capacity_before_full_exchange
+	inventory.reserved_barn_slots = reservation_before_full_exchange
+	events.merchant_stock[0]["quantity"] = 0
+	inventory.old_bottle = 1
+	inventory.old_boot = 1
+	var coins_before_relic_exchange: int = inventory.coins
+	check(events.can_exchange_stock(1) and events.exchange_merchant_stock(1), "bottle and boot bundle exchange succeeds")
+	check(inventory.old_bottle == 0 and inventory.old_boot == 0 and inventory.coins == coins_before_relic_exchange + 90, "relic exchange consumes exact inputs and grants coins once")
+	inventory.ancient_coin = 3
+	inventory.small_chest = 0
+	check(events.can_exchange_stock(2) and events.exchange_merchant_stock(2), "Ancient Coin exchange yields an existing treasure once")
+	check(inventory.ancient_coin == 0 and inventory.small_chest == 1, "three Ancient Coins exchange for one Small Chest and never become a mandatory order")
+	var exchange_stock_before_restore: Array = events.merchant_stock.duplicate(true)
+	events.restore(events.get_save_data())
+	check(events.merchant_stock == exchange_stock_before_restore, "merchant exchanges never reroll when the same day is restored")
 	check(save_manager.save_game(), "merchant stock saves")
 	var merchant_save := ConfigFile.new()
 	check(merchant_save.load(save_manager.SAVE_PATH) == OK and merchant_save.get_value("farm_event", "state", {}).get("merchant_stock", [])[0]["quantity"] == 0, "merchant stock persists across reload")

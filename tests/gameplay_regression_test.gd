@@ -48,6 +48,11 @@ func run_checks() -> void:
 	for id in manager.STATION_IDS:
 		assert(inv.buy_building(id))
 	assert(inv.buy_animal("chicken") and inv.buy_animal("cow"))
+	for kind in ["chicken", "cow"]:
+		var roster: Array = manager.animal_rosters[kind]
+		roster[0]["born_at"] = inv.AnimalData.adult_born_at(kind)
+		manager.animal_rosters[kind] = roster
+		main.animal_groups[kind].sync_count()
 	inv.wheat = 1
 	inv.corn = 3
 	inv.carrot = 1

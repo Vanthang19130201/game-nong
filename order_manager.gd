@@ -23,7 +23,12 @@ func _ready() -> void:
 	add_child(cooldown_timer)
 
 func _recipe_sources() -> Dictionary:
-	return {"bakery":Inventory.BakeryData.RECIPES,"dairy":Inventory.DairyData.RECIPES,"spinning_machine":Inventory.SpinningData.RECIPES}
+	return {
+		"bakery": Inventory.BakeryData.RECIPES,
+		"dairy": Inventory.DairyData.RECIPES,
+		"spinning_machine": Inventory.SpinningData.RECIPES,
+		"loom": Inventory.LoomData.RECIPES
+	}
 
 
 func item_info() -> Dictionary:
@@ -40,6 +45,8 @@ func item_info() -> Dictionary:
 		}
 	items["egg"] = {"name":"Egg","level":Inventory.Progression.PRODUCTS["chicken_coop"]["level"],"price":Inventory.EGG_PRICE,"exp":5,"category":"animal"}
 	items["milk"] = {"name":"Milk","level":Inventory.Progression.PRODUCTS["cow_shed"]["level"],"price":Inventory.MILK_PRICE,"exp":10,"category":"animal"}
+	items["pork"] = {"name":"Pork","level":Inventory.Progression.PRODUCTS["pig_pen"]["level"],"price":int(Inventory.AnimalData.PRODUCT_PRICES["pork"]),"exp":18,"category":"animal","order_max":2}
+	items["wool"] = {"name":"Wool","level":Inventory.Progression.PRODUCTS["sheep_barn"]["level"],"price":int(Inventory.AnimalData.PRODUCT_PRICES["wool"]),"exp":14,"category":"animal","order_max":2}
 	for fish in Inventory.FishingData.FISH:
 		if fish == "moon_fish":
 			continue
@@ -74,6 +81,10 @@ func _item_available(item: String, items: Dictionary, visiting: Array) -> bool:
 		return Inventory.owns_feed_mill and Inventory.owns_chicken_coop and Inventory.chicken_count > 0
 	if item == "milk":
 		return Inventory.owns_feed_mill and Inventory.owns_cow_shed and Inventory.cow_count > 0
+	if item == "pork":
+		return Inventory.owns_feed_mill and Inventory.owns_pig_pen and Inventory.pig_count > 0
+	if item == "wool":
+		return Inventory.owns_feed_mill and Inventory.owns_sheep_barn and Inventory.sheep_count > 0
 	return true
 
 
@@ -199,7 +210,7 @@ func _generate_order(difficulty: String = "") -> Dictionary:
 	for item in items:
 		if _item_available(item,items,[]):
 			var category: String = items[item]["category"]
-			available[item] = 8 if category == "crop" and Inventory.player_level < 6 else (5 if category == "crop" else (1 if category == "fish" else 3))
+			available[item] = 8 if category == "crop" and Inventory.player_level < 6 else (5 if category == "crop" else (1 if category == "fish" else (2 if category == "animal" else 3)))
 	var requirements: Dictionary = {}
 	var total_price: int = 0
 	var total_exp: int = 0
@@ -218,6 +229,8 @@ func _generate_order(difficulty: String = "") -> Dictionary:
 		var maximum: int = mini(capacities[storage],tier["crop_max"] if crop else tier["product_max"])
 		if Inventory.FishingData.FISH.has(item):
 			maximum = mini(maximum,Inventory.FishingData.FISH[item]["order_max"])
+		if items[item].has("order_max"):
+			maximum = mini(maximum,int(items[item]["order_max"]))
 		var minimum: int = mini(maximum,tier["crop_min"] if crop else tier["product_min"])
 		var amount: int = rng.randi_range(minimum,maximum)
 		requirements[item] = amount
@@ -251,15 +264,56 @@ func complete_order(order_id: String) -> bool:
 		if Inventory.coins > 9223372036854775807-order["coin_reward"] or Inventory.player_exp > 9223372036854775807-order["exp_reward"]:
 			return false
 		busy = true
+		var old_counts: Dictionary = {}
+		for item in order["requirements"]:
+			old_counts[item] = Inventory.get(item)
+		var old_coins: int = Inventory.coins
+		var old_exp: int = Inventory.player_exp
+		var old_level: int = Inventory.player_level
+		var old_fishing_unlocked: bool = Inventory.fishing_unlocked
+		var old_has_fishing_rod: bool = Inventory.has_fishing_rod
+		var old_fishing_rod_level: int = Inventory.fishing_rod_level
+		var old_tools_notified: bool = Inventory.tools_unlock_notified
+		var old_tools: Dictionary = {}
+		for tool_id in Inventory.ToolData.TOOLS:
+			old_tools["has_" + tool_id] = Inventory.get("has_" + tool_id)
+			old_tools[tool_id + "_level"] = Inventory.get(tool_id + "_level")
+		var old_orders: Array = orders.duplicate(true)
+		var old_next_id: int = next_order_id
 		for item in order["requirements"]:
 			Inventory.set(item, Inventory.get(item) - order["requirements"][item])
 		Inventory.coins += order["coin_reward"]
-		Inventory.add_exp(order["exp_reward"], false)
+		# Do not announce a level-up until this delivery has reached disk. This
+		# keeps orders atomic if the save snapshot cannot be written.
+		Inventory.player_exp += order["exp_reward"]
+		Inventory.normalize_exp(false)
+		# The level-up card already communicates the tool unlock. Mark its older
+		# one-off tooltip handled before writing the same transaction to disk.
+		if Inventory.player_level >= Inventory.ToolData.UNLOCK_LEVEL:
+			Inventory.tools_unlock_notified = true
 		# Replace first, then one signal saves items, rewards and new order together.
 		orders[index] = _generate_order()
+		if not SaveManager.save_game():
+			for item in old_counts:
+				Inventory.set(item, old_counts[item])
+			Inventory.coins = old_coins
+			Inventory.player_exp = old_exp
+			Inventory.player_level = old_level
+			Inventory.fishing_unlocked = old_fishing_unlocked
+			Inventory.has_fishing_rod = old_has_fishing_rod
+			Inventory.fishing_rod_level = old_fishing_rod_level
+			Inventory.tools_unlock_notified = old_tools_notified
+			for key in old_tools:
+				Inventory.set(key, old_tools[key])
+			orders = old_orders
+			next_order_id = old_next_id
+			busy = false
+			return Inventory.fail(tr("ERROR_SAVE_FAILED"))
 		Inventory.inventory_changed.emit()
 		busy = false
 		orders_changed.emit()
+		for level in range(old_level + 1, Inventory.player_level + 1):
+			Inventory.level_up.emit(level, Inventory.Progression.unlocks_for_level(level), Inventory.Progression.reward_for_level(level))
 		order_completed.emit(order["coin_reward"],order["exp_reward"])
 		return true
 	return false

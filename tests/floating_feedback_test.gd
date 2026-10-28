@@ -58,6 +58,11 @@ func collect_animals() -> void:
 		check(inv.buy_building(inv.Progression.ANIMALS[kind]["building"]), "building fixture")
 		for index in range(3):
 			check(inv.buy_animal(kind), "animal fixture")
+		var roster: Array = manager.animal_rosters[kind]
+		for record in roster:
+			record["born_at"] = inv.AnimalData.adult_born_at(kind)
+		manager.animal_rosters[kind] = roster
+		farm.animal_groups[kind].sync_count()
 	inv.chicken_feed = 1
 	inv.cow_feed = 1
 	sync_fixture()

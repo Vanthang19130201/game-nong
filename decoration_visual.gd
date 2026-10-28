@@ -46,6 +46,20 @@ func _draw() -> void:
 			draw_rect(Rect2(-15,-22,30,30),Color("969487"))
 			draw_circle(Vector2(0,-26),12,Color("a6a08e"))
 			draw_rect(Rect2(-5,-32,3,3),Color("554d43"))
+		"gem_pedestal":
+			draw_circle(Vector2(0,19),20,Color("2d4035",0.20))
+			draw_colored_polygon(PackedVector2Array([Vector2(-20,5),Vector2(20,5),Vector2(15,24),Vector2(-15,24)]),Color("66584e"))
+			draw_colored_polygon(PackedVector2Array([Vector2(-15,-17),Vector2(15,-17),Vector2(19,6),Vector2(-19,6)]),Color("8d8379"))
+			draw_colored_polygon(PackedVector2Array([Vector2(0,-31),Vector2(11,-15),Vector2(4,-2),Vector2(-4,-2),Vector2(-11,-15)]),Color("56b9aa"))
+			draw_polyline(PackedVector2Array([Vector2(0,-31),Vector2(0,-2),Vector2(11,-15),Vector2(-11,-15),Vector2(0,-31)]),Color("d5fff2"),2.0,true)
+			draw_line(Vector2(-14,-10),Vector2(14,-10),Color("2e776f"),2.0,true)
+		"ancient_coin_display":
+			draw_circle(Vector2(0,19),18,Color("2d4035",0.20))
+			draw_colored_polygon(PackedVector2Array([Vector2(-18,5),Vector2(18,5),Vector2(14,23),Vector2(-14,23)]),Color("66584e"))
+			draw_colored_polygon(PackedVector2Array([Vector2(-13,-8),Vector2(13,-8),Vector2(18,6),Vector2(-18,6)]),Color("8d8379"))
+			draw_circle(Vector2(0,-12),12,Color("c58e35"))
+			draw_arc(Vector2(0,-12),8.5,0.0,TAU,16,Color("f4d16e"),2.0,true)
+			draw_circle(Vector2(0,-12),2,Color("80572d"))
 		"river_lantern":
 			draw_rect(Rect2(-3,-2,6,32),Color("704b34"))
 			draw_rect(Rect2(-11,-26,22,19),Color("9a6845"))

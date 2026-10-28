@@ -74,6 +74,11 @@ func run_checks() -> void:
 	for id in ["chicken_coop","cow_shed"]:
 		check(farm.animal_groups["chicken" if id == "chicken_coop" else "cow"].animals().is_empty(),"no animal image at zero animals")
 	check(inv.buy_animal("chicken") and inv.buy_animal("cow"),"existing animal logic")
+	for kind in ["chicken", "cow"]:
+		var roster: Array = manager.animal_rosters[kind]
+		roster[0]["born_at"] = inv.AnimalData.adult_born_at(kind)
+		manager.animal_rosters[kind] = roster
+		farm.animal_groups[kind].sync_count()
 	inv.chicken_feed = 1
 	inv.cow_feed = 1
 	check(manager.stations["chicken_coop"].produce() and manager.stations["cow_shed"].produce(),"existing production still starts")

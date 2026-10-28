@@ -310,8 +310,13 @@ func show_inventory_change(item_id: String, amount: int) -> void:
 	floating_feedback.show_inventory_change(item_id, amount)
 
 
-func show_harvest_feedback(crop: String) -> void:
-	show_transaction_feedback(tr("TRADE_ITEM") % [1, Localization.display_name(crop)] + "\n" + tr("HARVEST_EXP_FEEDBACK") % CropData.CROPS[crop]["harvest_exp"])
+func show_harvest_feedback(item_id: String, amount: int = 1, base_crop: String = "") -> void:
+	var crop_id: String = base_crop if not base_crop.is_empty() else item_id.to_upper()
+	var crop_info: Dictionary = CropData.CROPS.get(crop_id, {})
+	var feedback: String = tr("TRADE_ITEM") % [amount, Localization.display_name(item_id)]
+	if not crop_info.is_empty():
+		feedback += "\n" + tr("HARVEST_EXP_FEEDBACK") % crop_info["harvest_exp"]
+	show_transaction_feedback(feedback)
 
 
 func _sell_bakery_item(item: String) -> void:
@@ -906,12 +911,15 @@ func _update_house_panel() -> void:
 		return
 	house_message.text = ""
 	house_info.text = tr("HOUSE_CURRENT") % Inventory.house_level
+	house_info.text += "\n" + tr("HOUSE_STORAGE_BONUS") % Inventory.house_storage_bonus()
 	var cost: Dictionary = Inventory.next_upgrade("house")
 	house_upgrade_button.disabled = cost.is_empty()
 	if cost.is_empty():
 		house_info.text += tr("HOUSE_MAX")
 		return
+	var next_bonus: int = Inventory.house_storage_bonus(Inventory.house_level + 1)
 	house_info.text += tr("HOUSE_NEXT") % [Inventory.house_level + 1, Inventory.coins, cost["coins"], Inventory.wood, cost["wood"], Inventory.stone, cost["stone"]]
+	house_info.text += "\n" + tr("HOUSE_NEXT_STORAGE_BONUS") % next_bonus
 
 
 func _upgrade_house() -> void:
@@ -1080,9 +1088,11 @@ func _update_build_rows() -> void:
 			row["button"].text = tr("UI_MAX_LEVEL")
 		else:
 			row["button"].text = tr("UI_UPGRADE")
-			row["label"].text += "\n" + tr("UI_UPGRADE_MATERIALS") % [cost["wood"],cost["stone"],cost["coins"]]
+			row["label"].text += "\n" + tr("UI_UPGRADE_MATERIALS_OWNED") % [Inventory.wood,cost["wood"],Inventory.stone,cost["stone"],Inventory.coins,cost["coins"]]
 			if cost.has("capacity"):
-				row["label"].text += tr("UI_CAPACITY") % cost["capacity"]
+				row["label"].text += tr("UI_CAPACITY_NEXT") % [Inventory.structure_capacity(id),cost["capacity"]]
+			elif id == "house":
+				row["label"].text += "\n" + tr("HOUSE_NEXT_STORAGE_BONUS") % Inventory.house_storage_bonus(current + 1)
 	dog_house_button.disabled = Inventory.has_dog_house
 	var dog_house_cost: Dictionary = Progression.DOG_HOUSE_COST
 	dog_house_button.text = tr("UI_OWNED") if Inventory.has_dog_house else tr("UI_DOG_HOUSE_COMPACT") % dog_house_cost["wood"]

@@ -87,14 +87,22 @@ custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Footer" type="CenterContainer" parent="Margin/Content"]
+[node name="Footer" type="HBoxContainer" parent="Margin/Content"]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 size_flags_vertical = 0
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="ActionButton" type="Button" parent="Margin/Content/Footer"]
+visible = false
+custom_minimum_size = Vector2(140, 44)
+layout_mode = 2
+focus_mode = 0
+text = "UI_USE"
 
 [node name="CloseButton" type="Button" parent="Margin/Content/Footer"]
 custom_minimum_size = Vector2(140, 44)
 layout_mode = 2
-size_flags_horizontal = 4
 focus_mode = 0
 text = "UI_CLOSE"

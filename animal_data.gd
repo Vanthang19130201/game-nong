@@ -12,11 +12,7 @@ const SPECIES: Dictionary = {
 }
 const PRODUCT_PRICES: Dictionary = {
 	"pork": 420,
-	"wool": 190,
-	"wool_yarn": 650,
-	"cotton_cloth": 600,
-	"wool_cloth": 1500,
-	"meat_pie": 900
+	"wool": 190
 }
 
 static func stage_for(animal_type: String, born_at: float, now: float = -1.0) -> int:

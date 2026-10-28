@@ -49,6 +49,11 @@ func prepare() -> void:
 		check(inv.buy_building(inv.Progression.ANIMALS[kind]["building"]), "buy building fixture")
 		for n in range(3):
 			check(inv.buy_animal(kind), "buy animal fixture")
+		var roster: Array = manager.animal_rosters[kind]
+		for record in roster:
+			record["born_at"] = inv.AnimalData.adult_born_at(kind)
+		manager.animal_rosters[kind] = roster
+		farm.animal_groups[kind].sync_count()
 	counts(3)
 	for kind in ["chicken", "cow"]:
 		check(not hud.animal_buttons[kind].has("sell"), "Build has only animal purchase")

@@ -109,7 +109,7 @@ func run_checks() -> void:
 			check_stage(plot,3)
 			plot.harvest()
 			var visuals = plot.get_node("Visuals")
-			check(inv.get(CROPS[index].to_lower()) == 1 and not visuals.get_node("CropSprite").visible and not visuals.get_node("GrowthTime").visible and visuals.get_node("SoilSprite").visible, "harvest keeps rewards and clears only crop visual/timer")
+			check(inv.get(CROPS[index].to_lower()) == 2 and not visuals.get_node("CropSprite").visible and not visuals.get_node("GrowthTime").visible and visuals.get_node("SoilSprite").visible, "harvest yields x2 and clears only crop visual/timer")
 		# Existing crops without stage art keep an icon fallback, never big labels.
 		var fallback = manager.plots["soil_04"]
 		fallback.restore_save_data({"state":"READY","crop_type":"COTTON","planted_at":1.0,"ready_at":2.0})

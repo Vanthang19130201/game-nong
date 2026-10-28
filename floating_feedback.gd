@@ -1,6 +1,7 @@
 extends Control
 
 const Toast = preload("res://transaction_feedback.gd")
+const TreasureData = preload("res://treasure_data.gd")
 const MAX_VISIBLE: int = 6
 var previous: Dictionary = {}
 var tracked_items: Array = []
@@ -34,15 +35,36 @@ func _on_inventory_changed() -> void:
 # Automatic inventory_changed feedback already calls this for committed deltas.
 # These helpers only display UI; they never grant, remove or save an item.
 func show_inventory_change(item_id: String, amount: int) -> void:
-	if amount != 0:
-		show_floating_feedback(tr("TRADE_ITEM") % [amount, Localization.display_name(item_id)])
-		if get_child_count() > 0 and item_id in ["egg", "milk", "chicken_feed", "cow_feed"]:
-			var item_icon: Control = preload("res://item_icon.gd").new()
-			item_icon.item_id = item_id
-			item_icon.position = Vector2(-24, 0)
-			item_icon.size = Vector2(20, 20)
-			item_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			get_child(get_child_count() - 1).add_child(item_icon)
+	if amount == 0:
+		return
+	if amount > 0 and TreasureData.ITEMS.has(item_id) and TreasureData.is_rare_or_better(item_id):
+		show_rare_loot_feedback(item_id, amount)
+		return
+	show_floating_feedback(tr("TRADE_ITEM") % [amount, Localization.display_name(item_id)])
+	if get_child_count() > 0 and item_id in ["egg", "milk", "chicken_feed", "cow_feed"]:
+		var item_icon: Control = preload("res://item_icon.gd").new()
+		item_icon.item_id = item_id
+		item_icon.position = Vector2(-24, 0)
+		item_icon.size = Vector2(20, 20)
+		item_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		get_child(get_child_count() - 1).add_child(item_icon)
+
+
+func show_rare_loot_feedback(item_id: String, amount: int) -> void:
+	var rarity_key := "RARITY_" + TreasureData.rarity_of(item_id).to_upper()
+	var text := tr(rarity_key).to_upper() + "!\n" + Localization.display_name(item_id) + " ×%d" % amount
+	var sell_value: int = Inventory.sell_price(item_id)
+	if sell_value > 0:
+		text += "\n" + (tr("ITEM_SELL_TOOLTIP") % sell_value)
+	show_floating_feedback(text)
+	if get_child_count() <= 0:
+		return
+	var item_icon: Control = preload("res://item_icon.gd").new()
+	item_icon.item_id = item_id
+	item_icon.position = Vector2(-28, 2)
+	item_icon.size = Vector2(24, 24)
+	item_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	get_child(get_child_count() - 1).add_child(item_icon)
 
 func show_floating_feedback(text: String) -> void:
 	if not is_instance_valid(player):

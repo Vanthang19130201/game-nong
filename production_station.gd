@@ -11,6 +11,7 @@ var production_type: String = ""
 var started_at: float = 0.0
 var ready_at: float = 0.0
 var player_near: bool = false
+var participant_animal_ids: Array[String] = []
 var chicken_count: int:
 	get: return Inventory.chicken_count
 var cow_count: int:
@@ -41,6 +42,8 @@ func get_save_data() -> Dictionary:
 		"state": state, "production_type": production_type,
 		"started_at": started_at, "ready_at": ready_at
 	}
+	if station_id != "feed_mill":
+		data["participant_animal_ids"] = participant_animal_ids.duplicate()
 	if station_id == "chicken_coop":
 		data["chicken_count"] = chicken_count
 	elif station_id == "cow_shed":
@@ -54,6 +57,12 @@ func restore_save_data(data: Dictionary) -> void:
 	production_type = data["production_type"]
 	started_at = data["started_at"]
 	ready_at = data["ready_at"]
+	participant_animal_ids.clear()
+	var saved_participants: Variant = data.get("participant_animal_ids", [])
+	if saved_participants is Array:
+		for animal_id in saved_participants:
+			if animal_id is String and not animal_id.is_empty() and animal_id not in participant_animal_ids:
+				participant_animal_ids.append(animal_id)
 	if state == "PRODUCING":
 		var remaining: float = ready_at - Time.get_unix_time_from_system()
 		if remaining > 0.0:
@@ -78,7 +87,7 @@ func can_produce(recipe: String = "chicken_feed") -> bool:
 				return false
 		return true
 	var product: Dictionary = Progression.PRODUCTS[station_id]
-	return state == "HUNGRY" and Inventory.player_level >= product["level"] and Inventory.get(product["animal"] + "_count") > 0 and Inventory.get(product["feed"]) > 0
+	return state == "HUNGRY" and Inventory.player_level >= product["level"] and not SaveManager.adult_animal_ids(product["animal"]).is_empty() and Inventory.get(product["feed"]) > 0
 
 
 func produce(recipe: String = "chicken_feed") -> bool:
@@ -95,9 +104,14 @@ func produce(recipe: String = "chicken_feed") -> bool:
 	else:
 		var product: Dictionary = Progression.PRODUCTS[station_id]
 		duration = product["time"]
+		participant_animal_ids = SaveManager.adult_animal_ids(product["animal"])
+		if participant_animal_ids.is_empty():
+			return Inventory.fail(tr("ERROR_STATION_PRODUCE"))
 		production_type = product["item"].to_upper()
 		Inventory.set(product["feed"], Inventory.get(product["feed"]) - 1)
 		AudioManager.play_sfx("animal_feed", global_position)
+	if station_id == "feed_mill":
+		participant_animal_ids.clear()
 	started_at = Time.get_unix_time_from_system()
 	ready_at = started_at + duration
 	state = "PRODUCING"
@@ -112,25 +126,55 @@ func output_data() -> Dictionary:
 	if station_id == "feed_mill":
 		return {"item": production_type.to_lower(), "amount": 1, "exp": 0}
 	var product: Dictionary = Progression.PRODUCTS[station_id]
-	var count: int = Inventory.get(product["animal"] + "_count")
-	return {"item": product["item"], "amount": count, "exp": product["exp"] * count}
+	var participants: Array[Dictionary] = _participant_records()
+	var count: int = participants.size()
+	var amount: int = count
+	if station_id == "pig_pen":
+		amount = 0
+		for record in participants:
+			amount += 3 if record.get("lucky", false) else 2
+	return {"item": product["item"], "amount": amount, "exp": product["exp"] * count}
+
+
+func _participant_records() -> Array[Dictionary]:
+	var records: Array[Dictionary] = []
+	if station_id == "feed_mill":
+		return records
+	var animal_type: String = Progression.PRODUCTS[station_id]["animal"]
+	for animal_id in participant_animal_ids:
+		for record in SaveManager.animal_records(animal_type):
+			if str(record.get("id", "")) == animal_id:
+				records.append(record)
+				break
+	return records
 
 
 func collect() -> bool:
 	if state != "READY" or not Inventory.owns_building(station_id):
 		return false
 	var output: Dictionary = output_data()
+	if output["amount"] <= 0:
+		# Animals sold during an active batch are removed from its participant
+		# snapshot; clear the now-empty batch without leaving a stuck READY station.
+		_clear_batch()
+		_update_display()
+		Inventory.inventory_changed.emit()
+		return true
 	if not Inventory.can_add_item(output["item"], output["amount"]):
 		return Inventory.fail(tr("ERROR_BARN_BATCH"))
 	if not Inventory.can_add_exp(output["exp"]):
 		return false
+	var consumed_animal_ids: Array[String] = participant_animal_ids.duplicate()
 	production_timer.stop()
-	state = "IDLE" if station_id == "feed_mill" else "HUNGRY"
-	production_type = ""
-	started_at = 0.0
-	ready_at = 0.0
+	_clear_batch()
 	Inventory.set(output["item"], Inventory.get(output["item"]) + output["amount"])
 	Inventory.add_exp(output["exp"], false)
+	if station_id == "pig_pen":
+		var removed_pigs: int = 0
+		for animal_id in consumed_animal_ids:
+			if not SaveManager.remove_animal_record("pig", animal_id).is_empty():
+				removed_pigs += 1
+		Inventory.pig_count = maxi(0, Inventory.pig_count - removed_pigs)
 	var collect_sound := "product_collect"
 	if station_id == "chicken_coop": collect_sound = "collect_egg"
 	elif station_id == "cow_shed": collect_sound = "collect_milk"
@@ -140,6 +184,19 @@ func collect() -> bool:
 	_update_display()
 	Inventory.inventory_changed.emit()
 	return true
+
+
+func _clear_batch() -> void:
+	production_timer.stop()
+	state = "IDLE" if station_id == "feed_mill" else "HUNGRY"
+	production_type = ""
+	started_at = 0.0
+	ready_at = 0.0
+	participant_animal_ids.clear()
+
+
+func remove_participant(animal_id: String) -> void:
+	participant_animal_ids.erase(animal_id)
 
 
 func _finish_production() -> void:

@@ -4,6 +4,7 @@ signal inventory_changed
 signal action_failed(message: String)
 signal level_up(level: int, unlocks: Array, reward: Dictionary)
 signal level_up_events_cleared
+signal treasure_opened(source_item: String, reward: Dictionary)
 
 const FarmData = preload("res://farm_data.gd")
 const ToolData = preload("res://tool_data.gd")
@@ -20,7 +21,7 @@ const EGG_PRICE: int = 18
 const MILK_PRICE: int = 30
 const Progression = preload("res://progression_data.gd")
 var SILO_ITEMS: Array[String] = CropData.silo_items()
-const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "pig_feed", "sheep_feed", "egg", "milk", "pork", "wool", "wool_yarn", "cotton_cloth", "wool_cloth", "meat_pie", "small_fish", "river_fish", "golden_fish", "moon_fish", "bread", "corn_bread", "carrot_pie", "egg_cake", "milk_cake", "pancake", "cream", "butter", "cheese", "cotton_thread", "old_bottle", "old_boot", "coin_pouch", "small_chest", "lost_lure", "ancient_coin", "map_fragment"]
+const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "pig_feed", "sheep_feed", "egg", "milk", "pork", "wool", "wool_yarn", "cotton_cloth", "wool_cloth", "meat_pie", "small_fish", "river_fish", "golden_fish", "moon_fish", "bread", "corn_bread", "carrot_pie", "egg_cake", "milk_cake", "pancake", "cream", "butter", "cheese", "cotton_thread", "old_bottle", "old_boot", "coin_pouch", "small_chest", "lost_lure", "ancient_coin", "map_fragment", "ancient_gem"]
 var owns_spinning_machine: bool = false
 var owns_loom: bool = false
 var cotton_thread: int = 0
@@ -39,6 +40,7 @@ var small_chest: int = 0
 var lost_lure: int = 0
 var ancient_coin: int = 0
 var map_fragment: int = 0
+var ancient_gem: int = 0
 var moon_fish: int = 0
 var owns_dairy: bool = false
 var cream: int = 0
@@ -62,6 +64,7 @@ var fishing_cycle_started_at: float = 0.0
 # Transient: an active fishing session reserves one slot, never saved.
 var reserved_barn_slots: int = 0
 var selling_item: bool = false
+var last_treasure_reward: Dictionary = {}
 
 var wheat_seed: int = 10
 var wheat: int = 0
@@ -171,9 +174,11 @@ func sellable_items() -> Array[String]:
 	if is_zone_unlocked("fishing"):
 		for fish in FishingData.FISH:
 			items.append(fish)
-		for treasure in TreasureData.ITEMS:
-			if int(TreasureData.ITEMS[treasure].get("sell_price", 0)) > 0:
-				items.append(treasure)
+	# Treasure can be found through Dig Spots and events before Fishing unlocks.
+	# Let the existing Market Stall clear any sellable treasure at any point.
+	for treasure in TreasureData.ITEMS:
+		if int(TreasureData.ITEMS[treasure].get("sell_price", 0)) > 0:
+			items.append(treasure)
 	items.append_array(["pork","wool"])
 	for recipes in [BakeryData.RECIPES,DairyData.RECIPES,SpinningData.RECIPES,LoomData.RECIPES]:
 		for item in recipes:
@@ -290,15 +295,15 @@ func use_seed(crop: String) -> bool:
 	return true
 
 
-func collect_crop(crop: String, output_item: String = "") -> bool:
+func collect_crop(crop: String, output_item: String = "", amount: int = 1) -> bool:
 	if not CropData.CROPS.has(crop):
 		return false
 	var output := crop.to_lower() if output_item.is_empty() else output_item
-	if not can_add_item(output, 1):
+	if amount <= 0 or not can_add_item(output, amount):
 		return fail(tr("ERROR_SILO_CROP"))
 	if not can_add_exp(CropData.CROPS[crop]["harvest_exp"]):
 		return false
-	set(output, get(output) + 1)
+	set(output, get(output) + amount)
 	add_exp(CropData.CROPS[crop]["harvest_exp"], false)
 	DiscoveryManager.discover_item(output)
 	inventory_changed.emit()
@@ -427,10 +432,116 @@ func add_item(item: String, amount: int = 1, notify: bool = true) -> bool:
 	if not can_add_item(item, amount):
 		return fail(tr("ERROR_STORAGE"))
 	set(item, get(item) + amount)
-	DiscoveryManager.discover_item(item)
+	_register_item_gain(item)
 	if notify:
 		inventory_changed.emit()
 	return true
+
+
+func treasure_action(item_id: String) -> String:
+	match item_id:
+		"coin_pouch":
+			return "use"
+		"small_chest":
+			return "open"
+	return ""
+
+
+func use_treasure(item_id: String) -> bool:
+	var action := treasure_action(item_id)
+	if action.is_empty() or get(item_id) <= 0:
+		return false
+	var nonce: int = SaveManager.treasure_open_sequence + 1
+	var reward: Dictionary = {}
+	if item_id == "coin_pouch":
+		reward = {"type": "coins", "amount": TreasureData.coin_pouch_coins(nonce)}
+	else:
+		reward = TreasureData.small_chest_reward(nonce, _available_chest_seeds())
+	if reward.is_empty():
+		return false
+	var reward_type := str(reward.get("type", ""))
+	var reward_item := str(reward.get("item", ""))
+	var reward_amount := maxi(1, int(reward.get("amount", 1)))
+	if reward_type == "item":
+		# The consumed chest/pouch frees one Barn slot before an item result is
+		# inserted, so a full Barn may still safely open into one replacement item.
+		if not _can_replace_treasure_with(item_id, reward_item, reward_amount):
+			return fail(tr("ERROR_STORAGE"))
+	elif reward_type == "coins":
+		if coins > 9223372036854775807 - reward_amount:
+			return false
+	else:
+		return false
+	var old_source: int = get(item_id)
+	var old_coins: int = coins
+	var old_reward_count: int = get(reward_item) if reward_type == "item" else 0
+	var old_nonce: int = SaveManager.treasure_open_sequence
+	var old_discovery: Dictionary = DiscoveryManager.get_save_data()
+	var unlocked_decoration := ""
+	set(item_id, old_source - 1)
+	if reward_type == "coins":
+		coins += reward_amount
+	else:
+		set(reward_item, old_reward_count + reward_amount)
+		DiscoveryManager.discover_item(reward_item)
+		unlocked_decoration = _unlock_treasure_cosmetic(reward_item, false)
+	SaveManager.treasure_open_sequence = nonce
+	if not SaveManager.save_game():
+		set(item_id, old_source)
+		coins = old_coins
+		if reward_type == "item":
+			set(reward_item, old_reward_count)
+		DiscoveryManager.restore(old_discovery)
+		SaveManager.treasure_open_sequence = old_nonce
+		return fail(tr("ERROR_SAVE_FAILED"))
+	last_treasure_reward = reward.duplicate(true)
+	if not unlocked_decoration.is_empty():
+		DiscoveryManager.cosmetic_unlocked.emit(unlocked_decoration)
+	treasure_opened.emit(item_id, last_treasure_reward)
+	inventory_changed.emit()
+	return true
+
+
+func _available_chest_seeds() -> Array[String]:
+	var seeds: Array[String] = []
+	for crop_id in CropData.CROPS:
+		if is_unlocked(crop_id):
+			seeds.append(crop_id.to_lower() + "_seed")
+	return seeds if not seeds.is_empty() else ["wheat_seed"]
+
+
+func _can_replace_treasure_with(source_item: String, result_item: String, amount: int) -> bool:
+	if amount <= 0:
+		return false
+	if result_item in SILO_ITEMS:
+		return can_add_item(result_item, amount)
+	if result_item in BARN_ITEMS:
+		var released: int = 1 if source_item in BARN_ITEMS else 0
+		return storage_used("barn") - released + reserved_barn_slots + amount <= barn_capacity
+	return false
+
+
+func _register_item_gain(item_id: String) -> void:
+	DiscoveryManager.discover_item(item_id)
+	_unlock_treasure_cosmetic(item_id)
+
+
+func _unlock_treasure_cosmetic(item_id: String, notify: bool = true) -> String:
+	var decoration_id := ""
+	match item_id:
+		"ancient_coin":
+			decoration_id = "ancient_coin_display"
+		"ancient_gem":
+			decoration_id = "gem_pedestal"
+	if not decoration_id.is_empty() and DiscoveryManager.unlock_cosmetic(decoration_id, notify):
+		return decoration_id
+	return ""
+
+
+func reconcile_treasure_cosmetics() -> void:
+	for item_id in ["ancient_coin", "ancient_gem"]:
+		if get(item_id) > 0:
+			_unlock_treasure_cosmetic(item_id, false)
 
 
 func reserve_fishing_slot() -> bool:
@@ -545,9 +656,9 @@ func animal_trade_busy(animal: String) -> bool:
 	var state: String = SaveManager.saved_stations.get(id, {}).get("state", "HUNGRY")
 	if SaveManager.stations.has(id) and is_instance_valid(SaveManager.stations[id]):
 		state = SaveManager.stations[id].state
-	# Running batches snapshot participants and remove sold IDs safely. Keep
-	# READY batches protected so an earned product cannot be invalidated.
-	return state == "READY"
+	# A production batch owns its animal snapshot through completion. This keeps
+	# output stable and prevents selling the animals that are being processed.
+	return state in ["PRODUCING", "READY"]
 
 
 func buy_animal(animal: String) -> bool:
@@ -627,10 +738,51 @@ func animal_capacity(animal: String) -> int:
 	return Progression.UPGRADES[building][level]["capacity"]
 
 
+func structure_capacity(id: String) -> int:
+	if id in ["silo", "barn"]:
+		return int(get(id + "_capacity"))
+	for animal in Progression.ANIMALS:
+		if str(Progression.ANIMALS[animal].get("building", "")) == id:
+			return animal_capacity(animal)
+	return 0
+
+
 func next_upgrade(id: String) -> Dictionary:
 	if not Progression.UPGRADES.has(id):
 		return {}
 	return Progression.UPGRADES[id].get(get(id + "_level") + 1, {})
+
+
+func house_storage_bonus(level: int = house_level) -> int:
+	return Progression.house_storage_bonus(level)
+
+
+func base_storage_capacity(storage: String, level: int = -1) -> int:
+	if storage not in ["silo", "barn"]:
+		return 0
+	var resolved_level: int = get(storage + "_level") if level < 0 else level
+	if resolved_level <= 1:
+		return 30 if storage == "silo" else 20
+	# Older saves can carry an unexpected level. Keep this lookup explicitly
+	# typed so a missing row never turns a save migration into an error.
+	var upgrades: Dictionary = Progression.UPGRADES[storage]
+	var data: Dictionary = upgrades.get(resolved_level, {})
+	return int(data.get("capacity", 30 if storage == "silo" else 20))
+
+
+func storage_capacity_target(storage: String, level: int = -1, for_house_level: int = -1) -> int:
+	var house_target: int = house_level if for_house_level < 0 else for_house_level
+	return base_storage_capacity(storage, level) + house_storage_bonus(house_target)
+
+
+func next_storage_capacity(storage: String) -> int:
+	var upgrade: Dictionary = next_upgrade(storage)
+	return storage_capacity_target(storage, get(storage + "_level") + 1) if not upgrade.is_empty() else get(storage + "_capacity")
+
+
+func reconcile_storage_capacities() -> void:
+	for storage in ["silo", "barn"]:
+		set(storage + "_capacity", maxi(get(storage + "_capacity"), storage_capacity_target(storage)))
 
 
 func can_pay_material_cost(cost: Dictionary) -> bool:
@@ -653,11 +805,30 @@ func upgrade_structure(id: String) -> bool:
 		return fail(tr("ERROR_MAX_LEVEL"))
 	if not can_pay_material_cost(cost):
 		return fail(tr("ERROR_RESOURCES") if id == "house" else tr("ERROR_MATERIALS"))
+	var old_wood: int = wood
+	var old_stone: int = stone
+	var old_coins: int = coins
+	var old_level: int = get(id + "_level")
+	var old_silo_capacity: int = silo_capacity
+	var old_barn_capacity: int = barn_capacity
 	_pay_material_cost(cost)
-	set(id + "_level", get(id + "_level") + 1)
+	set(id + "_level", old_level + 1)
 	if id in ["silo", "barn"]:
-		# Never shrink a larger capacity carried over from an older save.
-		set(id + "_capacity", maxi(get(id + "_capacity"), cost["capacity"]))
+		# Never shrink a larger capacity carried over from an older save, and keep
+		# the small House storage bonus when a storage building upgrades later.
+		set(id + "_capacity", maxi(get(id + "_capacity"), storage_capacity_target(id)))
+	elif id == "house":
+		# House upgrades are a modest, non-output benefit: both existing storage
+		# buildings gain a few slots while the local house visual becomes cozier.
+		reconcile_storage_capacities()
+	if not SaveManager.save_game():
+		wood = old_wood
+		stone = old_stone
+		coins = old_coins
+		set(id + "_level", old_level)
+		silo_capacity = old_silo_capacity
+		barn_capacity = old_barn_capacity
+		return fail(tr("ERROR_SAVE_FAILED"))
 	inventory_changed.emit()
 	AudioManager.play_sfx("upgrade_success")
 	return true

@@ -164,7 +164,7 @@ func check_offline() -> void:
 	check(inv.player_exp == 30, "milk EXP exactly once")
 	manager.plots["soil_01"].harvest()
 	manager.plots["soil_01"].harvest()
-	check(inv.wheat == 1 and inv.player_exp == 40, "crop harvest exactly once")
+	check(inv.wheat == 2 and inv.player_exp == 40, "crop harvest yields two crops but grants EXP once")
 	var tree = farm.get_node("tree4")
 	tree.zone_id = "future_2"
 	tree.restore_save_data({"respawn_at": 1.0})

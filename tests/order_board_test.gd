@@ -55,6 +55,8 @@ func prepare() -> void:
 		inv.set("owns_"+id,true)
 	inv.chicken_count = 1
 	inv.cow_count = 1
+	inv.pig_count = 1
+	inv.sheep_count = 1
 	inv.inventory_changed.emit()
 	orders.reset_orders()
 
@@ -75,10 +77,21 @@ func generator_checks() -> void:
 	prepare()
 	for item in orders.item_info():
 		check(orders.item_available(item),"all unlocked products have owned ingredient sources: "+item)
+	check(not orders.item_info().has("ancient_gem"),"Ancient Gem is never a mandatory Order item")
 	inv.cow_count = 0
 	for item in ["milk","milk_cake","pancake","cream","butter","cheese"]:
 		check(not orders.item_available(item),"missing cows blocks entire milk production chain: "+item)
 	inv.cow_count = 1
+	inv.pig_count = 0
+	for item in ["pork","meat_pie"]:
+		check(not orders.item_available(item),"missing pigs blocks pork production chain: "+item)
+	inv.pig_count = 1
+	inv.sheep_count = 0
+	for item in ["wool","wool_yarn","wool_cloth"]:
+		check(not orders.item_available(item),"missing sheep blocks wool and Loom production chain: "+item)
+	inv.sheep_count = 1
+	for item in ["pork","wool","wool_yarn","wool_cloth"]:
+		check(orders.item_available(item),"owned animal/building gate allows late-game Order item: "+item)
 	inv.owns_bakery = false
 	check(not orders.item_available("bread") and not orders.item_available("egg_cake"),"Bakery ownership gate")
 	inv.owns_bakery = true

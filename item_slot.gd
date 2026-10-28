@@ -2,6 +2,7 @@ extends Button
 
 const Icon = preload("res://item_icon.gd")
 const ItemData = preload("res://item_ui_data.gd")
+const DiscoveryData = preload("res://discovery_data.gd")
 var item_id: String = ""
 var quantity: int = 0
 var item_visual: Control
@@ -65,6 +66,9 @@ func display(id: String, count: int, locked: bool = false, hint: String = "") ->
 	amount.modulate.a = 0.55 if count == 0 else 1.0
 	amount.text = str(count)
 	tooltip_text = tr("ITEM_TOOLTIP") % [Localization.display_name(id),count]
+	var description_key: String = str(DiscoveryData.DESCRIPTIONS.get(id, ""))
+	if not description_key.is_empty():
+		tooltip_text += "\n" + tr(description_key)
 	var price: int = ItemData.sell_price(id)
 	if price > 0:
 		tooltip_text += "\n" + tr("ITEM_SELL_TOOLTIP") % price

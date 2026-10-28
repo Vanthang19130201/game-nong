@@ -3,6 +3,7 @@ extends PanelContainer
 @onready var tabs: TabBar = $Margin/Content/TabBar
 @onready var content_scroll: ScrollContainer = $Margin/Content/ContentScroll
 @onready var pages: VBoxContainer = $Margin/Content/ContentScroll/Items
+@onready var action_button: Button = $Margin/Content/Footer/ActionButton
 var upgrade_rows: Dictionary = {}
 const Slot = preload("res://item_slot.gd")
 const Icon = preload("res://item_icon.gd")
@@ -12,6 +13,7 @@ var grids: Array[GridContainer] = []
 var capacity_labels: Dictionary = {}
 var upgrade_grid: GridContainer
 var sorted_items: bool = false
+var selected_treasure_action: String = ""
 
 func _ready() -> void:
 	for title in ["STORAGE_PRODUCE","STORAGE_GOODS","STORAGE_MATERIALS"]:
@@ -21,6 +23,7 @@ func _ready() -> void:
 	_create_upgrade_rows()
 	Inventory.inventory_changed.connect(refresh)
 	$Margin/Content/Footer/CloseButton.pressed.connect(hide)
+	action_button.pressed.connect(_use_selected_treasure)
 	$Margin/Content/Header/SortButton.pressed.connect(sort_items)
 	$Margin/Content/Header/SortButton.tooltip_text = tr("STORAGE_SORT_HINT")
 	get_viewport().size_changed.connect(_fit_viewport)
@@ -67,6 +70,7 @@ func refresh() -> void:
 		item_cells[id].display(id,Inventory.get(id),locked,hint)
 		item_cells[id].highlight(id == Inventory.selected_crop.to_lower()+"_seed")
 	_refresh_upgrades()
+	_refresh_treasure_action()
 	if sorted_items:
 		_sort_grids()
 
@@ -129,12 +133,41 @@ func _add_grid(parent: VBoxContainer, heading: String, items: Array) -> void:
 		item_cells[item] = slot
 		if item.ends_with("_seed"):
 			slot.pressed.connect(_choose_seed.bind(item.trim_suffix("_seed").to_upper()))
+		elif not Inventory.treasure_action(item).is_empty():
+			slot.pressed.connect(_select_treasure_action.bind(item))
 		else:
 			slot.mouse_default_cursor_shape = Control.CURSOR_ARROW
 
 
 func _choose_seed(crop: String) -> void:
 	get_parent().hotbar.choose_seed(crop)
+
+
+func _select_treasure_action(item_id: String) -> void:
+	selected_treasure_action = item_id
+	_refresh_treasure_action()
+
+
+func _refresh_treasure_action() -> void:
+	var action := Inventory.treasure_action(selected_treasure_action)
+	action_button.visible = not action.is_empty()
+	if action.is_empty():
+		return
+	action_button.text = tr("UI_OPEN") if action == "open" else tr("UI_USE")
+	action_button.disabled = Inventory.get(selected_treasure_action) <= 0
+	var description_key: String = str(preload("res://discovery_data.gd").DESCRIPTIONS.get(selected_treasure_action, ""))
+	action_button.tooltip_text = tr(description_key) if not description_key.is_empty() else Localization.display_name(selected_treasure_action)
+
+
+func _use_selected_treasure() -> void:
+	if selected_treasure_action.is_empty():
+		return
+	if Inventory.use_treasure(selected_treasure_action):
+		var reward: Dictionary = Inventory.last_treasure_reward
+		var item_id := str(reward.get("item", ""))
+		if not item_id.is_empty():
+			get_parent().show_floating_feedback(tr("TRADE_ITEM") % [int(reward.get("amount", 1)), Localization.display_name(item_id)])
+	_refresh_treasure_action()
 
 
 func _create_upgrade_rows() -> void:
@@ -204,7 +237,8 @@ func _refresh_upgrades() -> void:
 		var capacity: int = Inventory.get(storage + "_capacity")
 		var title: String = tr("WAREHOUSE_SILO") if storage == "silo" else tr("WAREHOUSE_BARN")
 		var label: Label = upgrade_rows[storage]["label"]
-		label.text = tr("WAREHOUSE_UPGRADE_INFO") % [title, level, capacity, maxi(capacity, cost.get("capacity", capacity))]
+		var next_capacity: int = Inventory.next_storage_capacity(storage) if not cost.is_empty() else capacity
+		label.text = tr("WAREHOUSE_UPGRADE_INFO") % [title, level, capacity, next_capacity]
 		upgrade_rows[storage]["button"].disabled = cost.is_empty()
 		upgrade_rows[storage]["costs"].visible = not cost.is_empty()
 		if cost.is_empty():

@@ -15,6 +15,7 @@ $managerText = $managerText.Replace('user://save.cfg', 'res://test-save.cfg').Re
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'core_stability_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'gameplay_regression_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'fishing_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'upgrade_treasure_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'fish_market_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'market_stall_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'order_board_test.gd') -Destination $testRoot -Force
@@ -53,6 +54,8 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'level_up_test.gd') -Destination
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'feed_mill_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'pig_sheep_placement_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'world_expansion_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'discovery_system_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'audio_manager_test.gd') -Destination $testRoot -Force
 $projectPath = Join-Path $testRoot 'project.godot'
 Add-Content -LiteralPath $projectPath -Value "`n[debug]`nfile_logging/enable_file_logging=false"
 # Reuse the project's existing imports; no editor/settings writes are needed.
@@ -70,11 +73,11 @@ $stages = @('size_core', 'size_write', 'size_read', 'character_core', 'character
     'invalid_write', 'invalid_read', 'offline_write', 'offline_read',
     'backup_write', 'backup_read', 'defaults_write', 'defaults_read', 'duplicates',
     'fishing_core', 'fishing_limits', 'fishing_write', 'fishing_read', 'market_core', 'market_read', 'stall_core', 'stall_write', 'stall_read', 'stall_reset_read',
-    'audit_core', 'audit_write', 'audit_read', 'audit_again', 'audit_close', 'localization', 'storage_ui', 'cozy_ui', 'plot_popup', 'ui_polish', 'art_core', 'building_artwork', 'world_presence',
+    'audit_core', 'animal_output', 'audit_write', 'audit_read', 'audit_again', 'audit_close', 'discovery_core', 'audio_core', 'localization', 'storage_ui', 'cozy_ui', 'plot_popup', 'ui_polish', 'art_core', 'building_artwork', 'world_presence',
     'orders_core', 'orders_write', 'orders_read', 'orders_expired_read', 'orders_legacy_write', 'orders_legacy_read',
     'bakery_core', 'bakery_write', 'bakery_read', 'bakery_again', 'bakery_reset_read',
     'bakery_cakes', 'bakery_cakes_write', 'bakery_cakes_read', 'bakery_cakes_again', 'bakery_legacy_write', 'bakery_legacy_read',
-    'crop_core', 'crop_write', 'crop_read', 'crop_again', 'warehouse_core', 'warehouse_write', 'warehouse_read', 'mouse_core',
+	'crop_core', 'crop_rare_write', 'crop_rare_read', 'crop_rare_again', 'crop_write', 'crop_read', 'crop_again', 'warehouse_core', 'warehouse_write', 'warehouse_read', 'mouse_core',
     'edit_core', 'edit_write', 'edit_read', 'edit_legacy_write', 'edit_legacy_read', 'land_core', 'land_write', 'land_read', 'land_reset_read', 'land_legacy_write', 'land_legacy_read', 'camera_core',
     'soil_edit_core','soil_edit_write','soil_edit_read','soil_edit_offline_write','soil_edit_offline_read','soil_edit_reset_read','soil_edit_legacy_write','soil_edit_legacy_read','soil_edit_invalid_write','soil_edit_invalid_read',
     'edge_input','edge_move','edge_orders','edge_orders_read','edge_orders_again','edge_decoration','edge_decoration_read',
@@ -90,7 +93,8 @@ $stages = @('size_core', 'size_write', 'size_read', 'character_core', 'character
     'floating_core','floating_write','floating_read',
     'hud_completion','calendar_write','calendar_read','calendar_legacy_write','calendar_legacy_read','calendar_invalid_write','calendar_invalid_read',
     'feed_core','feed_write','feed_read','feed_again','feed_offline_write','feed_offline_read','feed_legacy_write','feed_legacy_read','feed_reset_read',
-    'feed_cancel','feed_cancel_write','feed_cancel_read','feed_cancel_again','level_up')
+    'feed_cancel','feed_cancel_write','feed_cancel_read','feed_cancel_again','level_up',
+    'upgrade_treasure_core','upgrade_treasure_legacy_write','upgrade_treasure_legacy_read')
 $onlyStage = $env:GODOT_TEST_ONLY
 if (-not [string]::IsNullOrWhiteSpace($onlyStage)) {
     $stages = @($stages | Where-Object { $_ -eq $onlyStage })
@@ -100,6 +104,7 @@ foreach ($stage in $stages) {
     $log = Join-Path $testRoot "$stage.log"
     $ErrorActionPreference = 'Continue'
     $testScript = if ($stage.StartsWith('fishing_')) { 'fishing_test.gd' } else { 'core_stability_test.gd' }
+    if ($stage.StartsWith('upgrade_treasure_')) { $testScript = 'upgrade_treasure_test.gd' }
     if ($stage -in @('collision_core','animal_context','fixes_write','fixes_read','fixes_hungry_read')) { $testScript = 'collision_animal_test.gd' }
     if ($stage.StartsWith('character_')) { $testScript = 'character_selection_test.gd' }
     if ($stage.StartsWith('size_')) { $testScript = 'character_size_test.gd' }
@@ -107,6 +112,9 @@ foreach ($stage in $stages) {
     if ($stage.StartsWith('stall_')) { $testScript = 'market_stall_test.gd' }
     if ($stage.StartsWith('orders_')) { $testScript = 'order_board_test.gd' }
     if ($stage.StartsWith('audit_')) { $testScript = 'level_audit_test.gd' }
+    if ($stage -eq 'animal_output') { $testScript = 'level_audit_test.gd' }
+    if ($stage -eq 'discovery_core') { $testScript = 'discovery_system_test.gd' }
+    if ($stage -eq 'audio_core') { $testScript = 'audio_manager_test.gd' }
     if ($stage.StartsWith('bakery_')) { $testScript = 'bakery_test.gd' }
     if ($stage.StartsWith('crop_')) { $testScript = 'crop_expansion_test.gd' }
     if ($stage.StartsWith('warehouse_')) { $testScript = 'warehouse_test.gd' }

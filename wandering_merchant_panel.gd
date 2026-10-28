@@ -60,21 +60,38 @@ func refresh() -> void:
 			row["row"].hide()
 			continue
 		var entry: Dictionary = stock[index]
-		var item: String = entry["item"]
-		var price: int = int(entry["price"])
 		var quantity: int = int(entry["quantity"])
+		var exchange: bool = str(entry.get("kind", "buy")) == "exchange"
 		row["row"].show()
-		row["icon"].item_id = item
-		row["info"].text = tr("MERCHANT_STOCK_ROW") % [Localization.display_name(item), price, quantity]
-		row["buy"].disabled = quantity <= 0 or Inventory.coins < price or not Inventory.can_add_item(item, 1) or FarmEventManager.merchant_busy
+		row["icon"].item_id = str(entry.get("display_item", entry.get("item", "")))
+		row["info"].text = FarmEventManager.merchant_entry_text(entry)
+		row["buy"].text = tr("UI_EXCHANGE") if exchange else tr("UI_BUY")
+		if exchange:
+			row["buy"].disabled = not FarmEventManager.can_exchange_stock(index)
+		else:
+			var item: String = str(entry.get("item", ""))
+			var price: int = int(entry.get("price", 0))
+			row["buy"].disabled = quantity <= 0 or Inventory.coins < price or not Inventory.can_add_item(item, 1) or FarmEventManager.merchant_busy
 
 func _buy(index: int) -> void:
 	if not visible or FarmEventManager.merchant_busy or index >= FarmEventManager.merchant_stock.size():
 		return
 	var entry: Dictionary = FarmEventManager.merchant_stock[index]
-	if FarmEventManager.buy_merchant_stock(index):
+	var exchange: bool = str(entry.get("kind", "buy")) == "exchange"
+	var completed: bool = FarmEventManager.exchange_merchant_stock(index) if exchange else FarmEventManager.buy_merchant_stock(index)
+	if completed:
 		var hud := get_tree().get_first_node_in_group("farm_hud")
 		if is_instance_valid(hud):
-			hud.show_inventory_change(str(entry["item"]), 1)
-			hud.show_inventory_change("coins", -int(entry["price"]))
+			if exchange:
+				var result: Dictionary = FarmEventManager.last_merchant_exchange
+				for item in result.get("requirements", {}):
+					hud.show_inventory_change(str(item), -int(result["requirements"][item]))
+				var reward: Dictionary = result.get("reward", {})
+				if str(reward.get("type", "")) == "item":
+					hud.show_inventory_change(str(reward.get("item", "")), int(reward.get("amount", 1)))
+				elif str(reward.get("type", "")) == "coins":
+					hud.show_inventory_change("coins", int(reward.get("amount", 0)))
+			else:
+				hud.show_inventory_change(str(entry["item"]), 1)
+				hud.show_inventory_change("coins", -int(entry["price"]))
 	refresh()

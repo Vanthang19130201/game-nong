@@ -3,6 +3,7 @@ extends PanelContainer
 const DiscoveryData = preload("res://discovery_data.gd")
 const ItemIcon = preload("res://item_icon.gd")
 const UI_THEME: Theme = preload("res://assets/ui/ui_theme.tres")
+const TreasureData = preload("res://treasure_data.gd")
 
 var _tabs: TabContainer
 var _built := false
@@ -107,6 +108,12 @@ func _refresh_categories() -> void:
 				description.theme_type_variation = &"MutedLabel"
 				description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 				info_column.add_child(description)
+			if known and TreasureData.ITEMS.has(item_id):
+				var rarity := Label.new()
+				var rarity_id: String = str(TreasureData.ITEMS[item_id].get("rarity", "common"))
+				rarity.text = tr("RARITY_" + rarity_id.to_upper())
+				rarity.theme_type_variation = &"RewardLabel" if rarity_id in ["rare", "ultra_rare"] else &"MutedLabel"
+				info_column.add_child(rarity)
 			line.add_child(info_column)
 			var marker := Label.new()
 			marker.text = "✓" if known else "?"

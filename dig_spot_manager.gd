@@ -4,6 +4,7 @@ const SpotScene = preload("res://dig_spot.tscn")
 const WeatherData = preload("res://weather_data.gd")
 const SafePlacement = preload("res://safe_world_placement.gd")
 const DecorationData = preload("res://decoration_data.gd")
+const TreasureData = preload("res://treasure_data.gd")
 
 var farm: Node2D
 var spots: Dictionary = {}
@@ -160,7 +161,11 @@ func _roll_reward(rng: RandomNumberGenerator) -> Dictionary:
 		return {"type": "item", "item": "map_fragment", "amount": 1}
 	if roll < 0.95:
 		return {"type": "item", "item": "small_chest", "amount": 1}
-	return {"type": "item", "item": "mystery_seed", "amount": 1}
+	if roll < 0.985:
+		return {"type": "item", "item": "mystery_seed", "amount": 1}
+	# The exact result is generated with the daily spot and saved in its record,
+	# so this rare container can never be rerolled by reloading before a dig.
+	return {"type": "item", "item": TreasureData.roll_rare_container(rng), "amount": 1}
 
 func _spawn_record(record: Dictionary) -> void:
 	var id := str(record.get("id", ""))
@@ -209,10 +214,14 @@ func _check_treasure_hunt() -> void:
 	for id in DecorationData.TYPES:
 		if DecorationData.TYPES[id].get("hidden", false) and id not in DiscoveryManager.unlocked_cosmetics:
 			decoration_ids.append(id)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 0x4D415046 + GameClock.absolute_day * 271 + Inventory.map_fragment
 	var reward: Dictionary = {"type":"coins", "amount":60}
-	if not decoration_ids.is_empty():
-		var rng := RandomNumberGenerator.new()
-		rng.seed = 0x4D415046 + GameClock.absolute_day * 271 + Inventory.map_fragment
+	# A hidden treasure has one persisted rare-container branch. The gem's 1%
+	# chance is centralized in TreasureData rather than added as a second roll.
+	if rng.randf() < 0.15:
+		reward = {"type":"item", "item":TreasureData.roll_rare_container(rng), "amount":1}
+	elif not decoration_ids.is_empty():
 		reward = {"type":"hidden_cosmetic", "decoration":decoration_ids[rng.randi_range(0, decoration_ids.size()-1)]}
 	var point := Vector2.ZERO
 	var found_position := false

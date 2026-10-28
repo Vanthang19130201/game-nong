@@ -139,19 +139,27 @@ func harvest() -> void:
 	var harvested_crop: String = crop_type
 	var harvest_key := "%s|%s|%d|%d" % [plot_id, harvested_crop, int(planted_at), int(ready_at)]
 	var rare_variant: String = CropData.roll_rare_variant(harvested_crop, harvest_key)
-	var output_item := rare_variant if not rare_variant.is_empty() and Inventory.can_add_item(rare_variant, 1) else harvested_crop.to_lower()
-	if not Inventory.can_add_item(output_item, 1):
+	var output_item: String = rare_variant if not rare_variant.is_empty() else harvested_crop.to_lower()
+	const HARVEST_AMOUNT: int = 2
+	if not Inventory.can_add_item(output_item, HARVEST_AMOUNT):
 		Inventory.fail(tr("ERROR_SILO_CROP"))
 		return
-	var already_discovered_rare: bool = not rare_variant.is_empty() and DiscoveryManager.has_discovered("rare_finds", rare_variant)
+	if not Inventory.can_add_exp(CropData.CROPS[harvested_crop]["harvest_exp"]):
+		return
+	var previous_planted_at: float = planted_at
+	var previous_ready_at: float = ready_at
 	_clear_crop()
-	_update_label()
-	if Inventory.collect_crop(harvested_crop, output_item):
-		AudioManager.play_random_sfx("harvest_crop", global_position)
-		if rare_variant.is_empty():
-			get_tree().call_group("farm_hud", "show_harvest_feedback", harvested_crop)
-		elif already_discovered_rare:
-			get_tree().call_group("farm_hud", "show_inventory_change", rare_variant, 1)
+	if not Inventory.collect_crop(harvested_crop, output_item, HARVEST_AMOUNT):
+		# Inventory preflight and grant stay in one synchronous action. Restore the
+		# ready crop if a future validation rule rejects the transaction.
+		state = PlotState.READY
+		crop_type = harvested_crop
+		planted_at = previous_planted_at
+		ready_at = previous_ready_at
+		_update_label()
+		return
+	AudioManager.play_random_sfx("harvest_crop", global_position)
+	get_tree().call_group("farm_hud", "show_harvest_feedback", output_item, HARVEST_AMOUNT, harvested_crop)
 
 
 func _clear_crop() -> void:

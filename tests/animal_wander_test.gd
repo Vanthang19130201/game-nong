@@ -170,6 +170,12 @@ func run_checks() -> void:
 			check(inv.coins == coins and inv.egg == 0 and inv.milk == 0, "wander never grants items or changes coins")
 			if "--capture" in OS.get_cmdline_user_args():
 				await capture()
+		for kind in ["chicken", "cow"]:
+			var roster: Array = manager.animal_rosters[kind]
+			for record in roster:
+				record["born_at"] = inv.AnimalData.adult_born_at(kind)
+			manager.animal_rosters[kind] = roster
+			farm.animal_groups[kind].sync_count()
 		inv.chicken_feed = 1
 		inv.cow_feed = 1
 		for id in DESTINATIONS:

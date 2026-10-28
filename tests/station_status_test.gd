@@ -40,6 +40,11 @@ func prepare() -> void:
 		var animal: String = inv.Progression.PRODUCTS[id]["animal"]
 		for index in range(3):
 			check(inv.buy_animal(animal), "three animals fixture")
+		var roster: Array = manager.animal_rosters[animal]
+		for record in roster:
+			record["born_at"] = inv.AnimalData.adult_born_at(animal)
+		manager.animal_rosters[animal] = roster
+		farm.animal_groups[animal].sync_count()
 		check_state(id, "HUNGRY")
 	inv.chicken_feed = 1
 	inv.cow_feed = 1

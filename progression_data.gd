@@ -124,18 +124,23 @@ const UPGRADES: Dictionary = {
 	},
 	"silo": {
 		2: {"wood": 10, "stone": 5, "coins": 200, "capacity": 50},
-		3: {"wood": 20, "stone": 10, "coins": 200, "capacity": 80}
+		3: {"wood": 25, "stone": 15, "coins": 850, "capacity": 80},
+		4: {"wood": 45, "stone": 28, "coins": 2200, "capacity": 120},
+		5: {"wood": 75, "stone": 50, "coins": 4800, "capacity": 180}
 	},
 	"barn": {
-		2: {"wood": 8, "stone": 8, "coins": 250, "capacity": 35},
-		3: {"wood": 20, "stone": 10, "coins": 200, "capacity": 60}
+		2: {"wood": 12, "stone": 10, "coins": 350, "capacity": 40},
+		3: {"wood": 30, "stone": 20, "coins": 1300, "capacity": 70},
+		4: {"wood": 58, "stone": 38, "coins": 3000, "capacity": 110},
+		5: {"wood": 95, "stone": 60, "coins": 6200, "capacity": 160}
 	}
 }
 const DOG_HOUSE_COST: Dictionary = {"wood": 5, "stone": 0, "coins": 0}
-# Future hooks only: these features are not implemented yet.
-const HOUSE_FUTURE_FEATURES: Dictionary = {
-	2: ["wardrobe", "basic_furniture"],
-	3: ["extra_room", "more_decorations"],
-	4: ["couple_marriage_room"]
-}
+# Cumulative capacity granted by the existing House level. This is deliberately
+# small: it improves storage planning without changing crop/animal outputs.
+const HOUSE_STORAGE_BONUSES: Dictionary = {1: 0, 2: 5, 3: 12, 4: 20}
+
+
+static func house_storage_bonus(level: int) -> int:
+	return int(HOUSE_STORAGE_BONUSES.get(clampi(level, 1, HOUSE_STORAGE_BONUSES.size()), 0))
 const RESOURCE_RESPAWN: Dictionary = {"wood": 60.0, "stone": 90.0}

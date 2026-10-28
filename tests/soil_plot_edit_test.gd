@@ -221,9 +221,9 @@ func check_normal_interaction() -> void:
 	plot.ready_at = Time.get_unix_time_from_system()-1
 	plot._on_grow_timer_timeout()
 	await click(plot.position)
-	check(plot.state == 0 and inv.corn == 1 and plot.position == DESTINATIONS["soil_01"], "normal click harvests moved plot")
+	check(plot.state == 0 and inv.corn == 2 and plot.position == DESTINATIONS["soil_01"], "normal click harvests moved plot x2")
 	await key(KEY_E)
-	check(inv.corn == 1, "no duplicate crop reward")
+	check(inv.corn == 2, "no duplicate crop reward")
 
 func check_all_plots() -> void:
 	while inv.unlocked_plot_count < 32:

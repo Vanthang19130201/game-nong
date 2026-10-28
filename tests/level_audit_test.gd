@@ -23,6 +23,22 @@ func disk() -> ConfigFile:
 func balances() -> Array:
 	return [inv.coins, inv.wood, inv.stone]
 
+func make_adults(animal: String) -> void:
+	var roster: Array = manager.animal_rosters[animal]
+	for record in roster:
+		record["born_at"] = inv.AnimalData.adult_born_at(animal)
+	manager.animal_rosters[animal] = roster
+	if farm.animal_groups.has(animal):
+		farm.animal_groups[animal].sync_count()
+
+func crop_inventory_total() -> int:
+	var total: int = 0
+	for crop in inv.CropData.CROPS:
+		total += inv.get(crop.to_lower())
+	for item in inv.CropData.RARE_VARIANTS:
+		total += inv.get(item)
+	return total
+
 func run_checks() -> void:
 	await process_frame
 	await process_frame
@@ -38,6 +54,7 @@ func run_checks() -> void:
 	var stage: String = OS.get_cmdline_user_args()[0]
 	match stage:
 		"audit_core": await audit_core()
+		"animal_output": animal_output()
 		"audit_write": audit_write()
 		"audit_read": audit_read(false)
 		"audit_again": audit_read(true)
@@ -79,6 +96,7 @@ func audit_core() -> void:
 				check(not inv.buy_animal(animal), "animal level gate")
 			elif level == required:
 				check(inv.buy_animal(animal), "animal unlock purchase")
+				make_adults(animal)
 		check(inv.can_use_tool("axe") == (level >= 6) and inv.can_use_tool("hammer") == (level >= 6), "tool level gate")
 		check(inv.is_zone_unlocked("fishing") == (level >= 10) and inv.has_fishing_rod == (level >= 10), "fishing level gate")
 		check(orders.item_available("egg") == (level >= 6), "egg orders unlock when egg production becomes possible")
@@ -86,8 +104,8 @@ func audit_core() -> void:
 		check(orders.item_available("golden_fish") == (level >= 10), "fish order gate")
 		for recipe in inv.Progression.RECIPES:
 			check(farm.get_node("FeedMill").can_produce(recipe) == (level >= inv.Progression.RECIPES[recipe]["level"]), "feed recipe unlock")
-		check(farm.get_node("ChickenCoop").can_produce() == (level >= 6), "egg production unlock")
-		check(farm.get_node("CowShed").can_produce() == (level >= 10), "milk production unlock")
+		check(farm.get_node("ChickenCoop").can_produce() == (level >= 6 and not manager.adult_animal_ids("chicken").is_empty()), "egg production unlock requires adults")
+		check(farm.get_node("CowShed").can_produce() == (level >= 10 and not manager.adult_animal_ids("cow").is_empty()), "milk production unlock requires adults")
 		for order in orders.orders:
 			for item in order["requirements"]:
 				check(orders.item_available(item), "orders only request producible items")
@@ -130,9 +148,14 @@ func audit_core() -> void:
 			check(inv.upgrade_structure(id) and balances() == [0,0,0], "exact structure upgrade cost")
 		check(not inv.upgrade_structure(id), "structure max level")
 	inv.coins = 100000
-	for animal in inv.Progression.ANIMALS:
+	inv.player_level = 18
+	for building in ["chicken_coop", "cow_shed"]:
+		if not inv.owns_building(building):
+			inv.set("owns_" + building, true)
+	for animal in ["chicken", "cow"]:
 		while inv.get(animal+"_count") < inv.animal_capacity(animal):
 			check(inv.buy_animal(animal), "buy within animal capacity")
+		make_adults(animal)
 		var before: int = inv.coins
 		check(not inv.buy_animal(animal) and inv.coins == before, "animal capacity limit")
 	for id in ["chicken_coop","cow_shed"]:
@@ -145,7 +168,7 @@ func audit_core() -> void:
 		station.ready_at = Time.get_unix_time_from_system()-1.0
 		station._finish_production()
 		check(not inv.sell_animal(animal), "no animal trade before collection")
-		check(station.collect() and inv.get(product["item"]) == count and not station.collect(), "herd reward matches animal count exactly once")
+		check(station.collect() and inv.get(product["item"]) == count and not station.collect(), "one output per adult chicken/cow, no duplicate collection")
 	# Storage rejects new items and keeps full-bin crops/products READY.
 	for item in inv.SILO_ITEMS:
 		inv.set(item,0)
@@ -156,10 +179,10 @@ func audit_core() -> void:
 	plot.restore_save_data({"state":"READY","crop_type":"WHEAT","planted_at":1.0,"ready_at":2.0})
 	plot.harvest()
 	check(plot.state == 2 and inv.wheat == inv.silo_capacity, "full Silo preserves crop")
-	check(inv.sell_wheat(), "free Silo slot")
+	check(inv.sell_wheat() and inv.sell_wheat(), "free two Silo slots")
 	plot.harvest()
 	plot.harvest()
-	check(plot.state == 0 and inv.wheat == inv.silo_capacity, "crop rewards exactly once")
+	check(plot.state == 0 and inv.storage_used("silo") == inv.silo_capacity, "x2 crop fills the two freed Silo slots")
 	inv.wheat = 1
 	inv.corn = 1
 	for item in inv.BARN_ITEMS:
@@ -233,13 +256,15 @@ func audit_write() -> void:
 		plot.planted_at = now-60 if index%2 == 0 else now
 		plot.ready_at = now-1 if index%2 == 0 else now+120
 		index += 1
-	for id in manager.STATION_IDS:
+	for id in ["feed_mill", "chicken_coop", "cow_shed"]:
 		check(inv.buy_building(id), "reload fixture building")
 	check(inv.buy_animal("chicken") and inv.buy_animal("cow"), "reload fixture animals")
+	make_adults("chicken")
+	make_adults("cow")
 	check(inv.add_item("wheat",1) and inv.add_item("corn",1), "mill ingredients")
 	inv.chicken_feed = 1
 	inv.cow_feed = 1
-	for id in manager.STATION_IDS:
+	for id in ["feed_mill", "chicken_coop", "cow_shed"]:
 		var station = manager.stations[id]
 		check(station.produce(), "start station production")
 		station.started_at = now-60
@@ -248,8 +273,8 @@ func audit_write() -> void:
 
 func audit_read(already_collected: bool) -> void:
 	check(inv.unlocked_plot_count == 32 and manager.plots.size() == 32, "all plot unlocks restored")
-	var total_before: int = inv.wheat + inv.corn + inv.carrot
-	check(total_before == (16 if already_collected else 0), "reload must not grant crops automatically")
+	var total_before: int = crop_inventory_total()
+	check(total_before == (32 if already_collected else 0), "reload must not grant crops automatically; each ready plot yields two")
 	var index: int = 0
 	var positions: Array = []
 	for id in manager.PLOT_IDS:
@@ -264,7 +289,7 @@ func audit_read(already_collected: bool) -> void:
 		else:
 			check(plot.state == 1 and plot.grow_timer.time_left > 30, "future crops resume remaining time")
 		index += 1
-	check(inv.wheat+inv.corn+inv.carrot == 16, "offline crops never duplicate across reload")
+	check(crop_inventory_total() == 32, "offline crops yield two each without duplication across reload")
 	for id in manager.STATION_IDS:
 		var station = manager.stations[id]
 		check(station.state == (manager.default_station(id)["state"] if already_collected else "READY"), "production state restored")
@@ -273,3 +298,51 @@ func audit_read(already_collected: bool) -> void:
 		check(not station.collect(), "cannot recollect batch")
 	check(inv.chicken_feed == 1 and inv.egg == 1 and inv.milk == 1 and inv.cow_feed == 0, "product rewards exactly once after reload")
 	check(inv.storage_used("silo") <= inv.silo_capacity and inv.storage_used("barn") <= inv.barn_capacity, "storage limits after reload")
+
+
+func animal_output() -> void:
+	check(manager.reset_game(), "reset animal output fixture")
+	inv.player_level = 18
+	inv.coins = 100000
+	for animal in ["chicken", "cow", "pig", "sheep"]:
+		var building: String = inv.Progression.ANIMALS[animal]["building"]
+		inv.set("owns_" + building, true)
+		check(inv.buy_animal(animal) and inv.buy_animal(animal), "buy two animal fixtures: " + animal)
+		if animal == "chicken":
+			inv.chicken_feed = 1
+			check(not manager.stations["chicken_coop"].can_produce(), "baby animals cannot produce before adulthood")
+			var legacy_batch := ConfigFile.new()
+			var now: float = Time.get_unix_time_from_system()
+			legacy_batch.set_value("chicken_coop", "state", "PRODUCING")
+			legacy_batch.set_value("chicken_coop", "production_type", "EGG")
+			legacy_batch.set_value("chicken_coop", "started_at", now)
+			legacy_batch.set_value("chicken_coop", "ready_at", now + 10.0)
+			var migrated_batch: Dictionary = manager._read_station(legacy_batch, "chicken_coop")
+			check(migrated_batch["state"] == "PRODUCING" and migrated_batch["participant_animal_ids"].size() == 2, "legacy active batch keeps its paid animal snapshot during migration")
+		make_adults(animal)
+	var pigs: Array = manager.animal_rosters["pig"]
+	pigs[0]["lucky"] = false
+	pigs[1]["lucky"] = true
+	manager.animal_rosters["pig"] = pigs
+	check(manager.save_game(), "save lucky pig identities")
+	var lucky_save := ConfigFile.new()
+	check(lucky_save.load(manager.SAVE_PATH) == OK, "read lucky pig identities")
+	manager._restore_animal_rosters(lucky_save)
+	check(manager.animal_rosters["pig"][0]["lucky"] == false and manager.animal_rosters["pig"][1]["lucky"] == true, "Lucky Pig status does not reroll on load")
+	for station_id in ["chicken_coop", "cow_shed", "sheep_barn", "pig_pen"]:
+		var station = manager.stations[station_id]
+		var product: Dictionary = inv.Progression.PRODUCTS[station_id]
+		inv.set(product["feed"], 1)
+		check(station.can_produce() and station.produce(), "adult livestock production starts: " + station_id)
+		var expected: int = 5 if station_id == "pig_pen" else 2
+		check(station.output_data()["amount"] == expected, "animal output follows per-species data: " + station_id)
+		station.ready_at = Time.get_unix_time_from_system() - 1.0
+		station._finish_production()
+		if station_id == "pig_pen":
+			inv.pork = inv.barn_capacity - 4
+			check(not station.collect() and station.state == "READY" and inv.pig_count == 2, "full Barn keeps pork output and pigs safely")
+			inv.pork = 0
+		check(station.collect() and not station.collect(), "livestock batch collected exactly once: " + station_id)
+		check(inv.get(product["item"]) == expected, "animal output is not doubled: " + station_id)
+		if station_id == "pig_pen":
+			check(inv.pig_count == 0 and manager.animal_records("pig").is_empty(), "slaughter removes each pig from roster/count")

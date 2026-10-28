@@ -142,10 +142,11 @@ func check_fishing() -> void:
 	for index in range(5):
 		check(start_session(), "start randomized session")
 		check(spot.bite_delay >= 1.0 and spot.bite_delay <= 5.0, "delay inside 1-5 seconds")
+		check(not manager.has_pending_fishing_reward(), "casting does not stage a fishing reward")
 		sampled.append(snappedf(spot.bite_delay,0.01))
 		spot.cancel_session()
 	check(sampled[0] != sampled[1], "each session samples a new random delay")
-	check(fish_count() == 0 and inv.reserved_barn_slots == 0, "cancel grants nothing/releases slot")
+	check(fish_count() == 0 and inv.reserved_barn_slots == 0 and not manager.has_pending_fishing_reward(), "cancel grants nothing/releases slot and leaves no reward")
 	check(inv.fishing_attempts_used == 5, "cancel consumes attempts")
 	inv.fishing_cycle_started_at = Time.get_unix_time_from_system() - inv.FishingData.CYCLE_SECONDS
 	inv.refresh_fishing_cycle()
@@ -209,6 +210,28 @@ func check_fishing() -> void:
 	hud.fishing_ui.reel_button.pressed.emit()
 	check(fish_count() == 3 and inv.storage_used("barn") == inv.barn_capacity, "catch kept in last slot")
 	end_cooldown()
+	# A result is only persisted after a successful reel finds the Barn full.
+	# The direct egg increment simulates a storage change after the cast's slot
+	# reservation; it gives the delivery path a full Barn without staging loot.
+	inv.egg -= 1
+	check(start_session() and not manager.has_pending_fishing_reward(), "fresh cast reserves space without a pending reward")
+	inv.egg += 1
+	begin_bite()
+	hud.fishing_ui.reel_button.pressed.emit()
+	var pending_reward: Dictionary = manager.get_pending_fishing_reward()
+	check(spot.state == spot.State.FAILED and not pending_reward.is_empty(), "successful catch persists only when delivery finds Barn full")
+	var pending_save := ConfigFile.new()
+	check(pending_save.load(manager.SAVE_PATH) == OK and pending_save.get_value("fishing", "pending_reward", {}) == pending_reward and pending_save.get_value("fishing", "pending_reward_claimable", false) == true, "full-Barn reward is in the save snapshot")
+	end_cooldown()
+	check(not start_session() and manager.has_pending_fishing_reward(), "full Barn leaves caught reward intact")
+	inv.egg -= 1
+	var pending_item := str(pending_reward.get("item", ""))
+	var pending_item_before: int = inv.get(pending_item)
+	check(start_session(), "retry pending reward after freeing one Barn slot")
+	begin_bite()
+	hud.fishing_ui.reel_button.pressed.emit()
+	check(inv.get(pending_item) == pending_item_before + 1 and not manager.has_pending_fishing_reward(), "pending reward delivers once without reroll")
+	end_cooldown()
 	inv.egg = 0
 	# Movement stays locked during the session; ESC cancels and restores control.
 	check(start_session(), "start movement lock test")
@@ -218,7 +241,7 @@ func check_fishing() -> void:
 	Input.action_release("move_down")
 	check(player.global_position.distance_to(fishing_origin) < 1.0 and spot.state == spot.State.WAITING_FOR_BITE, "Player movement locked while fishing")
 	hud.fishing_ui.close_session()
-	check(spot.state == spot.State.IDLE and hud.fishing_ui.active_spot == null and inv.reserved_barn_slots == 0 and fish_count() == 3, "closing session releases reservation without reward")
+	check(spot.state == spot.State.IDLE and hud.fishing_ui.active_spot == null and inv.reserved_barn_slots == 0, "closing session releases reservation without reward")
 	await create_timer(0.1).timeout
 	await key(KEY_E)
 	await key(KEY_ESCAPE)

@@ -167,6 +167,11 @@ func animal_checks() -> void:
 	for kind in ["chicken", "cow"]:
 		for index in range(3):
 			check(inv.buy_animal(kind), "buy animal fixture")
+		var roster: Array = manager.animal_rosters[kind]
+		for record in roster:
+			record["born_at"] = inv.AnimalData.adult_born_at(kind)
+		manager.animal_rosters[kind] = roster
+		farm.animal_groups[kind].sync_count()
 	await settle()
 	for group in farm.animal_groups.values():
 		for animal in group.animals():
@@ -239,6 +244,10 @@ func write_fixture() -> void:
 	await move_checks()
 	for kind in ["chicken", "cow"]:
 		check(inv.buy_animal(kind), "persistent animal fixture")
+		var roster: Array = manager.animal_rosters[kind]
+		roster[0]["born_at"] = inv.AnimalData.adult_born_at(kind)
+		manager.animal_rosters[kind] = roster
+		farm.animal_groups[kind].sync_count()
 		var station = manager.stations["chicken_coop" if kind == "chicken" else "cow_shed"]
 		inv.set(kind + "_feed", 1)
 		check(station.produce(), "persistent production fixture")

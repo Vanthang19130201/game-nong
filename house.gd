@@ -2,10 +2,16 @@ extends Node2D
 
 @onready var interaction_area: Area2D = $InteractionArea
 @onready var house_label: Label = $HouseLabel
+var upgrade_visual: Node2D
 
 
 func _ready() -> void:
 	add_to_group("farm_interactables")
+	upgrade_visual = Node2D.new()
+	upgrade_visual.name = "UpgradeVisual"
+	upgrade_visual.z_index = 1
+	upgrade_visual.set_script(preload("res://house_upgrade_visual.gd"))
+	add_child(upgrade_visual)
 	interaction_area.body_exited.connect(_on_body_exited)
 	Inventory.inventory_changed.connect(_update_visual)
 	_update_visual()
@@ -30,6 +36,8 @@ func interact(_player: Node2D = null) -> void:
 
 func _update_visual() -> void:
 	$Visuals.refresh()
+	if is_instance_valid(upgrade_visual):
+		upgrade_visual.house_level = Inventory.house_level
 
 
 func _on_body_exited(body: Node2D) -> void:

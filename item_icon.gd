@@ -49,7 +49,14 @@ const COLORS: Dictionary = {
 	"golden_wheat":Color("e6bd45"), "golden_corn":Color("f1c839"), "giant_carrot":Color("e77c38"),
 	"old_bottle":Color("73a29a"), "old_boot":Color("78624f"), "coin_pouch":Color("d2a344"),
 	"small_chest":Color("b7793d"), "lost_lure":Color("b95f4c"), "ancient_coin":Color("e5be52"),
-	"map_fragment":Color("d8c59b"), "moon_fish":Color("8e83b1")
+	"map_fragment":Color("d8c59b"), "ancient_gem":Color("58c8ba"), "moon_fish":Color("8e83b1"),
+	"mystery":Color("b887c8"), "small_fish":Color("7aaec3"), "egg":Color("f2d8a2"),
+	"milk":Color("dcecf0"), "cream":Color("fff0cc"), "butter":Color("f0cc5e"), "cheese":Color("f3b95e"),
+	"pork":Color("d88378"), "wool":Color("efe7d5"), "wool_yarn":Color("d9c4ad"),
+	"cotton_thread":Color("f5f2e9"), "cotton_cloth":Color("d6e4df"), "wool_cloth":Color("d5b993"),
+	"chicken_feed":Color("dfb24b"), "cow_feed":Color("79a95e"), "pig_feed":Color("d98477"), "sheep_feed":Color("b99bdb"),
+	"bread":Color("dc9f4c"), "corn_bread":Color("e8bc48"), "carrot_pie":Color("de7e45"),
+	"egg_cake":Color("f1c86c"), "milk_cake":Color("f3dfbb"), "pancake":Color("d99c57"), "meat_pie":Color("a85e49")
 }
 
 func _ready() -> void:
@@ -76,12 +83,42 @@ func _draw() -> void:
 	var id: String = item_id.trim_suffix("_seed")
 	var color: Color = COLORS.get(id,Color("bd9567"))
 	if item_id.ends_with("_seed"):
+		# Seeds share a recognizable paper packet silhouette, but each packet has
+		# its own crop mark so the Storage grid can be read at a glance.
 		_poly([Vector2(18,18),Vector2(46,18),Vector2(51,53),Vector2(13,53)],Color("c89a63"))
-		draw_rect(Rect2(19,12,26,8),INK)
-		draw_circle(Vector2(32,36),12,Color("f5e6be"))
-		draw_line(Vector2(32,44),Vector2(32,29),GREEN,3,true)
-		draw_circle(Vector2(27,32),4,color)
-		draw_circle(Vector2(36,28),4,color)
+		draw_rect(Rect2(19,12,26,8),Color("8c633f"))
+		draw_style_box(_rounded(Color("f7e8c6")),Rect2(20,25,24,20))
+		match id:
+			"wheat":
+				draw_line(Vector2(32,42),Vector2(32,29),GREEN,2,true)
+				for y in [31,35,39]:
+					draw_circle(Vector2(28,y),2.5,color)
+					draw_circle(Vector2(36,y - 2),2.5,color)
+			"corn":
+				draw_style_box(_rounded(color),Rect2(27,28,10,14))
+				for y in [31,35,39]:
+					draw_line(Vector2(29,y),Vector2(35,y),Color("b88d31"),1,true)
+			"carrot":
+				_poly([Vector2(31,31),Vector2(38,33),Vector2(32,42)],color)
+				draw_line(Vector2(33,32),Vector2(28,27),GREEN,2,true)
+				draw_line(Vector2(34,32),Vector2(39,27),GREEN,2,true)
+			"soybean":
+				for point in [Vector2(27,34),Vector2(34,31),Vector2(38,38)]:
+					draw_circle(point,3,color)
+			"sugarcane":
+				for x in [27,32,37]:
+					draw_line(Vector2(x,42),Vector2(x - 1,28),color,3,true)
+			"cotton":
+				for point in [Vector2(27,36),Vector2(34,32),Vector2(38,38)]:
+					draw_circle(point,4,Color("fffaf0"))
+			"flax":
+				draw_line(Vector2(32,42),Vector2(32,29),GREEN,2,true)
+				for point in [Vector2(27,34),Vector2(37,31),Vector2(34,38)]:
+					draw_circle(point,3,color)
+			_:
+				draw_circle(Vector2(32,36),6,color)
+				for offset in [Vector2(-8,-5),Vector2(8,-5),Vector2(-8,5),Vector2(8,5)]:
+					draw_line(Vector2(32,36),Vector2(32,36) + offset,Color("fff5ce"),1.5,true)
 	elif id in ["wheat","flax"]:
 		draw_line(Vector2(25,55),Vector2(37,12),GREEN,4,true)
 		for n in range(4):
@@ -132,18 +169,68 @@ func _draw() -> void:
 		draw_line(Vector2(42,10),Vector2(51,38),Color("7796a0"),2,true)
 		draw_arc(Vector2(47,40),5,0,PI,12,INK,2,true)
 	elif id.ends_with("fish"):
-		_poly([Vector2(42,30),Vector2(58,18),Vector2(58,47),Vector2(42,37)],color)
-		draw_style_box(_rounded(color),Rect2(8,20,39,26))
-		draw_circle(Vector2(18,29),3,INK)
+		# All fish use the same readable silhouette, with markings that make
+		# river, golden and moon catches immediately distinguishable.
+		_poly([Vector2(42,30),Vector2(57,17),Vector2(57,47),Vector2(42,37)],color)
+		draw_style_box(_rounded(color),Rect2(7,20,39,26))
+		draw_circle(Vector2(17,29),3,INK)
+		draw_line(Vector2(29,21),Vector2(34,17),color.lightened(0.22),3,true)
+		if id == "golden_fish":
+			for point in [Vector2(27,28),Vector2(35,34),Vector2(42,27)]:
+				draw_circle(point,2,Color("fff2b0"))
+		elif id == "river_fish":
+			for y in [25,31,37]:
+				draw_line(Vector2(27,y),Vector2(41,y + 2),Color("d3eced"),1.5,true)
+		elif id == "moon_fish":
+			draw_arc(Vector2(33,32),9,PI * 0.45,PI * 1.55,10,Color("e8e1ff"),3,true)
+			draw_circle(Vector2(45,18),2,Color("fff6bd"))
+		else:
+			draw_line(Vector2(27,28),Vector2(40,34),Color("c5e7e9"),2,true)
 	elif id == "egg":
-		draw_set_transform((size-Vector2.ONE*side)/2,0,Vector2(side/64,side/64*1.2))
-		draw_circle(Vector2(32,28),17,Color("f0d3a0"))
-		draw_circle(Vector2(27,22),5,Color("fff2cd"))
-	elif id in ["milk","cream"]:
+		_poly([Vector2(32,11),Vector2(43,25),Vector2(41,45),Vector2(32,54),Vector2(23,45),Vector2(21,25)],Color("f1d6a0"))
+		draw_circle(Vector2(28,23),4,Color("fff6d5"))
+	elif id == "milk":
 		draw_style_box(_rounded(Color("f5f0d8")),Rect2(19,22,27,33))
 		draw_rect(Rect2(24,12,17,12),Color("f5f0d8"))
 		draw_rect(Rect2(23,10,19,6),Color("8caaba"))
 		draw_rect(Rect2(22,32,21,12),Color("9eb5be"))
+		draw_line(Vector2(26,38),Vector2(39,38),Color("effaf5"),2,true)
+	elif id == "cream":
+		draw_style_box(_rounded(Color("f7e6b9")),Rect2(17,25,30,28))
+		draw_rect(Rect2(21,17,22,10),Color("f9efd5"))
+		draw_arc(Vector2(32,33),10,PI,TAU,12,Color("fff9e8"),5,true)
+		draw_circle(Vector2(32,29),3,Color("fffdf3"))
+	elif id == "butter":
+		draw_style_box(_rounded(Color("efc85b")),Rect2(10,24,44,25))
+		draw_rect(Rect2(14,19,36,8),Color("fff4cb"))
+		draw_line(Vector2(17,39),Vector2(47,39),Color("d5a644"),2,true)
+	elif id == "cheese":
+		_poly([Vector2(13,47),Vector2(46,47),Vector2(53,30),Vector2(29,20)],Color("f2bb5e"))
+		for point in [Vector2(31,38),Vector2(42,41),Vector2(38,31)]:
+			draw_circle(point,3,Color("d89643"))
+	elif id == "pork":
+		_poly([Vector2(12,34),Vector2(27,19),Vector2(49,26),Vector2(52,43),Vector2(37,52),Vector2(18,48)],Color("d98579"))
+		draw_arc(Vector2(34,35),8,0,TAU,12,Color("f3b3a5"),3,true)
+		draw_circle(Vector2(40,28),2,INK)
+	elif id == "wool":
+		for point in [Vector2(24,33),Vector2(32,24),Vector2(41,31),Vector2(35,41),Vector2(25,42)]:
+			draw_circle(point,10,Color("f3ead8"))
+		draw_circle(Vector2(28,29),2,Color("fffaf1"))
+	elif id in ["wool_yarn", "cotton_thread"]:
+		var thread_color: Color = COLORS[id]
+		draw_style_box(_rounded(Color("a87954")),Rect2(14,19,36,30))
+		for y in [24,29,34,39,44]:
+			draw_line(Vector2(18,y),Vector2(46,y),thread_color,3,true)
+		draw_circle(Vector2(31,34),5,Color("b98a63"))
+	elif id in ["cotton_cloth", "wool_cloth"]:
+		var cloth_color: Color = COLORS[id]
+		draw_style_box(_rounded(cloth_color),Rect2(12,16,40,39))
+		for x in [19,28,37,46]:
+			draw_line(Vector2(x,20),Vector2(x,51),cloth_color.darkened(0.18),1.5,true)
+		for y in [25,34,43]:
+			draw_line(Vector2(16,y),Vector2(48,y),Color("fff6e5",0.65),1.2,true)
+	elif id in ["bread", "corn_bread", "carrot_pie", "egg_cake", "milk_cake", "pancake", "meat_pie"]:
+		_draw_food_icon(id)
 	elif id == "coins":
 		draw_circle(Vector2(32,33),22,INK)
 		draw_circle(Vector2(32,31),19,Color("e9bd57"))
@@ -157,11 +244,7 @@ func _draw() -> void:
 	elif id == "stone":
 		_poly([Vector2(9,43),Vector2(18,20),Vector2(39,12),Vector2(55,35),Vector2(47,52),Vector2(21,55)],Color("99a4a0"))
 		_poly([Vector2(18,20),Vector2(39,12),Vector2(34,34)],Color("c5ccc0"))
-	elif id in ["bread","corn_bread","carrot_pie","egg_cake","milk_cake","pancake","butter","cheese"]:
-		draw_style_box(_rounded(Color("deb568")),Rect2(10,22,46,30))
-		for x in [21,32,43]:
-			draw_line(Vector2(x,27),Vector2(x-4,38),Color("b17b42"),3,true)
-	elif id in ["old_bottle", "old_boot", "coin_pouch", "small_chest", "lost_lure", "ancient_coin", "map_fragment"]:
+	elif id in ["old_bottle", "old_boot", "coin_pouch", "small_chest", "lost_lure", "ancient_coin", "map_fragment", "ancient_gem"]:
 		if id == "old_bottle":
 			draw_style_box(_rounded(Color("71a49c")), Rect2(24, 20, 17, 35))
 			draw_rect(Rect2(28, 13, 9, 9), Color("9b7146"))
@@ -184,6 +267,10 @@ func _draw() -> void:
 			draw_circle(Vector2(32,32),22,Color("d5ad49"))
 			draw_circle(Vector2(32,32),15,Color("f0d47b"))
 			draw_arc(Vector2(32,32),10,0,TAU,20,Color("a98238"),2,true)
+		elif id == "ancient_gem":
+			_poly([Vector2(32,8),Vector2(51,25),Vector2(42,53),Vector2(22,53),Vector2(13,25)],Color("3aa99e"))
+			_poly([Vector2(32,8),Vector2(42,25),Vector2(32,48),Vector2(22,25)],Color("8cf5de"))
+			draw_line(Vector2(24,19),Vector2(33,12),Color("effff5"),3,true)
 		else:
 			_poly([Vector2(13,12),Vector2(43,12),Vector2(52,22),Vector2(52,52),Vector2(13,52)],Color("e1d0a7"))
 			draw_line(Vector2(21,25),Vector2(43,25),Color("897454"),2,true)
@@ -197,15 +284,76 @@ func _draw() -> void:
 		draw_rect(Rect2(18,47,28,5),Color("c49a62"),true)
 		for x in range(22,45,5):
 			draw_line(Vector2(x,21),Vector2(x-2,46),Color("efe0bd"),2,true)
-	elif id in ["chicken_feed","cow_feed","cotton_thread"]:
-		draw_style_box(_rounded(Color("b88757")),Rect2(15,19,34,36))
-		draw_circle(Vector2(32,36),11,Color("e9cb8d"))
-		for x in [26,32,38]:
-			draw_line(Vector2(x,29),Vector2(x,43),GREEN if id == "cow_feed" else Color("aa8157"),3,true)
+	elif id in ["chicken_feed", "cow_feed", "pig_feed", "sheep_feed"]:
+		# Feed bags have a unique animal badge instead of the same blank sack.
+		var feed_color: Color = COLORS[id]
+		draw_style_box(_rounded(Color("b98758")),Rect2(15,17,34,39))
+		draw_rect(Rect2(18,14,28,7),Color("805638"))
+		draw_style_box(_rounded(Color("f5e5bc")),Rect2(21,28,22,18))
+		if id == "chicken_feed":
+			draw_circle(Vector2(29,36),5,feed_color)
+			draw_circle(Vector2(36,34),5,feed_color)
+			draw_line(Vector2(39,37),Vector2(45,39),Color("d77b3f"),2,true)
+		elif id == "cow_feed":
+			draw_arc(Vector2(32,38),8,PI,TAU,12,feed_color,5,true)
+			draw_circle(Vector2(27,34),2,INK)
+			draw_circle(Vector2(37,34),2,INK)
+		elif id == "pig_feed":
+			draw_circle(Vector2(32,37),8,feed_color)
+			draw_circle(Vector2(29,37),1.5,INK)
+			draw_circle(Vector2(35,37),1.5,INK)
+		else:
+			for point in [Vector2(27,36),Vector2(34,33),Vector2(38,39)]:
+				draw_circle(point,5,feed_color)
 	else:
 		draw_style_box(_rounded(color),Rect2(12,15,40,38))
 		draw_line(Vector2(16,25),Vector2(48,25),INK,3,true)
 		draw_line(Vector2(32,18),Vector2(32,49),Color("f2d5a1"),5,true)
+
+
+func _draw_food_icon(food_id: String) -> void:
+	match food_id:
+		"bread":
+			draw_style_box(_rounded(Color("d99a4f")),Rect2(10,25,44,24))
+			for x in [21,32,43]:
+				draw_line(Vector2(x,29),Vector2(x - 4,40),Color("fff0c4"),2.5,true)
+		"corn_bread":
+			draw_style_box(_rounded(Color("e7bd4d")),Rect2(10,24,44,25))
+			for point in [Vector2(21,32),Vector2(31,30),Vector2(40,34),Vector2(27,41),Vector2(39,42)]:
+				draw_circle(point,2.3,Color("b9842f"))
+		"carrot_pie":
+			_poly([Vector2(10,48),Vector2(53,48),Vector2(35,17)],Color("db813f"))
+			draw_line(Vector2(14,47),Vector2(51,47),Color("f4d277"),3,true)
+			for point in [Vector2(34,34),Vector2(39,41),Vector2(27,42)]:
+				draw_circle(point,2.5,Color("80a64f"))
+		"egg_cake":
+			draw_style_box(_rounded(Color("edc76f")),Rect2(12,25,40,25))
+			draw_arc(Vector2(32,29),16,PI,TAU,16,Color("fff5cf"),6,true)
+			draw_circle(Vector2(32,33),4,Color("f6b347"))
+		"milk_cake":
+			draw_style_box(_rounded(Color("e7c690")),Rect2(13,25,38,25))
+			draw_style_box(_rounded(Color("fff5dc")),Rect2(13,18,38,15))
+			for x in [22,32,42]:
+				draw_circle(Vector2(x,25),2,Color("eccf91"))
+		"pancake":
+			for y in [43,36,29]:
+				_draw_ellipse(Vector2(32,y),Vector2(20,6),Color("dfa25a"))
+			draw_circle(Vector2(32,27),5,Color("f4d371"))
+			draw_line(Vector2(32,21),Vector2(32,15),Color("b77736"),2,true)
+		"meat_pie":
+			draw_arc(Vector2(32,42),19,PI,TAU,18,Color("ae6047"),10,true)
+			draw_line(Vector2(13,42),Vector2(51,42),Color("f0c16d"),3,true)
+			for x in [20,29,38,47]:
+				draw_line(Vector2(x,38),Vector2(x - 4,32),Color("7c4837"),2,true)
+
+
+func _draw_ellipse(center: Vector2, radii: Vector2, color: Color) -> void:
+	# A simple polygon keeps procedural icons crisp at every UI scale.
+	var points: Array[Vector2] = []
+	for index in range(16):
+		var angle := TAU * float(index) / 16.0
+		points.append(center + Vector2(cos(angle) * radii.x, sin(angle) * radii.y))
+	_poly(points, color)
 
 func _get_crop_texture() -> Texture2D:
 	var path: String = CROP_TEXTURE_PATHS.get(item_id, "")

@@ -46,10 +46,8 @@ func get_interaction_position() -> Vector2:
 
 func interact(_player: Node2D = null) -> void:
 	if can_interact() and FarmEventManager.collect_current_event():
-		if FarmEventManager.current_event_id == "fallen_branch":
-			get_tree().call_group("farm_hud", "show_floating_feedback", tr("TRADE_RESOURCE") % [2, tr("ITEM_WOOD")])
-		else:
-			get_tree().call_group("farm_hud", "show_inventory_change", "old_bottle", 1)
+		# Inventory's shared floating feedback reads the committed transaction.
+		# Keeping presentation there avoids a stale hard-coded Old Bottle toast.
 		prompt.hide()
 		queue_redraw()
 

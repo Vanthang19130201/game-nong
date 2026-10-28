@@ -64,13 +64,19 @@ func prepare() -> void:
 	inv.stone = 5
 	check(inv.build_dog_house() and inv.buy_dog(), "dog house fixture")
 	check(inv.buy_animal("chicken") and inv.buy_animal("cow"), "animals fixture")
+	for kind in ["chicken", "cow"]:
+		var roster: Array = manager.animal_rosters[kind]
+		roster[0]["born_at"] = inv.AnimalData.adult_born_at(kind)
+		manager.animal_rosters[kind] = roster
+		farm.animal_groups[kind].sync_count()
 	inv.wheat = 5
 	inv.corn = 5
 	inv.carrot = 5
 	inv.chicken_feed = 1
 	inv.cow_feed = 1
 	for station in manager.stations.values():
-		check(station.produce(), "production fixture")
+		if inv.owns_building(station.station_id):
+			check(station.produce(), "production fixture")
 	check(farm.get_node("Bakery").enqueue("bread"), "bakery queue fixture")
 	inv.house_level = 2
 	inv.silo_level = 2

@@ -93,11 +93,11 @@ func run_checks() -> void:
 	plot.ready_at = Time.get_unix_time_from_system()-1
 	plot._on_grow_timer_timeout()
 	plot.harvest()
-	check(cells["carrot"].quantity == 0 and cells["wheat"].quantity == 1, "harvest refresh")
-	check(not hud.transaction_feedback.visible and hud.transaction_feedback.get_child_count() == 0 and hud.transaction_feedback.text == "+1 Lúa mì\n+10 Kinh nghiệm", "harvest never creates a large notification panel")
+	check(cells["carrot"].quantity == 0 and cells["wheat"].quantity == 2, "harvest refresh")
+	check(not hud.transaction_feedback.visible and hud.transaction_feedback.get_child_count() == 0 and hud.transaction_feedback.text == "+2 Lúa mì\n+10 Kinh nghiệm", "harvest never creates a large notification panel")
 	var toast_count: int = hud.transaction_feedback.get_child_count()
 	plot.harvest()
-	check(hud.transaction_feedback.get_child_count() == toast_count and inv.wheat == 1, "empty plot gives no reward or feedback")
+	check(hud.transaction_feedback.get_child_count() == toast_count and inv.wheat == 2, "empty plot gives no reward or feedback")
 	check(inv.buy_seed("WHEAT") and cells["wheat_seed"].quantity == 10, "buy refresh")
 	inv.tools_unlock_notified = true
 	inv.player_level = 10

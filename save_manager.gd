@@ -89,11 +89,17 @@ var next_animal_ids: Dictionary = {"chicken": 1, "cow": 1, "pig": 1, "sheep": 1}
 var saved_dig_spots: Array = []
 var saved_dig_spots_day_key: int = -1
 var hidden_treasure_claimed: bool = false
+# Only a catch that has succeeded but could not enter a full Barn is stored
+# here. This must never represent a cast, a miss, or a cancelled session.
+var pending_fishing_reward: Dictionary = {}
+var pending_fishing_reward_claimable: bool = false
+# Monotonic nonce for deterministic Coin Pouch / Small Chest openings.
+var treasure_open_sequence: int = 0
 var PLOT_IDS: Array[String] = FarmData.plot_ids()
 var INVENTORY_DEFAULTS: Dictionary = CropData.inventory_defaults().merged({
 	"coins": 100, "chicken_feed": 0, "cow_feed": 0, "pig_feed": 0, "sheep_feed": 0, "egg": 0, "milk": 0, "pork": 0, "wool": 0, "wool_yarn": 0, "cotton_cloth": 0, "wool_cloth": 0, "meat_pie": 0, "wood": 0, "stone": 0,
 	"small_fish": 0, "river_fish": 0, "golden_fish": 0, "moon_fish": 0,
-	"old_bottle": 0, "old_boot": 0, "coin_pouch": 0, "small_chest": 0, "lost_lure": 0, "ancient_coin": 0, "map_fragment": 0,
+	"old_bottle": 0, "old_boot": 0, "coin_pouch": 0, "small_chest": 0, "lost_lure": 0, "ancient_coin": 0, "map_fragment": 0, "ancient_gem": 0,
 	"bread": 0, "corn_bread": 0, "carrot_pie": 0,
 	"egg_cake": 0, "milk_cake": 0, "pancake": 0,
 	"cream": 0, "butter": 0, "cheese": 0, "cotton_thread": 0
@@ -111,6 +117,28 @@ var building_positions: Dictionary = {}
 
 func animal_records(animal_type: String) -> Array:
 	return animal_rosters.get(animal_type, [])
+
+
+func get_pending_fishing_reward() -> Dictionary:
+	return pending_fishing_reward.duplicate(true) if has_pending_fishing_reward() else {}
+
+
+func has_pending_fishing_reward() -> bool:
+	return pending_fishing_reward_claimable and not pending_fishing_reward.is_empty()
+
+
+func set_pending_fishing_reward(value: Dictionary) -> bool:
+	var normalized := _normalize_pending_fishing_reward(value)
+	if normalized.is_empty():
+		return false
+	pending_fishing_reward = normalized
+	pending_fishing_reward_claimable = true
+	return true
+
+
+func clear_pending_fishing_reward() -> void:
+	pending_fishing_reward.clear()
+	pending_fishing_reward_claimable = false
 
 func adult_animal_ids(animal_type: String, now: float = -1.0) -> Array[String]:
 	var ids: Array[String] = []
@@ -315,7 +343,7 @@ func save_game() -> bool:
 	data.set_value("spinning_machine","spinning_machine_queue",spinning_machine_queue)
 	data.set_value("buildings","owns_loom",Inventory.owns_loom)
 	data.set_value("loom","queue",loom_queue)
-	data.set_value("game", "version", 17)
+	data.set_value("game", "version", 18)
 	data.set_value("discovery", "state", DiscoveryManager.get_save_data())
 	data.set_value("weather", "state", WeatherManager.get_save_data())
 	data.set_value("farm_event", "state", FarmEventManager.get_save_data())
@@ -329,6 +357,9 @@ func save_game() -> bool:
 	data.set_value("fishing", "fishing_cycle_started_at", Inventory.fishing_cycle_started_at)
 	data.set_value("fishing", "has_fishing_rod", Inventory.has_fishing_rod)
 	data.set_value("fishing", "fishing_rod_level", Inventory.fishing_rod_level)
+	data.set_value("fishing", "pending_reward", pending_fishing_reward.duplicate(true))
+	data.set_value("fishing", "pending_reward_claimable", pending_fishing_reward_claimable)
+	data.set_value("treasure", "open_sequence", treasure_open_sequence)
 	for id in FarmData.BUILDINGS:
 		var position: Vector2 = building_positions.get(id, FarmData.BUILDINGS[id]["position"])
 		if buildings.has(id) and is_instance_valid(buildings[id]):
@@ -444,6 +475,8 @@ func reset_game() -> bool:
 	Inventory.fishing_attempts_used = 0
 	Inventory.fishing_cycle_started_at = 0.0
 	Inventory.reserved_barn_slots = 0
+	clear_pending_fishing_reward()
+	treasure_open_sequence = 0
 	building_positions.clear()
 	for id in FarmData.BUILDINGS:
 		building_positions[id] = FarmData.BUILDINGS[id]["position"]
@@ -544,6 +577,9 @@ func _load_game() -> void:
 	# Missing or invalid fields use defaults; valid legacy values are kept.
 	for key in INVENTORY_DEFAULTS:
 		Inventory.set(key, _read_int(data, "inventory", key, INVENTORY_DEFAULTS[key]))
+	# Legacy saves gain newly catalogued treasure at zero; owning a migrated Coin
+	# or Gem still grants its cosmetic exactly once without granting any item.
+	Inventory.reconcile_treasure_cosmetics()
 	Inventory.player_level = _read_int(data, "player", "player_level", 1, 1)
 	Inventory.player_exp = _read_int(data, "player", "player_exp", 0)
 	Inventory.unlocked_plot_count = clampi(_read_int(data, "farm", "unlocked_plot_count", FarmData.STARTING_PLOTS), FarmData.STARTING_PLOTS, FarmData.MAX_PLOTS)
@@ -566,6 +602,16 @@ func _load_game() -> void:
 	Inventory.has_fishing_rod = rod_owned if rod_owned is bool else false
 	Inventory.fishing_rod_level = mini(Inventory.FishingData.ROD_LEVELS.size(), _read_int(data, "fishing", "fishing_rod_level", 0))
 	Inventory.fishing_rod_level = maxi(1, Inventory.fishing_rod_level) if Inventory.has_fishing_rod else 0
+	# Pending rewards written by the former pre-cast staging implementation had
+	# no completion marker. Treat those legacy values as transient/cancelled so
+	# loading cannot grant a reward that was never successfully caught.
+	var pending_claimable: Variant = data.get_value("fishing", "pending_reward_claimable", false)
+	if pending_claimable is bool and pending_claimable:
+		pending_fishing_reward = _normalize_pending_fishing_reward(data.get_value("fishing", "pending_reward", {}))
+		pending_fishing_reward_claimable = not pending_fishing_reward.is_empty()
+	else:
+		clear_pending_fishing_reward()
+	treasure_open_sequence = _read_int(data, "treasure", "open_sequence", 0)
 	# Loading normalizes malformed/legacy XP quietly; it must not create level-up rewards.
 	Inventory.normalize_exp(false)
 	if data.has_section_key("player", "last_rewarded_level"):
@@ -590,6 +636,9 @@ func _load_game() -> void:
 		if level > 1:
 			var capacity: int = Progression.UPGRADES[storage][level]["capacity"]
 			Inventory.set(storage + "_capacity", maxi(Inventory.get(storage + "_capacity"), capacity))
+	# House storage space was added after existing saves. Reconcile upward only so
+	# no valid legacy capacity or stored item can ever be lost during migration.
+	Inventory.reconcile_storage_capacities()
 	var legacy: bool = _read_int(data, "game", "version", 0) < 5
 	for id in STATION_IDS:
 		# Previously these buildings were free. Keep them on existing farms.
@@ -638,6 +687,21 @@ func _read_int(data: ConfigFile, section: String, key: String, fallback: int, mi
 	return fallback
 
 
+func _normalize_pending_fishing_reward(value: Variant) -> Dictionary:
+	if not value is Dictionary:
+		return {}
+	var item: Variant = value.get("item", "")
+	var amount: Variant = value.get("amount", 0)
+	var token: Variant = value.get("token", 0)
+	if not item is String or item not in Inventory.BARN_ITEMS:
+		return {}
+	if not amount is int or amount != 1:
+		return {}
+	if not token is int or token < 1 or token > 2147483647:
+		return {}
+	return {"item": item, "amount": amount, "token": token}
+
+
 func _read_station(data: ConfigFile, id: String) -> Dictionary:
 	var result: Dictionary = default_station(id)
 	if not Inventory.owns_building(id):
@@ -670,9 +734,12 @@ func _read_station(data: ConfigFile, id: String) -> Dictionary:
 				if animal_id is String and _roster_has_id(animal_type, animal_id) and animal_id not in participants:
 					participants.append(animal_id)
 		else:
-			# Legacy active batches snapshot all migrated adult animals, preserving
-			# an already-started or READY product without charging feed again.
-			participants = adult_animal_ids(animal_type)
+			# Preserve the animal set from an active pre-snapshot batch. New cycles
+			# only use adults, but an old save must not lose a paid in-flight batch.
+			for record in animal_records(animal_type):
+				var legacy_id: String = str(record.get("id", ""))
+				if not legacy_id.is_empty() and legacy_id not in participants:
+					participants.append(legacy_id)
 		result["participant_animal_ids"] = participants
 		if participants.is_empty():
 			return default_station(id)

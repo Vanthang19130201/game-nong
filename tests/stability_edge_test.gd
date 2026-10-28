@@ -90,7 +90,7 @@ func run_checks() -> void:
 			var seeds: int = inv.wheat_seed
 			push_key(KEY_E,true)
 			push_click(player.get_canvas_transform()*plot.position,true)
-			check(inv.wheat == 1 and plot.state == 0 and inv.wheat_seed == seeds, "harvest cannot also plant via simultaneous E/click")
+			check(inv.wheat == 2 and plot.state == 0 and inv.wheat_seed == seeds, "harvest x2 cannot also plant via simultaneous E/click")
 			push_key(KEY_E,false)
 			push_click(player.get_canvas_transform()*plot.position,false)
 			await process_frame

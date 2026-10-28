@@ -30,6 +30,11 @@ var player: Node2D
 
 var reserved_slot: bool = false
 
+# A catch that could not enter the Barn remains claimable. Ordinary misses and
+# cancellations never create a reward, preserving fishing's normal risk while
+# preventing storage failures from deleting rare loot.
+var retain_pending_reward: bool = false
+
 var last_caught_fish: String = ""
 
 var session_cast_world_position: Vector2 = (
@@ -242,10 +247,11 @@ func _begin_cast() -> bool:
 	if not _can_continue_session():
 		return false
 
-	if (
-		Inventory.fishing_attempts_remaining()
-		<= 0
-	):
+	# Only a catch that has actually succeeded can have a persistent result.
+	# A reward retained because the Barn was full can be retried after a reload
+	# without consuming a second attempt or rolling a different result.
+	var has_pending_reward := SaveManager.has_pending_fishing_reward()
+	if not has_pending_reward and Inventory.fishing_attempts_remaining() <= 0:
 		Inventory.fail(
 			"Đã hết lượt câu cá."
 		)
@@ -260,10 +266,15 @@ func _begin_cast() -> bool:
 		return false
 
 	reserved_slot = true
+	# A previously caught-but-undelivered result must survive any retry until it
+	# can safely enter storage. Fresh casts deliberately do not reserve or save
+	# a reward here: misses and cancellations must never create one.
+	retain_pending_reward = has_pending_reward
 
-	if not Inventory.consume_fishing_attempt():
-		_release_slot()
-		return false
+	if not has_pending_reward:
+		if not Inventory.consume_fishing_attempt():
+			_release_slot()
+			return false
 
 	last_caught_fish = ""
 
@@ -441,24 +452,40 @@ func reel() -> void:
 func _catch_fish() -> void:
 	state = State.SUCCESS
 
-	var treasure_bonus: float = 0.02 if FarmEventManager.is_active("fishing_day") else 0.0
-	var treasure: String = TreasureData.roll(
-		rng,
-		WeatherManager.fish_bonus(),
-		treasure_bonus
-	)
-	var fish: String = treasure if not treasure.is_empty() else _roll_fish()
-
 	_release_slot()
 
-	if not Inventory.can_add_item(
-		fish,
-		1
-	):
+	var is_retrying_pending_reward := SaveManager.has_pending_fishing_reward()
+	var reward := SaveManager.get_pending_fishing_reward() if is_retrying_pending_reward else {}
+	# A reward is rolled only after the player has reeled during the bite window.
+	# It stays transient when the Barn has room; persistence is needed solely for
+	# a completed catch that cannot currently be delivered.
+	if not is_retrying_pending_reward:
+		reward = _roll_success_reward()
+	var fish := str(reward.get("item", ""))
+	var amount := int(reward.get("amount", 0))
+	if fish.is_empty() or amount != 1:
+		_fail(tr("ERROR_FISH_SAVE"), is_retrying_pending_reward)
+		return
+	if not Inventory.can_add_item(fish, amount):
+		if not is_retrying_pending_reward:
+			if not _persist_full_barn_reward(reward):
+				_fail(tr("ERROR_FISH_SAVE"))
+				return
+			retain_pending_reward = true
 		_fail(
-			tr("FISHING_BARN_FULL")
+			tr("FISHING_BARN_FULL"),
+			true
 		)
 		return
+	var granted := false
+	if is_retrying_pending_reward:
+		granted = _claim_pending_fishing_reward(reward)
+	else:
+		granted = _grant_direct_fishing_reward(reward)
+	if not granted:
+		_fail(tr("ERROR_FISH_SAVE"), is_retrying_pending_reward)
+		return
+	retain_pending_reward = false
 
 	last_caught_fish = fish
 
@@ -473,14 +500,88 @@ func _catch_fish() -> void:
 		+ CATCH_DISPLAY_TIME
 	)
 
-	if Inventory.add_item(
-		fish,
-		1
-	):
-		AudioManager.play_sfx("treasure_found" if TreasureData.ITEMS.has(fish) else "fish_caught", session_cast_world_position)
+	AudioManager.play_sfx("treasure_found" if TreasureData.ITEMS.has(fish) else "fish_caught", session_cast_world_position)
 
 
-func _roll_fish() -> String:
+func _roll_success_reward() -> Dictionary:
+	# This is intentionally called only from `_catch_fish()` after a successful
+	# reel. The token makes a full-Barn result reproducible once it must be saved.
+	var token: int = rng.randi_range(1, 2147483647)
+	var item_id := _resolve_fishing_reward(token)
+	if item_id.is_empty() or item_id not in Inventory.BARN_ITEMS:
+		return {}
+	return {"item": item_id, "amount": 1, "token": token}
+
+
+func _resolve_fishing_reward(token: int) -> String:
+	# TreasureData.roll contains the shared rare-container/Gem branch. A local
+	# seeded RNG makes the result reproducible from the persisted token as well
+	# as from the persisted item value.
+	var reward_rng := RandomNumberGenerator.new()
+	reward_rng.seed = token
+	var treasure_bonus: float = 0.02 if FarmEventManager.is_active("fishing_day") else 0.0
+	var treasure: String = TreasureData.roll(
+		reward_rng,
+		WeatherManager.fish_bonus(),
+		treasure_bonus
+	)
+	return treasure if not treasure.is_empty() else _roll_fish(reward_rng)
+
+
+func _claim_pending_fishing_reward(reward: Dictionary) -> bool:
+	var item_id := str(reward.get("item", ""))
+	var amount := int(reward.get("amount", 0))
+	if item_id.is_empty() or amount != 1 or not Inventory.can_add_item(item_id, amount):
+		return false
+	var old_item_count: int = Inventory.get(item_id)
+	var old_discovery: Dictionary = DiscoveryManager.get_save_data()
+	if not Inventory.add_item(item_id, amount, false):
+		return false
+	SaveManager.clear_pending_fishing_reward()
+	if not SaveManager.save_game():
+		Inventory.set(item_id, old_item_count)
+		DiscoveryManager.restore(old_discovery)
+		SaveManager.set_pending_fishing_reward(reward)
+		return false
+	Inventory.inventory_changed.emit()
+	return true
+
+
+func _grant_direct_fishing_reward(reward: Dictionary) -> bool:
+	var item_id := str(reward.get("item", ""))
+	var amount := int(reward.get("amount", 0))
+	if item_id.is_empty() or amount != 1 or not Inventory.can_add_item(item_id, amount):
+		return false
+	var old_item_count: int = Inventory.get(item_id)
+	var old_discovery: Dictionary = DiscoveryManager.get_save_data()
+	if not Inventory.add_item(item_id, amount, false):
+		return false
+	# The result was not pending, so saving the inventory is enough. Roll back
+	# the in-memory side effects if the snapshot cannot be committed.
+	if not SaveManager.save_game():
+		Inventory.set(item_id, old_item_count)
+		DiscoveryManager.restore(old_discovery)
+		return false
+	Inventory.inventory_changed.emit()
+	return true
+
+
+func _persist_full_barn_reward(reward: Dictionary) -> bool:
+	# This is the only point at which a newly caught reward becomes persistent:
+	# the catch succeeded, but storage rejected delivery. Save before reporting
+	# the full-Barn feedback so restarting cannot reroll or delete rare loot.
+	if not SaveManager.set_pending_fishing_reward(reward):
+		return false
+	if SaveManager.save_game():
+		return true
+	SaveManager.clear_pending_fishing_reward()
+	return false
+
+
+func _roll_fish(roll_rng: RandomNumberGenerator = null) -> String:
+	# Preserve the existing no-argument helper for fishing tests and any scene
+	# callers, while deterministic pending rewards pass their persisted RNG.
+	var active_rng: RandomNumberGenerator = roll_rng if roll_rng != null else rng
 	var available: Array[String] = []
 	var weights: Array[int] = []
 	var total: int = 0
@@ -497,7 +598,7 @@ func _roll_fish() -> String:
 	if total <= 0:
 		return "small_fish"
 
-	var roll: int = rng.randi_range(
+	var roll: int = active_rng.randi_range(
 		1,
 		total
 	)
@@ -530,10 +631,15 @@ func _fish_is_available(info: Dictionary) -> bool:
 # ==================================================
 
 func _fail(
-	message: String
+	message: String,
+	keep_pending: bool = false
 ) -> void:
 
 	_release_slot()
+	# Once a result was retained because the Barn was full, a retry must not
+	# accidentally destroy it merely because the player misses that retry.
+	var should_keep_pending := keep_pending or retain_pending_reward
+	retain_pending_reward = should_keep_pending and SaveManager.has_pending_fishing_reward()
 
 	last_caught_fish = ""
 
@@ -564,10 +670,7 @@ func _auto_recast() -> void:
 		cancel_session()
 		return
 
-	if (
-		Inventory.fishing_attempts_remaining()
-		<= 0
-	):
+	if not SaveManager.has_pending_fishing_reward() and Inventory.fishing_attempts_remaining() <= 0:
 		cancel_session()
 
 		Inventory.fail(
@@ -717,6 +820,7 @@ func cancel_session() -> void:
 	feedback = ""
 
 	last_caught_fish = ""
+	retain_pending_reward = false
 
 	session_cast_world_position = (
 		Vector2.ZERO
