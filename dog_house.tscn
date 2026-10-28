@@ -54,13 +54,13 @@ fallback_paths = Array[NodePath]([NodePath("../../Visual")])
 position = Vector2(0, 82)
 
 [node name="DogRestShiba" type="Marker2D" parent="."]
-position = Vector2(-72, 112)
+position = Vector2(-78, 106)
 
 [node name="DogRestCream" type="Marker2D" parent="."]
-position = Vector2(0, 118)
+position = Vector2(0, 112)
 
 [node name="DogRestBlackTan" type="Marker2D" parent="."]
-position = Vector2(72, 112)
+position = Vector2(78, 106)
 
 [node name="FoodSpotShiba" type="Marker2D" parent="."]
 position = Vector2(-64, 88)

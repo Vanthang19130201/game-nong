@@ -48,12 +48,15 @@ func configure(next_variant_id: String, display_name: String) -> void:
 	texture_available = frames != null
 	sprite.sprite_frames = frames
 	if frames != null:
-		# Artwork occupies about 240 pixels inside a 313.5px atlas cell. This
-		# produces a 64px world dog while leaving room for ears and tail.
-		var scale_factor := DogData.TARGET_BODY_HEIGHT / 240.0
+		# The full original illustration is used as one compact world sprite.
+		# Fit by source height so no high-resolution artwork overwhelms the farm.
+		var source_texture: Texture2D = DogData.texture_for_variant(variant_id)
+		var source_height: float = float(source_texture.get_height()) if source_texture != null else 1200.0
+		var scale_factor := DogData.TARGET_BODY_HEIGHT / source_height
 		sprite.scale = Vector2.ONE * scale_factor
 		base_scale = sprite.scale
-		base_sprite_position = Vector2(0.0, (DogData.SHEET_FRAME_SIZE * 0.5 - DogData.SHEET_GROUND_Y) * scale_factor)
+		# The source art is centered, with paws near the lower edge.
+		base_sprite_position = Vector2(0.0, -source_height * scale_factor * 0.47)
 		sprite.position = base_sprite_position
 	name_label.text = display_name
 	set_state(state_name)
@@ -92,7 +95,6 @@ func show_name(seconds: float = 2.5) -> void:
 
 
 func happy() -> void:
-	show_name(2.0)
 	heart_time = 0.9
 	reaction_time = 0.55
 	if texture_available:
@@ -104,9 +106,9 @@ func set_interaction_hint(show_hint: bool, display_name: String) -> void:
 	interact_label.visible = show_hint
 	if show_hint:
 		interact_label.text = "[E] " + display_name
-		name_label.hide()
-	elif name_time > 0.0:
-		name_label.show()
+	# The interact prompt is the one consistent name presentation in-world.
+	# A separate floating name can otherwise linger after the player moves away.
+	name_label.hide()
 
 
 func set_inside(inside: bool) -> void:

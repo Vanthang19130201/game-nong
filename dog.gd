@@ -75,6 +75,18 @@ func rest_position() -> Vector2:
 			return rest_marker.global_position
 	return home_slot_position()
 
+
+func restored_position() -> Vector2:
+	# A companion keeps its last valid place on the farm across save/load. New
+	# dogs still receive a separated yard point, but returning players do not
+	# find every dog stacked in front of the Dog House.
+	var manager := _save_manager()
+	var profile: Dictionary = manager.dog_profile(pet_id) if is_instance_valid(manager) else {}
+	var saved: Variant = profile.get("last_position", Vector2.INF)
+	if saved is Vector2 and saved.is_finite() and _safe_destination(saved):
+		return saved
+	return rest_position()
+
 func food_wait_position() -> Vector2:
 	if is_instance_valid(home_point):
 		var marker_name := "FoodSpotShiba" if variant_id == "shiba" else "FoodSpotCream" if variant_id == "cream" else "FoodSpotBlackTan"
@@ -261,7 +273,6 @@ func begin_eating(fed_pet_id: String) -> void:
 
 func interact(_player: Node2D = null) -> void:
 	if is_instance_valid(dog_visual):
-		dog_visual.show_name()
 		if not is_hungry() and not walking:
 			dog_visual.happy()
 			if rng.randf() <= 0.34:

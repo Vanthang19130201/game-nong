@@ -85,7 +85,7 @@ func run_checks() -> void:
 	var home := Node2D.new()
 	home.name = "DogHouseFixture"
 	root.add_child(home)
-	for marker_data in [["DogEntrance", Vector2(0, 38)], ["DogRestShiba", Vector2(-42, 74)], ["DogRestCream", Vector2(0, 78)], ["DogRestBlackTan", Vector2(42, 74)], ["FoodSpotShiba", Vector2(-30, 50)], ["FoodSpotCream", Vector2(0, 52)], ["FoodSpotBlackTan", Vector2(30, 50)]]:
+	for marker_data in [["DogEntrance", Vector2(0, 38)], ["DogRestShiba", Vector2(-112, 124)], ["DogRestCream", Vector2(0, 136)], ["DogRestBlackTan", Vector2(112, 124)], ["FoodSpotShiba", Vector2(-30, 50)], ["FoodSpotCream", Vector2(0, 52)], ["FoodSpotBlackTan", Vector2(30, 50)]]:
 		var marker := Marker2D.new()
 		marker.name = marker_data[0]
 		marker.position = marker_data[1]
@@ -109,7 +109,7 @@ func run_checks() -> void:
 			check(sprite.sprite_frames.get_frame_count(animation_name) > 0, "every dog animation has frames: " + animation_name)
 			for frame_index in range(sprite.sprite_frames.get_frame_count(animation_name)):
 				check(sprite.sprite_frames.get_frame_texture(animation_name, frame_index) != null, "every dog animation frame is a valid texture: %s/%d" % [animation_name, frame_index])
-		check(is_equal_approx(240.0 * sprite.scale.y, 64.0), "runtime dog art is constrained to a 64px display height")
+		check(sprite.scale.y > 0.0 and sprite.scale.y < 0.1, "runtime dog art is compact relative to its source illustration")
 	var visual: Node = dog.get_node("DogVisual")
 	for mapping in [["IDLE", &"idle"], ["WANDER", &"walk"], ["RETURN_HOME", &"run"], ["WAIT_FOOD", &"sit_idle"], ["LIE_DOWN", &"lie_down"], ["SLEEP", &"sleep"], ["GO_INSIDE", &"walk"], ["EXIT_HOUSE", &"walk"], ["GREET_PLAYER", &"run"], ["EATING", &"eat"]]:
 		visual.set_state(mapping[0])
@@ -121,6 +121,8 @@ func run_checks() -> void:
 	check(not visual.get_node("NameLabel").visible, "nearby dog uses one prompt instead of duplicating its name")
 	visual.set_interaction_hint(false, "MÃ­t")
 	check(dog.rest_position() == home.get_node("DogRestShiba").global_position and dog.rest_position() != dog.entrance_position(), "dog loads in the open Dog House yard rather than at the entrance")
+	check(not visual.get_node("NameLabel").visible, "dog name never lingers after the nearby prompt closes")
+	check(runtime_dogs[0].rest_position().distance_to(runtime_dogs[1].rest_position()) >= 70.0 and runtime_dogs[1].rest_position().distance_to(runtime_dogs[2].rest_position()) >= 70.0, "new dogs use separated Dog House yard positions")
 	check(dog.food_wait_position() == home.get_node("FoodSpotShiba").global_position, "dog uses Dog House food slot")
 	check(runtime_dogs[0].food_wait_position() != runtime_dogs[1].food_wait_position() and runtime_dogs[1].food_wait_position() != runtime_dogs[2].food_wait_position(), "three hungry dogs use separate food slots")
 	dog.begin_eating("dog_shiba")
@@ -135,6 +137,11 @@ func run_checks() -> void:
 	for runtime in runtime_dogs:
 		runtime.set_home_point(home)
 	check(dog.entrance_position() == home.get_node("DogEntrance").global_position and dog.global_position == Vector2(1200, 1000), "moving Dog House updates home without teleporting an exploring dog")
+	manager.set("unlocked_land_zones", ["farm_core"])
+	dog.global_position = Vector2(800, 700)
+	check(manager.save_game(), "save exploring dog position")
+	check(manager.dog_profile("dog_shiba").get("last_position") == Vector2(800, 700), "pet save stores its current world position")
+	check(dog.restored_position() == Vector2(800, 700), "pet resumes its saved safe world position")
 	set_hunger("dog_shiba", 10.0)
 	dog._decide_next()
 	check(dog.current_state == dog.State.RETURN_HOME and dog.target == dog.food_wait_position(), "only a hungry dog returns to the Dog House food spot")

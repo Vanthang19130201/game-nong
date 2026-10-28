@@ -424,6 +424,7 @@ func empty_plot(id: String) -> Dictionary:
 
 
 func save_game() -> bool:
+	_capture_pet_positions()
 	if resetting:
 		return false
 	var data := ConfigFile.new()
@@ -528,6 +529,21 @@ func save_game() -> bool:
 	for id in STATION_IDS:
 		saved_stations[id] = _read_station(data, id)
 	return true
+
+
+func _capture_pet_positions() -> void:
+	# Runtime pets are recreated on load, so keep their latest valid world point
+	# in the existing pet profile rather than introducing another save system.
+	for pet in get_tree().get_nodes_in_group("farm_pets"):
+		if not is_instance_valid(pet):
+			continue
+		var pet_id := str(pet.get("pet_id"))
+		var point: Variant = pet.get("global_position")
+		if pet_id.is_empty() or not pet_dogs.has(pet_id) or not point is Vector2 or not point.is_finite():
+			continue
+		var profile: Dictionary = pet_dogs[pet_id]
+		profile["last_position"] = point
+		pet_dogs[pet_id] = profile
 
 
 func reset_game() -> bool:

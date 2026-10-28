@@ -371,8 +371,9 @@ func _update_pets() -> void:
 			add_child(runtime)
 			runtime.wander_bounds = $Player.farm_bounds
 			runtime.configure(pet_id, profiles[pet_id], home, maxi(slot, 0))
-			# A fresh runtime starts in the Dog House yard, not hidden at its door.
-			runtime.global_position = runtime.rest_position()
+			# New dogs use separated yard points. Returning dogs resume their last
+			# safe farm position instead of piling up at the Dog House after reload.
+			runtime.global_position = runtime.restored_position()
 			dogs_by_id[pet_id] = runtime
 		else:
 			runtime.set_home_point(home)

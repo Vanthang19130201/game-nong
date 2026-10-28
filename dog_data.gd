@@ -38,10 +38,10 @@ const HUNGER_PER_SECOND: float = 1.0 / 60.0
 const MAX_OFFLINE_HUNGER_LOSS: float = 20.0
 const SHEET_GRID: int = 4
 const SHEET_FRAME_SIZE: float = 313.5
-# Generated artwork has a common 4x4 cell grid. Keeping the origin at this
-# baseline prevents feet from jumping while AnimatedSprite2D changes frames.
-const SHEET_GROUND_Y: float = 282.0
-const TARGET_BODY_HEIGHT: float = 64.0
+# The original one-dog artwork is deliberately used at runtime. The large
+# generated pose boards remain source/preview material only: their detailed
+# cells read too large and busy beside the farm's compact characters.
+const TARGET_BODY_HEIGHT: float = 52.0
 
 static var visual_frames_cache: Dictionary = {}
 
@@ -67,33 +67,19 @@ static func visual_sheet_for_variant(variant_id: String) -> Texture2D:
 static func visual_frames_for_variant(variant_id: String) -> SpriteFrames:
 	if visual_frames_cache.has(variant_id):
 		return visual_frames_cache[variant_id]
-	var sheet := visual_sheet_for_variant(variant_id)
-	if sheet == null:
+	var texture := texture_for_variant(variant_id)
+	if texture == null:
 		return null
 	var frames := SpriteFrames.new()
 	frames.remove_animation(&"default")
-	# The generated 4x4 boards share this exact pose order: idle, blink, four
-	# walk poses, four run poses, sit, lie, sleep, eat, happy, alert.  Do not
-	# remap bottom-row cells as rest poses: that was the source of Black Tan
-	# briefly showing the wrong art while running/resting.
-	_add_animation(frames, &"idle", [0, 0, 0, 0], 6.0, true, sheet)
-	_add_animation(frames, &"idle_blink", [0, 1, 1, 0], 8.0, false, sheet)
-	_add_animation(frames, &"walk", [2, 3, 4, 5, 4, 3, 2, 0], 9.0, true, sheet)
-	_add_animation(frames, &"run", [6, 7, 8, 9, 8, 7, 6, 9], 12.0, true, sheet)
-	_add_animation(frames, &"sit", [10, 10, 10, 10], 7.0, false, sheet)
-	_add_animation(frames, &"sit_idle", [10, 10, 10, 10], 5.0, true, sheet)
-	_add_animation(frames, &"lie_down", [10, 11, 11, 11], 8.0, false, sheet)
-	_add_animation(frames, &"lie_idle", [11, 11, 11, 11], 5.0, true, sheet)
-	_add_animation(frames, &"sleep", [12, 12, 12, 12, 12, 12], 5.0, true, sheet)
-	_add_animation(frames, &"wake_up", [12, 11, 10, 0], 8.0, false, sheet)
-	_add_animation(frames, &"eat", [13, 13, 13, 13, 13, 13], 8.0, true, sheet)
-	_add_animation(frames, &"happy", [14, 14, 14, 0], 10.0, false, sheet)
-	# Reuse the genuine nose-down and sit poses for the small optional beats;
-	# this is safer than trying to read a pose from an empty/misaligned cell.
-	_add_animation(frames, &"sniff", [13, 13, 13, 0], 7.0, false, sheet)
-	_add_animation(frames, &"scratch", [10, 10, 10, 0], 8.0, false, sheet)
-	_add_animation(frames, &"shake", [0, 2, 0, 3, 0, 2, 0, 0], 12.0, false, sheet)
-	_add_animation(frames, &"alert", [15, 15, 15, 0], 7.0, false, sheet)
+	# Keep the existing state names so behaviour remains untouched, but render a
+	# clean, compact master sprite in every state instead of a mismatched pose
+	# board. Gentle bob/heart/ZZZ effects in dog_visual.gd still provide life.
+	for animation_name in [&"idle", &"idle_blink", &"walk", &"run", &"sit", &"sit_idle", &"lie_down", &"lie_idle", &"sleep", &"wake_up", &"eat", &"happy", &"sniff", &"scratch", &"shake", &"alert"]:
+		frames.add_animation(animation_name)
+		frames.set_animation_speed(animation_name, 6.0)
+		frames.set_animation_loop(animation_name, animation_name in [&"idle", &"walk", &"run", &"sit_idle", &"lie_idle", &"sleep", &"eat"])
+		frames.add_frame(animation_name, texture)
 	visual_frames_cache[variant_id] = frames
 	return frames
 
