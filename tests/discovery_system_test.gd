@@ -80,7 +80,8 @@ func run_checks() -> void:
 		lighting_count += 1
 	check(lighting_count == 1, "farm has one WorldLighting CanvasModulate")
 	check(farm.get_node("WorldWeatherLayer").layer < farm.get_node("HUD").layer, "weather visuals render below HUD so UI colors stay untinted")
-	check(farm.get_node("WorldWeatherLayer/WeatherVisual/RainParticles").amount <= 220, "weather particles remain lightweight at larger viewport sizes")
+	var weather_visual: Node = farm.get_node("WorldWeatherLayer/WeatherVisual")
+	check(weather_visual.rain_particles.amount >= 240 and weather_visual.rain_particles.amount <= 700, "rain density scales with viewport and stays bounded")
 	inventory.map_fragment = 3
 	manager._check_treasure_hunt()
 	var hidden_spot: Node = null
@@ -131,6 +132,15 @@ func run_checks() -> void:
 	var merchant_save := ConfigFile.new()
 	check(merchant_save.load(save_manager.SAVE_PATH) == OK and merchant_save.get_value("farm_event", "state", {}).get("merchant_stock", [])[0]["quantity"] == 0, "merchant stock persists across reload")
 	weather.current_weather = "rain"
+	weather.changed.emit("rain")
+	var cloud_phase_before: float = weather_visual.cloud_phase
+	await create_timer(0.1).timeout
+	check(weather_visual.rain_particles.emitting and weather_visual.cloud_visible and weather_visual.cloud_phase > cloud_phase_before, "rain shows falling streaks under visibly drifting storm clouds")
+	weather.current_weather = "cloudy"
+	weather.changed.emit("cloudy")
+	cloud_phase_before = weather_visual.cloud_phase
+	await create_timer(0.1).timeout
+	check(not weather_visual.rain_particles.emitting and weather_visual.cloud_visible and weather_visual.cloud_phase > cloud_phase_before, "cloudy weather animates moving clouds without rain")
 	farm.get_node("HUD/Calendar").refresh()
 	check(farm.get_node("HUD/Calendar/Content/Time/WeatherIcon").texture != null, "weather icon remains set")
 	print("PASS: discovery, deterministic crops, weather layering, events, treasure hunt, Mystery Seed, and merchant stock persistence")
