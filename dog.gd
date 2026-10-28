@@ -152,7 +152,10 @@ func _move_toward_target(delta: float) -> void:
 
 func _arrive() -> void:
 	if current_state == State.RETURN_HOME:
-		_set_state(State.WAIT_FOOD, 0.8)
+		# Hunger ends its movement here.  A short decision timer used to fire again
+		# while still hungry, repeatedly re-enter RETURN_HOME at the exact same
+		# bowl position and restart run/sit animations every 0.8 seconds.
+		_set_state(State.WAIT_FOOD, 0.0)
 	elif current_state == State.GO_INSIDE:
 		dog_visual.set_inside(true)
 		_set_state(State.INSIDE_HOUSE, rng.randf_range(5.0, 12.0))
@@ -172,6 +175,11 @@ func _arrive() -> void:
 func _decide_next() -> void:
 	if interaction_lock > 0.0:
 		decision_timer.start(interaction_lock)
+		return
+	if current_state == State.WAIT_FOOD:
+		# Remain calmly at this dog's own food marker until feed_dog() starts the
+		# EATING routine.  Do not reissue a zero-distance RETURN_HOME movement.
+		decision_timer.stop()
 		return
 	if current_state == State.INSIDE_HOUSE:
 		dog_visual.set_inside(false)

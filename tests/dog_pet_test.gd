@@ -40,12 +40,43 @@ func distinct_atlas_regions(frames: SpriteFrames, animation_name: StringName) ->
 
 
 func effective_frame_anchor(sprite: AnimatedSprite2D, variant_id: String) -> Vector2:
+	if DogData.uses_strip_system(variant_id):
+		var strip_size := DogData.strip_frame_size_for_variant(variant_id)
+		var strip_anchor := Vector2(strip_size.x * 0.5, DogData.strip_ground_y_for_variant(variant_id))
+		var strip_center := Vector2(strip_size.x * 0.5, strip_size.y * 0.5)
+		return sprite.position + (sprite.offset + strip_anchor - strip_center) * sprite.scale
 	var sheet := DogData.visual_sheet_for_variant(variant_id)
 	var data: Dictionary = DogData.DOG_VARIANTS[variant_id]
 	var source_cell := DogData.cell_for_animation_frame(variant_id, sprite.animation, sprite.frame)
 	var source_anchor := DogData.cell_anchor_for_variant(variant_id, source_cell)
 	var cell_center := Vector2(float(sheet.get_width()) / int(data["sheet_columns"]) * 0.5, float(sheet.get_height()) / int(data["sheet_rows"]) * 0.5)
 	return sprite.position + (sprite.offset + source_anchor - cell_center) * sprite.scale
+
+
+func check_strip_safe(variant_id: String, path: String, animation_name: String, frame_count: int) -> void:
+	var file := FileAccess.open(path, FileAccess.READ)
+	check(file != null, "%s strip source opens for border validation: %s" % [variant_id.capitalize(), animation_name])
+	if file == null:
+		return
+	var image := Image.new()
+	check(image.load_png_from_buffer(file.get_buffer(file.get_length())) == OK and not image.is_empty(), "%s strip source loads for border validation: %s" % [variant_id.capitalize(), animation_name])
+	if image.is_empty():
+		return
+	var size := DogData.strip_frame_size_for_variant(variant_id)
+	var margin := DogData.CREAM_STRIP_SAFE_MARGIN if variant_id == "cream" else DogData.SHIBA_STRIP_SAFE_MARGIN
+	for frame_index in range(frame_count):
+		var min_x := size.x
+		var min_y := size.y
+		var max_x := -1
+		var max_y := -1
+		for y in range(size.y):
+			for x in range(size.x):
+				if image.get_pixel(frame_index * size.x + x, y).a > 0.10:
+					min_x = mini(min_x, x)
+					min_y = mini(min_y, y)
+					max_x = maxi(max_x, x)
+					max_y = maxi(max_y, y)
+		check(max_x >= 0 and min_x >= margin and min_y >= margin and max_x < size.x - margin and max_y < size.y - margin, "%s animation frame is cropped: %s/%d" % [variant_id.capitalize(), animation_name, frame_index])
 
 func run_checks() -> void:
 	await process_frame
@@ -122,6 +153,17 @@ func run_checks() -> void:
 	var dog: CharacterBody2D = runtime_dogs[0]
 	var shiba_sprite: AnimatedSprite2D = dog.get_node("DogVisual/MotionRoot/Sprite")
 	check(shiba_sprite.sprite_frames == DogData.visual_frames_for_variant("shiba"), "runtime dog uses cached Shiba animation frames")
+	for strip_variant in ["shiba", "cream"]:
+		check(DogData.uses_strip_system(strip_variant), "%s uses its dedicated strip runtime instead of the legacy pose board" % strip_variant.capitalize())
+		var strip_size := DogData.strip_frame_size_for_variant(strip_variant)
+		for animation_name in DogData.strip_animations_for_variant(strip_variant):
+			var strip_path := DogData.strip_path_for_variant(strip_variant, str(animation_name))
+			var strip: Texture2D = load(strip_path)
+			var expected_frames := int(DogData.strip_animations_for_variant(strip_variant)[animation_name]["frames"])
+			check(strip != null and strip.get_width() == strip_size.x * expected_frames and strip.get_height() == strip_size.y, "%s strip dimensions use its configured full-body cells: %s" % [strip_variant.capitalize(), animation_name])
+			check_strip_safe(strip_variant, strip_path, str(animation_name), expected_frames)
+	check(ResourceLoader.exists("res://assets/animals/dogs/shiba/from_uploaded/uploaded_action_poses.png") and ResourceLoader.exists("res://assets/animals/dogs/shiba/from_uploaded/uploaded_run_sequence.png"), "Shiba runtime source archive contains exactly the two user uploads")
+	check(shiba_sprite.sprite_frames.get_frame_count(&"run") == 4 and distinct_atlas_regions(shiba_sprite.sprite_frames, &"run") == 4, "Shiba run uses four vetted full-body stride frames from the user upload")
 	for runtime in runtime_dogs:
 		var sprite: AnimatedSprite2D = runtime.get_node("DogVisual/MotionRoot/Sprite")
 		var visual: Node = runtime.get_node("DogVisual")
@@ -132,10 +174,21 @@ func run_checks() -> void:
 			for frame_index in range(sprite.sprite_frames.get_frame_count(animation_name)):
 				var frame_texture := sprite.sprite_frames.get_frame_texture(animation_name, frame_index)
 				check(frame_texture != null and frame_texture is AtlasTexture, "every normal dog frame is an atlas pose: %s/%d" % [animation_name, frame_index])
-		check(distinct_atlas_regions(sprite.sprite_frames, &"walk") >= 4, "walk uses at least four distinct verified pose-sheet cells")
-		check(distinct_atlas_regions(sprite.sprite_frames, &"run") >= 2, "run uses multiple real pose-sheet cells instead of a static image")
-		check(distinct_atlas_regions(sprite.sprite_frames, &"wake_up") >= 3, "wake-up has a real pose transition")
-		check(sprite.scale.y > 0.15 and sprite.scale.y < 0.30, "runtime dog art uses the compact calibrated pose-sheet scale")
+				if runtime.variant_id in ["shiba", "cream"]:
+					var expected_strip_source := "assets/animals/dogs/%s/animations/" % runtime.variant_id
+					check(expected_strip_source in str((frame_texture as AtlasTexture).atlas.resource_path), "%s runtime frame uses dedicated strips, never the legacy pose board" % runtime.variant_id.capitalize())
+		if runtime.variant_id == "shiba":
+			check(sprite.sprite_frames.get_frame_count(&"run") == 4 and distinct_atlas_regions(sprite.sprite_frames, &"run") == 4, "Shiba run retains four distinct full-body stride frames")
+		else:
+			check(distinct_atlas_regions(sprite.sprite_frames, &"walk") >= 4, "legacy/cream walk has multiple verified source regions")
+			check(distinct_atlas_regions(sprite.sprite_frames, &"run") >= 2, "legacy/cream run uses multiple real source regions")
+			check(distinct_atlas_regions(sprite.sprite_frames, &"wake_up") >= 3, "legacy/cream wake-up has a real pose transition")
+		if runtime.variant_id == "shiba":
+			check(sprite.scale.y > 0.42 and sprite.scale.y < 0.54, "Shiba uses the calibrated uploaded-art 192px strip scale")
+		elif runtime.variant_id == "cream":
+			check(sprite.scale.y > 0.40 and sprite.scale.y < 0.52, "Cream uses its separate full-body 160px strip scale")
+		else:
+			check(sprite.scale.y > 0.15 and sprite.scale.y < 0.30, "legacy dog art uses the compact calibrated pose-sheet scale")
 		for animation_name in required_animations:
 			sprite.play(animation_name)
 			for frame_index in range(sprite.sprite_frames.get_frame_count(animation_name)):
@@ -216,6 +269,10 @@ func run_checks() -> void:
 	dog.global_position = dog.food_wait_position()
 	dog._move_toward_target(0.1)
 	check(dog.current_state == dog.State.WAIT_FOOD and hungry_badge.visible, "hungry dog arrives at its own food spot with a clear badge")
+	check(dog.decision_timer.is_stopped(), "hungry dog waits at its bowl without a repeating return-home timer")
+	var waiting_frame := shiba_sprite.frame
+	dog._decide_next()
+	check(dog.current_state == dog.State.WAIT_FOOD and shiba_sprite.animation == &"sit_idle" and shiba_sprite.frame == waiting_frame, "hungry dog keeps its stable wait animation instead of restarting run and sit")
 	set_hunger("dog_shiba", 100.0)
 	dog.begin_eating("dog_shiba")
 	dog.global_position = dog.food_wait_position()

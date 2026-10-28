@@ -54,7 +54,12 @@ func configure(next_variant_id: String, display_name: String) -> void:
 	sprite.sprite_frames = frames
 	if frames != null:
 		var pose_sheet: Texture2D = DogData.visual_sheet_for_variant(variant_id)
-		if pose_sheet != null:
+		if DogData.uses_strip_system(variant_id):
+			# Shiba's rebuilt strips are already authored on a common 128px ground
+			# baseline. They deliberately do not use the legacy pose-board offsets.
+			sprite.scale = Vector2.ONE * DogData.visual_scale_for_variant(variant_id)
+			base_sprite_position = Vector2(0.0, DogData.strip_ground_offset_for_variant(variant_id))
+		elif pose_sheet != null:
 			# Normal path: each animation uses AtlasTexture frames cut from its
 			# own pose board. Scale and baseline live in DogData per breed.
 			sprite.scale = Vector2.ONE * DogData.visual_scale_for_variant(variant_id)
@@ -186,6 +191,9 @@ func _on_sprite_frame_changed() -> void:
 
 
 func _apply_frame_anchor() -> void:
+	if DogData.uses_strip_system(variant_id):
+		sprite.offset = Vector2.ZERO
+		return
 	var sheet: Texture2D = DogData.visual_sheet_for_variant(variant_id)
 	if sheet == null or sprite.sprite_frames == null:
 		sprite.offset = Vector2.ZERO

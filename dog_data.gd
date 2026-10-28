@@ -95,6 +95,55 @@ const ANIMATION_FPS: Dictionary = {
 	"sniff": 7.0, "scratch": 9.0, "shake": 12.0, "alert": 7.0
 }
 const LOOPING_ANIMATIONS: Array[StringName] = [&"idle", &"walk", &"run", &"sit_idle", &"lie_idle", &"sleep", &"eat"]
+const SHIBA_STRIP_FRAME_SIZE := Vector2i(192, 192)
+const SHIBA_STRIP_GROUND_Y := 154.0
+const SHIBA_STRIP_SCALE := 0.48
+const SHIBA_STRIP_SAFE_MARGIN := 12
+const SHIBA_STRIP_ANIMATIONS: Dictionary = {
+	# The user-uploaded source contains single key poses for actions. Keep those
+	# transparent instead of pretending repeated art is a multi-frame sequence.
+	"idle": {"frames": 1, "fps": 6.0, "loop": true},
+	"idle_blink": {"frames": 1, "fps": 6.0, "loop": false},
+	"walk": {"frames": 1, "fps": 8.0, "loop": true},
+	# Four distinct, full-body stride poses from the uploaded run sheet.  The
+	# remaining source poses are preserved in from_uploaded/, but their airborne
+	# silhouette loses too much leg readability at gameplay scale.
+	"run": {"frames": 4, "fps": 10.0, "loop": true},
+	"sit": {"frames": 1, "fps": 6.0, "loop": false},
+	"sit_idle": {"frames": 1, "fps": 5.0, "loop": true},
+	"lie_down": {"frames": 1, "fps": 6.0, "loop": false},
+	"lie_idle": {"frames": 1, "fps": 5.0, "loop": true},
+	"sleep": {"frames": 1, "fps": 5.0, "loop": true},
+	"wake_up": {"frames": 1, "fps": 6.0, "loop": false},
+	"eat": {"frames": 1, "fps": 8.0, "loop": true},
+	"happy": {"frames": 1, "fps": 8.0, "loop": false},
+	"sniff": {"frames": 1, "fps": 7.0, "loop": false},
+	"scratch": {"frames": 1, "fps": 8.0, "loop": false},
+	"shake": {"frames": 1, "fps": 8.0, "loop": false},
+	"alert": {"frames": 1, "fps": 6.0, "loop": false}
+}
+const CREAM_STRIP_FRAME_SIZE := Vector2i(160, 160)
+const CREAM_STRIP_GROUND_Y := 142.0
+const CREAM_STRIP_SCALE := 0.46
+const CREAM_STRIP_SAFE_MARGIN := 10
+const CREAM_STRIP_ANIMATIONS: Dictionary = {
+	"idle": {"frames": 6, "fps": 5.5, "loop": true},
+	"idle_blink": {"frames": 4, "fps": 7.0, "loop": false},
+	"walk": {"frames": 8, "fps": 8.0, "loop": true},
+	"run": {"frames": 8, "fps": 11.0, "loop": true},
+	"sit": {"frames": 5, "fps": 7.0, "loop": false},
+	"sit_idle": {"frames": 4, "fps": 5.0, "loop": true},
+	"lie_down": {"frames": 6, "fps": 7.0, "loop": false},
+	"lie_idle": {"frames": 4, "fps": 5.0, "loop": true},
+	"sleep": {"frames": 6, "fps": 5.0, "loop": true},
+	"wake_up": {"frames": 6, "fps": 7.0, "loop": false},
+	"eat": {"frames": 8, "fps": 8.0, "loop": true},
+	"happy": {"frames": 6, "fps": 8.0, "loop": false},
+	"sniff": {"frames": 6, "fps": 7.0, "loop": false},
+	"scratch": {"frames": 8, "fps": 8.0, "loop": false},
+	"shake": {"frames": 8, "fps": 10.0, "loop": false},
+	"alert": {"frames": 5, "fps": 6.0, "loop": false}
+}
 
 static var visual_frames_cache: Dictionary = {}
 
@@ -120,6 +169,8 @@ static func visual_sheet_for_variant(variant_id: String) -> Texture2D:
 static func visual_frames_for_variant(variant_id: String) -> SpriteFrames:
 	if visual_frames_cache.has(variant_id):
 		return visual_frames_cache[variant_id]
+	if uses_strip_system(variant_id):
+		return _strip_frames(variant_id)
 	var data: Dictionary = DOG_VARIANTS.get(variant_id, DOG_VARIANTS["shiba"])
 	var sheet := visual_sheet_for_variant(variant_id)
 	if sheet == null:
@@ -145,6 +196,56 @@ static func visual_frames_for_variant(variant_id: String) -> SpriteFrames:
 		)
 	visual_frames_cache[variant_id] = frames
 	return frames
+
+
+static func uses_strip_system(variant_id: String) -> bool:
+	# Migrated breeds never silently fall back to their legacy 4x4 pose boards.
+	# A damaged strip instead gets the isolated emergency master-art frame.
+	return variant_id in ["shiba", "cream"]
+
+
+static func strip_frame_size_for_variant(variant_id: String) -> Vector2i:
+	return CREAM_STRIP_FRAME_SIZE if variant_id == "cream" else SHIBA_STRIP_FRAME_SIZE
+
+
+static func strip_ground_y_for_variant(variant_id: String) -> float:
+	return CREAM_STRIP_GROUND_Y if variant_id == "cream" else SHIBA_STRIP_GROUND_Y
+
+
+static func strip_animations_for_variant(variant_id: String) -> Dictionary:
+	return CREAM_STRIP_ANIMATIONS if variant_id == "cream" else SHIBA_STRIP_ANIMATIONS
+
+
+static func _strip_frames(variant_id: String) -> SpriteFrames:
+	var frames := SpriteFrames.new()
+	frames.remove_animation(&"default")
+	var strip_size := strip_frame_size_for_variant(variant_id)
+	var strip_animations := strip_animations_for_variant(variant_id)
+	for animation_name in ANIMATION_NAMES:
+		var config: Dictionary = strip_animations.get(String(animation_name), {})
+		var expected_frames := int(config.get("frames", 1))
+		var texture: Texture2D = load(strip_path_for_variant(variant_id, String(animation_name)))
+		var valid := texture != null and texture.get_width() == strip_size.x * expected_frames and texture.get_height() == strip_size.y
+		frames.add_animation(animation_name)
+		frames.set_animation_speed(animation_name, float(config.get("fps", 6.0)))
+		frames.set_animation_loop(animation_name, bool(config.get("loop", false)))
+		if not valid:
+			push_warning("Invalid %s strip for %s; using static emergency fallback." % [variant_id, animation_name])
+			var fallback := texture_for_variant(variant_id)
+			frames.add_frame(animation_name, fallback)
+			continue
+		for frame_index in range(expected_frames):
+			var atlas := AtlasTexture.new()
+			atlas.atlas = texture
+			atlas.region = Rect2(frame_index * strip_size.x, 0, strip_size.x, strip_size.y)
+			frames.add_frame(animation_name, atlas)
+	visual_frames_cache[variant_id] = frames
+	return frames
+
+
+static func strip_path_for_variant(variant_id: String, animation_name: String) -> String:
+	var asset_name: String = "blink" if animation_name == "idle_blink" else animation_name
+	return "res://assets/animals/dogs/%s/animations/%s_%s.png" % [variant_id, variant_id, asset_name]
 
 
 static func _static_fallback_frames(variant_id: String) -> SpriteFrames:
@@ -210,6 +311,8 @@ static func target_anchor_for_variant(variant_id: String, sheet: Texture2D) -> V
 
 
 static func visual_scale_for_variant(variant_id: String) -> float:
+	if uses_strip_system(variant_id):
+		return CREAM_STRIP_SCALE if variant_id == "cream" else SHIBA_STRIP_SCALE
 	var data: Dictionary = DOG_VARIANTS.get(variant_id, DOG_VARIANTS["shiba"])
 	return float(data.get("visual_target_height", 62.0)) / float(data.get("visual_art_height", 260.0))
 
@@ -219,6 +322,11 @@ static func visual_ground_offset_for_variant(variant_id: String, sheet: Texture2
 	var rows := maxi(int(data.get("sheet_rows", 4)), 1)
 	var cell_height := float(sheet.get_height()) / rows
 	return (cell_height * 0.5 - float(data.get("ground_y", 282.0))) * visual_scale_for_variant(variant_id)
+
+
+static func strip_ground_offset_for_variant(variant_id: String) -> float:
+	var size := strip_frame_size_for_variant(variant_id)
+	return (size.y * 0.5 - strip_ground_y_for_variant(variant_id)) * visual_scale_for_variant(variant_id)
 
 static func normalized_name(value: Variant, fallback: String) -> String:
 	if not value is String:

@@ -3,8 +3,14 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $testRoot = Join-Path $projectRoot '.godot/core-stability-project'
 New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
-Copy-Item -LiteralPath (Join-Path $projectRoot 'assets') -Destination $testRoot -Recurse -Force
-Copy-Item -LiteralPath (Join-Path $projectRoot 'localization') -Destination $testRoot -Recurse -Force
+$testAssets = Join-Path $testRoot 'assets'
+$testLocalization = Join-Path $testRoot 'localization'
+New-Item -ItemType Directory -Path $testAssets -Force | Out-Null
+New-Item -ItemType Directory -Path $testLocalization -Force | Out-Null
+# Copy directory contents, not the parent directories.  Repeated test runs then
+# receive newly-created assets instead of nesting them under assets/assets.
+Get-ChildItem -LiteralPath (Join-Path $projectRoot 'assets') -Force | Copy-Item -Destination $testAssets -Recurse -Force
+Get-ChildItem -LiteralPath (Join-Path $projectRoot 'localization') -Force | Copy-Item -Destination $testLocalization -Recurse -Force
 Get-ChildItem -LiteralPath $projectRoot -File | Where-Object {
     $_.Extension -in @('.gd', '.uid', '.tscn', '.godot', '.svg', '.import')
 } | Copy-Item -Destination $testRoot -Force
@@ -59,16 +65,25 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'audio_manager_test.gd') -Destin
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'dog_pet_test.gd') -Destination $testRoot -Force
 $projectPath = Join-Path $testRoot 'project.godot'
 Add-Content -LiteralPath $projectPath -Value "`n[debug]`nfile_logging/enable_file_logging=false"
-# Reuse the project's existing imports; no editor/settings writes are needed.
+# Refresh the source project's imports before copying them.  This matters when
+# a generated sprite strip changes its dimensions while keeping its filename.
+& $Godot --headless --path $projectRoot --import
+# Reuse the project's existing imports in the disposable test project.
 $importSource = Join-Path $projectRoot '.godot/imported'
 if (-not (Test-Path -LiteralPath $importSource)) {
     throw 'Open the real project in Godot once to import its assets, then run tests.'
 }
 $cacheRoot = Join-Path $testRoot '.godot'
 New-Item -ItemType Directory -Path $cacheRoot -Force | Out-Null
-Copy-Item -LiteralPath $importSource -Destination $cacheRoot -Recurse -Force
+$testImports = Join-Path $cacheRoot 'imported'
+New-Item -ItemType Directory -Path $testImports -Force | Out-Null
+Get-ChildItem -LiteralPath $importSource -Force | Copy-Item -Destination $testImports -Recurse -Force
 $uidCache = Join-Path $projectRoot '.godot/uid_cache.bin'
 if (Test-Path -LiteralPath $uidCache) { Copy-Item -LiteralPath $uidCache -Destination $cacheRoot -Force }
+# Let Godot refresh the disposable test project's import index after copying
+# assets.  A shared source cache can otherwise point at a stale or missing
+# imported texture when a newly-created sprite strip has the same path.
+& $Godot --headless --path $testRoot --import
 $previousPreference = $ErrorActionPreference
 $stages = @('size_core', 'size_write', 'size_read', 'character_core', 'character_missing', 'character_write', 'character_read', 'character_legacy_write', 'character_legacy_read', 'character_invalid_write', 'character_invalid_read', 'collision_core', 'animal_context', 'fixes_write', 'fixes_read', 'fixes_hungry_read', 'core', 'position_write', 'position_read', 'legacy_write', 'legacy_read',
     'invalid_write', 'invalid_read', 'offline_write', 'offline_read',
