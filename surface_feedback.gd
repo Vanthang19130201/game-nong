@@ -62,17 +62,33 @@ func _process(delta: float) -> void:
 
 
 func _spawn_step(surface: String) -> void:
-	var origin := body.global_position + Vector2(randf_range(-4.0, 4.0), 22.0)
-	var life := 0.34 if surface == "dirt" else 0.42 if surface == "grass" else 0.25
+	var origin := body.global_position + Vector2(
+		randf_range(-3.0, 3.0),
+		5.0
+	)
+
+	var life := (
+		0.34 if surface == "dirt"
+		else 0.42 if surface == "grass"
+		else 0.25
+	)
+
 	particles.append({
 		"position": origin,
-		"velocity": Vector2(randf_range(-7.0, 7.0), -randf_range(7.0, 14.0)),
+		"velocity": Vector2(
+			randf_range(-5.0, 5.0),
+			-randf_range(5.0, 10.0)
+		),
 		"life": life,
 		"max_life": life,
 		"surface": surface
 	})
+
 	if sound_cooldown <= 0.0:
-		AudioManager.play_random_sfx("footstep_soft", body.global_position)
+		AudioManager.play_random_sfx(
+			"footstep_soft",
+			body.global_position
+		)
 		sound_cooldown = 0.19
 
 

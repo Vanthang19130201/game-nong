@@ -282,10 +282,7 @@ func _update_buildings() -> void:
 
 		# The existing Dog House stays on the map as a visual landmark.
 		# Ownership and pet behavior continue to use Inventory.has_dog_house.
-		building.visible = (
-			owned
-			or id == "dog_house"
-		)
+		building.visible = owned
 
 		if not info.get(
 			"preserve_scale",

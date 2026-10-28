@@ -92,8 +92,8 @@ color = Color(0.35, 0.48, 0.28, 1)
 z_index = -8
 offset_left = 1050.0
 offset_top = 460.0
-offset_right = 1670.0
-offset_bottom = 762.0
+offset_right = 1627.0
+offset_bottom = 737.0
 mouse_filter = 2
 color = Color(0.35, 0.48, 0.28, 1)
 
@@ -156,7 +156,8 @@ script = ExtResource("94_building")
 
 [node name="HouseSprite" type="Sprite2D" parent="House/Visuals" unique_id=1928157321]
 z_index = -1
-position = Vector2(0, -14)
+position = Vector2(-3.9999847, -3.0000153)
+scale = Vector2(0.17783856, 0.21654274)
 texture = ExtResource("4_getpj")
 script = ExtResource("90_art")
 target_size = Vector2(218, 160)
