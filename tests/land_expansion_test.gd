@@ -70,28 +70,28 @@ func run_checks() -> void:
 	match stage:
 		"land_core":
 			check(manager.reset_game(),"fixture reset")
-			check(manager.unlocked_land_zones == ["farm_core"] and get_nodes_in_group("land_zones").size() == 7,"seven zones, core only default")
+			check(manager.unlocked_land_zones == ["farm_core"] and get_nodes_in_group("land_zones").size() == 21,"twenty-one zones, core only default")
 			check(not manager.purchase_land("land_01") and inv.coins == 100,"insufficient resources atomic")
 			fund()
 			var funds: Array = [inv.coins,inv.wood,inv.stone]
 			check(not manager.purchase_land("land_06") and [inv.coins,inv.wood,inv.stone] == funds,"disconnected land cannot be bought")
 			check(inv.buy_building("feed_mill"),"placement source")
 			var mill = manager.buildings["feed_mill"]
-			check(not hud.edit_farm.Placement.can_place(mill,Vector2(320,1664)),"placement rejects locked land")
-			check(not hud.edit_farm.Placement.can_place(mill,Vector2(320,1472)),"footprint cannot cross into locked land")
+			check(not hud.edit_farm.Placement.can_place(mill,Vector2(320,1824)),"placement rejects land beyond the expanded starting area")
+			check(not hud.edit_farm.Placement.can_place(mill,Vector2(320,1672)),"footprint cannot cross into locked land")
 			var resource = manager.resources["tree_1"]
-			resource.global_position = Vector2(320,1664)
+			resource.global_position = Vector2(320,1824)
 			resource.respawn_at = Time.get_unix_time_from_system()+120
 			resource._update_zone(true)
 			check(resource.visible and not resource.zone_active and resource.respawn_timer.is_stopped(),"locked resources visible but inactive")
-			player.position = Vector2(300,1710)
+			player.position = Vector2(300,1860)
 			player.get_node("Camera2D").reset_smoothing()
 			await create_timer(0.1).timeout
-			await click(Vector2(300,1710))
+			await click(Vector2(300,1860))
 			check(hud.land_panel.visible and hud.blocks_world_input() and not resource.harvest(),"click locked zone opens modal and blocks gathering")
 			await key(KEY_ESCAPE)
 			check(not hud.land_panel.visible,"ESC closes land panel")
-			await click(Vector2(300,1710))
+			await click(Vector2(300,1860))
 			funds = [inv.coins,inv.wood,inv.stone]
 			hud.land_panel.buy_button.pressed.emit()
 			hud.land_panel.buy_button.pressed.emit()
@@ -100,9 +100,9 @@ func run_checks() -> void:
 			check("land_01" in disk().get_value("land","unlocked_land_zones") and not farm.get_node("land_01").sign.visible,"ownership autosave and overlay removed")
 			check(resource.zone_active and resource.respawn_timer.time_left > 100,"resource timer resumes on unlock")
 			resource.global_position = Vector2(450,220)
-			check(hud.edit_farm.Placement.can_place(mill,Vector2(320,1472)),"owned footprint may span core boundary")
-			check(not hud.edit_farm.Placement.can_place(mill,Vector2(576,1664)),"partial overlap with next locked zone denied")
-			check(manager.purchase_land("land_02") and hud.edit_farm.Placement.can_place(mill,Vector2(576,1664)),"two owned neighbors allow spanning footprint")
+			check(hud.edit_farm.Placement.can_place(mill,Vector2(320,1672)),"owned footprint may span core boundary")
+			check(not hud.edit_farm.Placement.can_place(mill,Vector2(576,1672)),"partial overlap with next locked zone denied")
+			check(manager.purchase_land("land_02") and hud.edit_farm.Placement.can_place(mill,Vector2(576,1672)),"two owned neighbors allow spanning footprint")
 			check(manager.purchase_land("land_04") and manager.purchase_land("land_05"),"adjacent nonlinear expansion")
 			hud.edit_farm.enter_mode()
 			hud.edit_farm.select_building(mill)

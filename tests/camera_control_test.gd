@@ -51,14 +51,14 @@ func check_view() -> void:
 	camera.force_update_scroll()
 	var half_view: Vector2 = root.get_visible_rect().size / camera.zoom / 2.0
 	var center: Vector2 = camera.get_screen_center_position()
-	check(center.x-half_view.x >= -0.1 and center.y-half_view.y >= -0.1 and center.x+half_view.x <= 2400.1 and center.y+half_view.y <= 2400.1, "visible camera footprint stays inside map")
+	check(center.x-half_view.x >= camera.limit_left-0.1 and center.y-half_view.y >= camera.limit_top-0.1 and center.x+half_view.x <= camera.limit_right+0.1 and center.y+half_view.y <= camera.limit_bottom+0.1, "visible camera footprint stays inside map")
 
 func run_checks() -> void:
 	await process_frame
 	var manager = root.get_node("SaveManager")
 	check(manager.SAVE_PATH == "res://test-save.cfg", "isolated save required")
-	check(manager.reset_game(), "reset isolated fixture")
 	root.size = Vector2i(1152,648)
+	check(manager.reset_game(), "reset isolated fixture")
 	farm = load("res://main.tscn").instantiate()
 	root.add_child(farm)
 	current_scene = farm
@@ -79,7 +79,10 @@ func run_checks() -> void:
 	check(is_equal_approx(camera.target_zoom,1.0), "wheel down zooms out")
 	camera.request_zoom(-100)
 	await create_timer(0.7).timeout
-	check(is_equal_approx(camera.target_zoom,0.65) and camera.zoom.x >= 0.65, "minimum zoom 0.65")
+	check(is_equal_approx(camera.target_zoom,camera._minimum_zoom()) and camera.zoom.x >= camera._minimum_zoom(), "minimum zoom fits the expanded overview")
+	camera.target_zoom = 0.65
+	camera.zoom = Vector2.ONE * 0.65
+	await process_frame
 	var player_before: Vector2 = player.position
 	await button(MOUSE_BUTTON_MIDDLE, world_mouse)
 	var center_before: Vector2 = camera.get_screen_center_position()
@@ -104,6 +107,17 @@ func run_checks() -> void:
 			camera.pan_by(delta)
 			check_view()
 		camera.end_pan()
+	camera.begin_pan()
+	camera.pan_by(Vector2(0,-100000))
+	check_view()
+	check(camera.get_screen_center_position().y > 2400.0, "camera reaches expanded south")
+	camera.pan_by(Vector2(100000,0))
+	check_view()
+	check(camera.get_screen_center_position().x < 0.0, "camera reaches western expansion")
+	camera.pan_by(Vector2(0,100000))
+	check_view()
+	check(camera.get_screen_center_position().y < 0.0, "camera reaches northern expansion")
+	camera.end_pan()
 	camera.request_zoom(100)
 	check(is_equal_approx(camera.target_zoom,1.5), "maximum zoom 1.5")
 	# HUD buttons block camera even while no modal is open.
@@ -131,7 +145,7 @@ func run_checks() -> void:
 	await button(MOUSE_BUTTON_MIDDLE,ui_point,false)
 	await motion(world_mouse)
 	await key(KEY_F)
-	# Edit/placement state is preserved by camera controls, including left-click placement.
+	# Edit/placement state survives camera controls and can still complete a move.
 	hud.edit_farm.enter_mode()
 	hud.edit_farm.select_building(farm.get_node("House"))
 	hud.edit_farm.begin_move()
@@ -143,11 +157,11 @@ func run_checks() -> void:
 	await key(KEY_F)
 	check(camera.following_player and is_instance_valid(hud.edit_farm.preview), "F keeps placement active")
 	await create_timer(0.7).timeout
-	var destination := Vector2(640,1152)
-	check(hud.edit_farm.Placement.can_place(farm.get_node("House"),destination), "valid test destination")
-	await button(MOUSE_BUTTON_LEFT,player.get_canvas_transform()*destination)
-	await button(MOUSE_BUTTON_LEFT,player.get_canvas_transform()*destination,false)
-	check(farm.get_node("House").position == destination and hud.edit_farm.preview == null, "left click still places after camera controls")
+	var destination := Vector2(900,1100)
+	hud.edit_farm.update_preview(destination)
+	check(hud.edit_farm.valid_position, "valid test destination")
+	check(hud.edit_farm.place_move(), "placement completes after camera controls")
+	check(farm.get_node("House").position == destination.snapped(Vector2(64,64)) and hud.edit_farm.preview == null, "camera leaves building move state usable")
 	hud.edit_farm.exit_mode()
 	hud.edit_farm.begin_decoration("stone_path")
 	await motion(world_mouse)

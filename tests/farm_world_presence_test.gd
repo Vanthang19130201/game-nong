@@ -92,7 +92,7 @@ func run_checks() -> void:
 	check(farm.get_node("RiverRestDeck").position == Vector2(1980, 1020) and farm.get_node("PondRestDeck").position == Vector2(2048, 1450), "two separate decorative decks align with their banks")
 	check(not farm.get_node("FishingAreaLabel").visible and farm.get_node("Bridge/Sign").visible, "fishing area uses one heading attached to its bridge")
 	check(farm.get_node("Landscape").get_script().resource_path == "res://farm_landscape.gd", "static paths and quarry terrain exist")
-	check(manager.resources.size() == 12 and manager.plots.size() == 32, "original resource IDs and crop plots preserved")
+	check(manager.resources.size() == 42 and manager.plots.size() == 32, "farm and forest trees plus crop plots are registered")
 	var rocks: int = 0
 	for resource in manager.resources.values():
 		if resource.resource_type != "stone":

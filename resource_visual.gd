@@ -1,6 +1,12 @@
 extends Node2D
 
 const RockData = preload("res://rock_data.gd")
+const TREE_SPECIES_TEXTURES: Dictionary = {
+	"oak": preload("res://assets/environment/tree/Tree.png"),
+	"autumn": preload("res://assets/environment/tree/autumn_tree.svg"),
+	"pine": preload("res://assets/environment/tree/pine_tree.svg"),
+	"blossom": preload("res://assets/environment/tree/blossom_tree.svg")
+}
 @export var tree_texture: Texture2D = preload("res://assets/environment/tree/Tree.png")
 @export var tree_region: Rect2 = Rect2(0,2,1248,1230)
 @export var tree_size: Vector2 = Vector2(128,160)
@@ -48,7 +54,7 @@ func _draw_ellipse(center: Vector2, radii: Vector2, color: Color) -> void:
 
 func _fit_tree() -> void:
 	var sprite: Sprite2D = $ResourceSprite
-	sprite.region_enabled = tree_region.has_area()
+	sprite.region_enabled = sprite.texture == tree_texture and tree_region.has_area()
 	sprite.region_rect = tree_region
 	var art_size: Vector2 = tree_region.size if sprite.region_enabled else sprite.texture.get_size()
 	var factor: float = minf(tree_size.x/art_size.x,tree_size.y/art_size.y)
@@ -62,7 +68,9 @@ func refresh() -> void:
 	var depleted: bool = state == "DEPLETED"
 	var texture: Texture2D = tree_texture if wood else rock_texture
 	var color: Color = Color(0.15,0.5,0.2)
-	var sprite_color: Color = $ResourceSprite.modulate
+	var sprite_color: Color = Color.WHITE if wood else $ResourceSprite.modulate
+	if wood:
+		texture = TREE_SPECIES_TEXTURES.get(resource_node.tree_species, tree_texture)
 	if not wood:
 		sprite_color = Color.WHITE
 		color = RockData.TYPES[resource_node.rock_type]["color"]

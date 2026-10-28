@@ -716,7 +716,9 @@ func is_zone_unlocked(id: String) -> bool:
 		"fishing":
 			return fishing_unlocked and player_level >= FarmData.FISHING_LEVEL
 		_:
-			# Future/unknown zones stay inactive until explicitly supported.
+			# Land zones follow the saved ownership list; unknown zones stay locked.
+			if SaveManager.LandData.ZONES.has(id):
+				return id in SaveManager.unlocked_land_zones
 			return false
 
 

@@ -8,7 +8,7 @@ const PLOT_SIZE: Vector2 = Vector2(64, 48)
 const FISHING_LEVEL: int = 10
 const RIVER_LEFT: float = 1800.0
 const SAFE_MAIN_SIDE: Vector2 = Vector2(1740, 850)
-const BUILDABLE_LAND := Rect2(120, 100, 1560, 2180)
+const BUILDABLE_LAND := Rect2(-600, 0, 2400, 3400)
 const FIELD_RESERVE := Rect2(950, 360, 820, 540)
 # Stable world IDs, scene references and default positions.
 const BUILDINGS: Dictionary = {

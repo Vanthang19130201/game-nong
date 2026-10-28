@@ -52,6 +52,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'hud_completion_test.gd') -Desti
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'level_up_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'feed_mill_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'pig_sheep_placement_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'world_expansion_test.gd') -Destination $testRoot -Force
 $projectPath = Join-Path $testRoot 'project.godot'
 Add-Content -LiteralPath $projectPath -Value "`n[debug]`nfile_logging/enable_file_logging=false"
 # Reuse the project's existing imports; no editor/settings writes are needed.
@@ -83,7 +84,7 @@ $stages = @('size_core', 'size_write', 'size_read', 'character_core', 'character
     'resource_update_core','resource_update_write','resource_update_read','resource_update_legacy_write','resource_update_legacy_read',
     'animals_core','animals_write','animals_read','animals_again','animals_reset_read',
     'animal_entity_core','animal_entity_write','animal_entity_read',
-    'pig_sheep_placement',
+    'pig_sheep_placement','expansion_core','expansion_write','expansion_read','expansion_legacy_write','expansion_legacy_read',
     'station_status_core','station_status_write','station_status_read',
     'crop_visual_core','crop_visual_write','crop_visual_read',
     'floating_core','floating_write','floating_read',
@@ -136,7 +137,8 @@ foreach ($stage in $stages) {
     if ($stage -eq 'level_up') { $testScript = 'level_up_test.gd' }
     if ($stage.StartsWith('feed_')) { $testScript = 'feed_mill_test.gd' }
     if ($stage -eq 'pig_sheep_placement') { $testScript = 'pig_sheep_placement_test.gd' }
-    & $Godot --headless --path $testRoot --script $testScript --quit-after 1800 -- $stage *> $log
+    if ($stage.StartsWith('expansion_')) { $testScript = 'world_expansion_test.gd' }
+    & $Godot --headless --path $testRoot --script $testScript --quit-after 1800 --log-file $log -- $stage
     $ErrorActionPreference = $previousPreference
     $output = Get-Content -LiteralPath $log -Raw
     $unexpected = @($output -split "`n" | Where-Object {
@@ -153,7 +155,7 @@ foreach ($stage in $stages) {
 }
 $ErrorActionPreference = 'Continue'
 if ([string]::IsNullOrWhiteSpace($onlyStage)) {
-    & $Godot --headless --path $testRoot --script gameplay_regression_test.gd --quit-after 1800 *> (Join-Path $testRoot 'gameplay.log')
+    & $Godot --headless --path $testRoot --script gameplay_regression_test.gd --quit-after 1800 --log-file (Join-Path $testRoot 'gameplay.log')
 }
 $ErrorActionPreference = $previousPreference
 if (-not [string]::IsNullOrWhiteSpace($onlyStage)) {

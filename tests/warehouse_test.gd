@@ -49,7 +49,7 @@ func run_checks() -> void:
 	match stage:
 		"warehouse_core":
 			check(manager.reset_game(), "reset fixture")
-			check(farm.get_node("Ground").size == Vector2(2400,2400) and player.get_node("Camera2D").limit_bottom == 2400, "expanded ground and camera")
+			check(farm.get_node("Ground").size == Vector2(3000,3400) and player.get_node("Camera2D").limit_bottom == 3400, "restored farm ground and camera")
 			var yard = farm.get_node("FarmYard")
 			check(yard.size.y > 850 and farm.get_node("Ground").get_rect().encloses(yard.get_rect()), "expanded farm yard remains inside map")
 			check(farm.get_node("Bridge").position == Vector2(1870,850) and farm.get_node("RiverRestDeck").position == Vector2(1980,1020), "bridge and river deck stay separate beside the eastern bank")

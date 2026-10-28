@@ -92,5 +92,22 @@ const MESSAGES: Dictionary = {
 	"ON": "On",
 	"OFF": "Off",
 	"MUSIC_VOLUME": "Music Volume",
-	"SFX_VOLUME": "Sound Volume"
+	"SFX_VOLUME": "Sound Volume",
+	"LAND_CORE": "Main Farm",
+	"LAND_01": "Land 01",
+	"LAND_02": "Land 02",
+	"LAND_03": "Land 03",
+	"LAND_04": "Land 04",
+	"LAND_05": "Land 05",
+	"LAND_06": "Land 06",
+	"LAND_07": "Southern Land I",
+	"LAND_08": "Southern Land II",
+	"LAND_09": "Southern Land III",
+	"LAND_10": "Southern Meadow I",
+	"LAND_11": "Southern Meadow II",
+	"LAND_12": "Southern Meadow III",
+	"LAND_13": "Western Meadow I",
+	"LAND_14": "Western Meadow II",
+	"LAND_15": "Western Meadow III",
+	"LAND_16": "Western Meadow IV"
 }

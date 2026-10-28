@@ -21,12 +21,12 @@ func disk() -> ConfigFile:
 
 func check_layout() -> void:
 	var counts: Dictionary = {"wood":0,"stone":0}
-	check(manager.resources.size() == 12 and manager.plots.size() == 32,"12 unique resources; 32 plots unchanged")
+	check(manager.resources.size() == 42 and manager.plots.size() == 32,"42 unique resources; 32 plots unchanged")
 	for resource in manager.resources.values():
 		counts[resource.resource_type] += 1
 		check(resource.global_position.x < 1800,"no resources in River or Fishing Area")
 		check(resource.visible and farm.Placement.can_place(resource,resource.global_position,false),"resource avoids map objects: " + resource.resource_id)
-	check(counts == {"wood":8,"stone":4},"8 Trees and 4 Rocks, 50 percent more")
+	check(counts == {"wood":32,"stone":10},"32 harvestable Trees and 10 Rocks are registered")
 
 func run_checks() -> void:
 	await process_frame

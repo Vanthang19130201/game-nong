@@ -14,7 +14,6 @@ const FENCE_WOOD := Color("a47b4e")
 func _draw() -> void:
 	_draw_grass_patches()
 	_draw_paths()
-	_draw_field_edge()
 	_draw_fences()
 	_draw_farmyard_props()
 	_draw_edge_nature()
@@ -40,7 +39,21 @@ func _draw_grass_patches() -> void:
 		[Vector2(380, 2290), Vector2(290, 120), Color("8caf62", 0.17)],
 		[Vector2(975, 2280), Vector2(250, 118), Color("a5ad69", 0.13)],
 		[Vector2(1650, 2280), Vector2(270, 118), Color("8caf62", 0.16)],
-		[Vector2(2280, 2200), Vector2(165, 260), Color("99a864", 0.11)]
+		[Vector2(2280, 2200), Vector2(165, 260), Color("99a864", 0.11)],
+		[Vector2(340, 2500), Vector2(240, 118), Color("a5ad69", 0.12)],
+		[Vector2(1070, 2520), Vector2(260, 105), Color("8caf62", 0.12)],
+		[Vector2(1550, 2670), Vector2(195, 150), Color("a5ad69", 0.11)],
+		[Vector2(330, 3020), Vector2(250, 135), Color("8caf62", 0.13)],
+		[Vector2(1200, 2980), Vector2(230, 130), Color("a5ad69", 0.10)],
+		[Vector2(1640, 3100), Vector2(180, 155), Color("8caf62", 0.12)],
+		[Vector2(2210, 2780), Vector2(160, 260), Color("99a864", 0.11)],
+		[Vector2(2220, 3170), Vector2(170, 190), Color("8caf62", 0.10)],
+		[Vector2(-700, -340), Vector2(230, 170), Color("a5ad69", 0.10)],
+		[Vector2(100, -330), Vector2(270, 130), Color("8caf62", 0.12)],
+		[Vector2(970, -330), Vector2(250, 140), Color("a5ad69", 0.10)],
+		[Vector2(-420, 500), Vector2(160, 280), Color("8caf62", 0.11)],
+		[Vector2(-430, 1510), Vector2(170, 260), Color("a5ad69", 0.10)],
+		[Vector2(-440, 2180), Vector2(160, 190), Color("8caf62", 0.10)]
 	]:
 		_draw_ellipse(patch[0], patch[1], patch[2])
 
@@ -64,7 +77,10 @@ func _draw_grass_patches() -> void:
 		[Vector2(380, 2220), Vector2(130, 40), Color("a5ad69", 0.09)],
 		[Vector2(1780, 2210), Vector2(145, 44), Color("8caf62", 0.10)],
 		[Vector2(360, 970), Vector2(120, 34), Color("a5ad69", 0.09)],
-		[Vector2(1630, 920), Vector2(94, 35), Color("8caf62", 0.10)]
+		[Vector2(1630, 920), Vector2(94, 35), Color("8caf62", 0.10)],
+		[Vector2(470, 2500), Vector2(130, 36), Color("a5ad69", 0.09)],
+		[Vector2(1320, 2790), Vector2(150, 38), Color("8caf62", 0.10)],
+		[Vector2(1030, 3180), Vector2(170, 40), Color("a5ad69", 0.09)]
 	]:
 		_draw_ellipse(patch[0], patch[1], patch[2])
 
@@ -92,28 +108,21 @@ func _draw_paths() -> void:
 	_path(PackedVector2Array([Vector2(1975, 850), Vector2(2010, 885), Vector2(2040, 930), Vector2(2040, 1800)]), 28.0)
 	_path(PackedVector2Array([Vector2(2040, 930), Vector2(2040, 600), Vector2(2110, 550), Vector2(2160, 500), Vector2(2240, 410)]), 28.0)
 	_path(PackedVector2Array([Vector2(2040, 1020), Vector2(1980, 1020)]), 22.0)
+	# A gentle continuation opens the south while retaining large clear interiors.
+	_path(PackedVector2Array([Vector2(700, 1140), Vector2(715, 1480), Vector2(790, 1770), Vector2(820, 2050), Vector2(790, 2290), Vector2(790, 2460), Vector2(840, 2650), Vector2(815, 2860), Vector2(880, 3060)]), 36.0)
+	_path(PackedVector2Array([Vector2(790, 2460), Vector2(590, 2505), Vector2(360, 2580), Vector2(180, 2690)]), 25.0)
+	_path(PackedVector2Array([Vector2(805, 2610), Vector2(1035, 2555), Vector2(1270, 2560), Vector2(1510, 2635)]), 25.0)
+	_path(PackedVector2Array([Vector2(820, 2860), Vector2(640, 2940), Vector2(420, 3010), Vector2(220, 3110)]), 24.0)
+	_path(PackedVector2Array([Vector2(835, 2860), Vector2(1080, 2910), Vector2(1320, 2990), Vector2(1570, 3100)]), 24.0)
+	# New outer approaches wrap around the unchanged farm core from north and west.
+	_path(PackedVector2Array([Vector2(900, -500), Vector2(900, -280), Vector2(850, -80), Vector2(790, 180), Vector2(820, 360), Vector2(838, 480)]), 36.0)
+	_path(PackedVector2Array([Vector2(-1050, 1040), Vector2(-760, 1050), Vector2(-480, 1080), Vector2(-220, 1130), Vector2(0, 1140), Vector2(360, 1140), Vector2(700, 1140)]), 36.0)
+	_path(PackedVector2Array([Vector2(-1040, 440), Vector2(-760, 455), Vector2(-500, 480), Vector2(-260, 515), Vector2(0, 540), Vector2(370, 550), Vector2(700, 650)]), 26.0)
+	_path(PackedVector2Array([Vector2(-1040, 1770), Vector2(-760, 1760), Vector2(-500, 1745), Vector2(-250, 1710), Vector2(0, 1680), Vector2(350, 1690), Vector2(790, 1770)]), 26.0)
 
 	# A few stones sit within the broad trail, leaving the walking lanes open.
-	for point in [Vector2(752, 831), Vector2(778, 834), Vector2(804, 837), Vector2(2011, 898), Vector2(2062, 580), Vector2(2140, 519)]:
+	for point in [Vector2(752, 831), Vector2(778, 834), Vector2(804, 837), Vector2(2011, 898), Vector2(2062, 580), Vector2(2140, 519), Vector2(762, 2340), Vector2(785, 2372), Vector2(846, 2734), Vector2(875, 2762)]:
 		_draw_stepping_stone(point, 0.72)
-
-
-func _draw_field_edge() -> void:
-	# Accents frame the field without covering any of the 32 plot footprints.
-	var field := Rect2(1050, 460, 620, 302)
-	draw_rect(field, Color("775532", 0.48), false, 5.0)
-	draw_rect(field.grow(-6), Color("d5b47d", 0.24), false, 2.0)
-	# Small soil/grass shoulders sit beyond the plot rows and away from the center paths.
-	for point in [Vector2(1073, 482), Vector2(1647, 483), Vector2(1074, 735), Vector2(1645, 736)]:
-		_draw_ellipse(point, Vector2(24, 8), Color("a67a4e", 0.3))
-	# Open fence fragments give the field an edge while preserving approach from the south.
-	_fence_segment(Vector2(1090, 474), Vector2(1210, 474), 4)
-	_fence_segment(Vector2(1510, 474), Vector2(1630, 474), 4)
-	_fence_segment(Vector2(1058, 520), Vector2(1058, 560), 3)
-	_fence_segment(Vector2(1058, 640), Vector2(1058, 665), 2)
-	_fence_segment(Vector2(1662, 520), Vector2(1662, 665), 4)
-	_fence_segment(Vector2(1090, 747), Vector2(1210, 747), 4)
-	_fence_segment(Vector2(1510, 747), Vector2(1630, 747), 4)
 
 
 func _draw_fences() -> void:
@@ -136,11 +145,33 @@ func _draw_edge_nature() -> void:
 	# These are background-only; resource nodes remain the only trees with collision.
 	for entry in [
 		[Vector2(30, 330), 0.85], [Vector2(45, 735), 0.72], [Vector2(36, 1035), 0.82],
-		[Vector2(48, 1585), 0.76], [Vector2(330, 2355), 0.9], [Vector2(740, 2360), 0.72],
-		[Vector2(1180, 2360), 0.82], [Vector2(1650, 2355), 0.76], [Vector2(1930, 2250), 0.72],
+		[Vector2(48, 1585), 0.76], [Vector2(330, 2320), 0.78], [Vector2(620, 2390), 0.66],
+		[Vector2(1320, 2340), 0.78], [Vector2(1650, 2290), 0.76], [Vector2(1930, 2250), 0.72],
 		[Vector2(2370, 2150), 0.8], [Vector2(2365, 1820), 0.68], [Vector2(1720, 340), 0.6],
 		[Vector2(95, 1900), 0.68], [Vector2(95, 2200), 0.82], [Vector2(2250, 2320), 0.86],
 		[Vector2(2150, 2050), 0.68], [Vector2(2250, 1650), 0.74], [Vector2(1870, 2360), 0.72]
+	]:
+		_tree(entry[0], entry[1])
+	# The actual map edge is now south, not the old y≈2400 seam.
+	for entry in [
+		[Vector2(35, 4020), 0.86], [Vector2(145, 4080), 0.78], [Vector2(330, 4035), 0.9],
+		[Vector2(560, 4090), 0.78], [Vector2(790, 4025), 0.84], [Vector2(1030, 4085), 0.9],
+		[Vector2(1280, 4035), 0.76], [Vector2(1510, 4080), 0.86], [Vector2(1745, 4020), 0.8],
+		[Vector2(1905, 4050), 0.74], [Vector2(2220, 4080), 0.84], [Vector2(2370, 4025), 0.72],
+		[Vector2(-1240, 4040), 0.78], [Vector2(-760, 4080), 0.72], [Vector2(-320, 4030), 0.8],
+		[Vector2(2660, 4050), 0.76], [Vector2(3000, 4080), 0.82]
+	]:
+		_tree(entry[0], entry[1])
+	# The true outer edge now wraps the farm; these are decorative background trees only.
+	for entry in [
+		[Vector2(-1280, -580), 0.84], [Vector2(-1130, -660), 0.74], [Vector2(-780, -630), 0.8],
+		[Vector2(250, -655), 0.7], [Vector2(700, -645), 0.78], [Vector2(1180, -665), 0.74],
+		[Vector2(1690, -620), 0.82], [Vector2(2020, -620), 0.7], [Vector2(2450, -600), 0.8],
+		[Vector2(3060, -610), 0.86], [Vector2(-1270, 180), 0.76], [Vector2(-1280, 720), 0.84],
+		[Vector2(-1260, 1330), 0.78], [Vector2(-1290, 1900), 0.88], [Vector2(-1250, 2500), 0.76],
+		[Vector2(3050, 850), 0.82], [Vector2(3060, 1640), 0.76], [Vector2(3040, 2450), 0.86],
+		[Vector2(3050, 3290), 0.8], [Vector2(2390, 4060), 0.78], [Vector2(1980, 4050), 0.74],
+		[Vector2(-1280, 3090), 0.76], [Vector2(-1290, 3650), 0.82], [Vector2(3060, 3650), 0.78]
 	]:
 		_tree(entry[0], entry[1])
 	for entry in [
@@ -148,10 +179,15 @@ func _draw_edge_nature() -> void:
 		[Vector2(620, 2310), 0.65], [Vector2(1430, 2315), 0.72], [Vector2(2295, 2250), 0.66]
 	]:
 		_bush_cluster(entry[0], entry[1])
+	for entry in [[Vector2(250, 3370), 0.95], [Vector2(700, 3355), 0.9], [Vector2(1160, 3375), 0.95], [Vector2(1600, 3350), 0.92], [Vector2(2070, 3370), 0.9], [Vector2(2350, 3330), 0.82]]:
+		_bush_cluster(entry[0], entry[1])
+	for entry in [[Vector2(-1200, -350), 0.8], [Vector2(-760, -420), 0.68], [Vector2(420, -390), 0.72], [Vector2(1510, -370), 0.78], [Vector2(-1210, 420), 0.76], [Vector2(-1220, 1100), 0.7], [Vector2(-1190, 1840), 0.82], [Vector2(-1220, 2280), 0.76]]:
+		_bush_cluster(entry[0], entry[1])
 	for entry in [
 		[Vector2(1770, 360), 0.68], [Vector2(1762, 635), 0.72], [Vector2(1760, 1190), 0.7],
 		[Vector2(1768, 1510), 0.72], [Vector2(1965, 520), 0.62], [Vector2(1970, 1330), 0.62],
-		[Vector2(1980, 1760), 0.6], [Vector2(2065, 745), 0.58], [Vector2(2055, 1685), 0.62]
+		[Vector2(1980, 1760), 0.6], [Vector2(2065, 745), 0.58], [Vector2(2055, 1685), 0.62],
+		[Vector2(1965, 2440), 0.62], [Vector2(1970, 2720), 0.64], [Vector2(1965, 3050), 0.62], [Vector2(1970, 3280), 0.66]
 	]:
 		_reeds(entry[0], entry[1])
 	for entry in [
@@ -177,7 +213,9 @@ func _draw_small_ground_details() -> void:
 		[Vector2(880, 1815), 0.6], [Vector2(1135, 2075), 0.65], [Vector2(1380, 1935), 0.58],
 		[Vector2(1610, 2110), 0.65], [Vector2(1860, 1965), 0.58], [Vector2(2110, 2290), 0.68],
 		[Vector2(150, 2080), 0.6], [Vector2(560, 2140), 0.58], [Vector2(920, 2320), 0.62],
-		[Vector2(1230, 2200), 0.58], [Vector2(1730, 2280), 0.62], [Vector2(2300, 1800), 0.58]
+		[Vector2(1230, 2200), 0.58], [Vector2(1730, 2280), 0.62], [Vector2(2300, 1800), 0.58],
+		[Vector2(520, 2500), 0.62], [Vector2(1160, 2675), 0.58], [Vector2(1530, 2800), 0.62],
+		[Vector2(320, 2940), 0.60], [Vector2(1260, 3140), 0.64], [Vector2(1700, 3100), 0.58]
 	]:
 		_tuft(entry[0], entry[1])
 	for entry in [
@@ -185,7 +223,8 @@ func _draw_small_ground_details() -> void:
 		[Vector2(1010, 365), 0.5], [Vector2(1610, 360), 0.54], [Vector2(1660, 1480), 0.55],
 		[Vector2(780, 2220), 0.6], [Vector2(1280, 2290), 0.58],
 		[Vector2(320, 1880), 0.48], [Vector2(760, 2115), 0.5], [Vector2(1060, 1840), 0.48],
-		[Vector2(1450, 2020), 0.5], [Vector2(1890, 2300), 0.48]
+		[Vector2(1450, 2020), 0.5], [Vector2(1890, 2300), 0.48],
+		[Vector2(300, 2660), 0.5], [Vector2(1320, 2480), 0.52], [Vector2(500, 3160), 0.48], [Vector2(1450, 3160), 0.54]
 	]:
 		_flower_cluster(entry[0], entry[1], Color("f0dfb5"))
 
@@ -247,6 +286,16 @@ func _draw_south_farm_details() -> void:
 	_draw_sign_mark(Vector2(1505, 1858), Color("c29a61"))
 	_fence_segment(Vector2(1300, 2240), Vector2(1425, 2240), 4)
 	_flower_cluster(Vector2(1465, 2265), 0.76, Color("f0dfb5"))
+	_bush_cluster(Vector2(320, 2540), 0.78)
+	_stone_cluster(Vector2(1500, 2760), 0.62)
+	_flower_cluster(Vector2(1320, 2940), 0.64, Color("e8d19b"))
+	_fence_segment(Vector2(55, 3230), Vector2(125, 3260), 3)
+	_fence_segment(Vector2(1620, 3250), Vector2(1735, 3210), 4)
+	# Sparse outer-edge details frame the new land but leave plots open for building.
+	for point in [Vector2(-1050, -100), Vector2(-670, -590), Vector2(460, -620), Vector2(1430, -590), Vector2(-1150, 650), Vector2(-1170, 1510), Vector2(-1100, 2200)]:
+		_tuft(point, 0.85)
+	for point in [Vector2(-950, -380), Vector2(210, -450), Vector2(1150, -420), Vector2(-1100, 350), Vector2(-1140, 950), Vector2(-1120, 1650), Vector2(-1110, 2150)]:
+		_stone_cluster(point, 0.62)
 
 
 func _draw_sign_mark(point: Vector2, mark_color: Color) -> void:

@@ -28,7 +28,7 @@ Use `AudioManager.play_sfx("plant_seed")` after a successful action. Pass a worl
 
 ## Music and settings
 
-The single `farm_day` original track runs on the Music bus through scene changes, preventing duplicate playback. Farm ambience and rain ambience are separate and subtle. Music and SFX/ambience have separate live toggles. Preferences and volumes are stored in `user://settings.cfg`, never in the farm save; new game and farm reset do not touch them. Initial linear volumes are 50% music and 75% SFX.
+The single `farm_day` original track runs on the Music bus through scene changes, preventing duplicate playback. Farm ambience and rain ambience are separate and subtle. Music and SFX/ambience have separate live toggles. Preferences and volumes are stored in `user://settings.cfg`, never in the farm save; new game and farm reset do not touch them. Initial linear volumes are 42% music and 62% SFX, with additional bus and per-effect attenuation for a softer mix. Existing saved volume preferences remain honored while the mix trims also soften them.
 
 ## Copyright and adding sounds
 

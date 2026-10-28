@@ -35,10 +35,10 @@ var action_motion_active: bool = false
 @export var speed: float = 200.0
 
 @export var farm_bounds: Rect2 = Rect2(
-	50,
-	50,
-	2300,
-	2300
+	-600,
+	0,
+	3000,
+	3400
 )
 
 @onready var hud: Node = (

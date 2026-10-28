@@ -7,8 +7,26 @@ const MUSIC_ROOT := "res://assets/audio/music/"
 const AMBIENCE_ROOT := "res://assets/audio/ambience/"
 const SFX_POOL_SIZE := 12
 const SPATIAL_POOL_SIZE := 4
-const DEFAULT_MUSIC_VOLUME := 0.5
-const DEFAULT_SFX_VOLUME := 0.75
+const DEFAULT_MUSIC_VOLUME := 0.42
+const DEFAULT_SFX_VOLUME := 0.62
+const DEFAULT_AMBIENCE_VOLUME := 0.34
+const MUSIC_MIX_TRIM_DB := -1.5
+const SFX_MIX_TRIM_DB := -1.5
+const AMBIENCE_MIX_TRIM_DB := -1.5
+const DEFAULT_SFX_TRIM_DB := -2.5
+const SFX_TRIM_DB := {
+	"ui_click": -3.5, "ui_success": -2.5, "ui_error": -4.5, "coin": -3.5,
+	"plant_seed": -2.5, "harvest_crop": -2.5,
+	"axe_swing": -2.0, "axe_hit_wood": -3.0, "tree_break": -3.5,
+	"hammer_swing": -2.0, "hammer_hit_rock": -3.5, "rock_break": -4.0,
+	"dig_hit": -3.0, "dig_find": -2.5,
+	"fishing_cast": -2.0, "fishing_splash": -3.0, "fishing_bite": -2.5,
+	"fishing_reel_tick": -4.5, "fish_caught": -2.5, "fishing_fail": -3.5, "treasure_found": -2.5,
+	"chicken_cluck": -5.0, "cow_moo": -5.5, "pig_oink": -5.0, "sheep_baa": -5.5,
+	"animal_feed": -3.0, "collect_egg": -2.5, "collect_milk": -3.0, "collect_wool": -3.0, "item_collect": -3.0,
+	"production_start": -3.5, "production_ready": -4.0, "product_collect": -3.0,
+	"building_place": -3.0, "upgrade_success": -3.0, "footstep_soft": -4.0
+}
 
 var music_enabled := true
 var sfx_enabled := true
@@ -94,13 +112,13 @@ func _create_players() -> void:
 	_farm_ambience = AudioStreamPlayer.new()
 	_farm_ambience.name = "FarmAmbience"
 	_farm_ambience.bus = "Ambience"
-	_farm_ambience.volume_db = -19.0
+	_farm_ambience.volume_db = -22.0
 	_farm_ambience.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(_farm_ambience)
 	_rain_ambience = AudioStreamPlayer.new()
 	_rain_ambience.name = "RainAmbience"
 	_rain_ambience.bus = "Ambience"
-	_rain_ambience.volume_db = -35.0
+	_rain_ambience.volume_db = -38.0
 	_rain_ambience.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(_rain_ambience)
 	for index in range(SFX_POOL_SIZE):
@@ -169,16 +187,16 @@ func set_sfx_volume(value: float) -> void:
 	_save_settings()
 
 func _apply_bus_settings() -> void:
-	_set_bus_volume("Music", music_volume, true)
-	_set_bus_volume("SFX", sfx_volume, sfx_enabled)
-	_set_bus_volume("Ambience", 0.42, sfx_enabled)
+	_set_bus_volume("Music", music_volume, true, MUSIC_MIX_TRIM_DB)
+	_set_bus_volume("SFX", sfx_volume, sfx_enabled, SFX_MIX_TRIM_DB)
+	_set_bus_volume("Ambience", DEFAULT_AMBIENCE_VOLUME, sfx_enabled, AMBIENCE_MIX_TRIM_DB)
 
-func _set_bus_volume(bus_name: String, value: float, enabled: bool) -> void:
+func _set_bus_volume(bus_name: String, value: float, enabled: bool, trim_db: float = 0.0) -> void:
 	var index := AudioServer.get_bus_index(bus_name)
 	if index < 0:
 		return
 	AudioServer.set_bus_mute(index, not enabled or value <= 0.0001)
-	AudioServer.set_bus_volume_db(index, linear_to_db(maxf(0.0001, value)))
+	AudioServer.set_bus_volume_db(index, linear_to_db(maxf(0.0001, value)) + trim_db)
 
 func play_sfx(sound_id: String, world_position: Vector2 = Vector2.INF, vary_pitch := true) -> void:
 	if not sfx_enabled:
@@ -206,6 +224,11 @@ func play_sfx(sound_id: String, world_position: Vector2 = Vector2.INF, vary_pitc
 		_pool_cursor = (_pool_cursor + 1) % _sfx_players.size()
 	player.stop()
 	player.stream = stream
+	var sound_gain_db: float = float(SFX_TRIM_DB.get(sound_id, DEFAULT_SFX_TRIM_DB))
+	if player is AudioStreamPlayer2D:
+		(player as AudioStreamPlayer2D).volume_db = sound_gain_db
+	else:
+		(player as AudioStreamPlayer).volume_db = sound_gain_db
 	player.pitch_scale = randf_range(0.985, 1.015) if vary_pitch else 1.0
 	player.play()
 
@@ -258,7 +281,7 @@ func _sync_ambience() -> void:
 			_rain_ambience.stream = _get_stream(AMBIENCE_ROOT + "rain_loop.wav")
 		if _rain_ambience.stream != null and not _rain_ambience.playing:
 			_rain_ambience.play()
-	_fade_player(_rain_ambience, -9.0 if raining and sfx_enabled else -42.0, 1.8)
+	_fade_player(_rain_ambience, -12.0 if raining and sfx_enabled else -45.0, 1.8)
 
 func _fade_player(player: AudioStreamPlayer, target_db: float, duration: float) -> void:
 	if player.stream == null:

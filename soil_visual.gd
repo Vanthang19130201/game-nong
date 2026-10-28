@@ -24,16 +24,20 @@ func refresh() -> void:
 		$SoilSprite.scale = soil_size / texture.get_size()
 	$SoilSprite.visible = unlocked
 	color.visible = unlocked and texture == null
-	color.color = Color("A66D3F") if unlocked else Color("789457", 0.16)
-	# READY emphasis belongs around the crop, not across the complete soil tile.
+	color.color = Color("87965f") if unlocked else Color("789457", 0.16)
+	# The plot texture now carries its own muted grass-and-earth palette.
 	$SoilSprite.modulate = Color.WHITE
 	# Keep the node/reference for old scenes, but never draw text across a plot.
 	label.text = ""
 	label.hide()
-	$LockedMarker.visible = not unlocked
-	var plot_number: int = FarmData.plot_number(plot.plot_id)
-	var next_plot: bool = plot_number == Inventory.unlocked_plot_count + 1
-	$LockedMarker.modulate = Color(1, 1, 1, 0.92 if next_plot else 0.28)
+	# Keep only the next sequential plot visible as a meadow tile, so its location
+	# is discoverable while all later locked plots remain completely hidden.
+	var is_next_plot: bool = not unlocked and FarmData.plot_number(plot.plot_id) == Inventory.unlocked_plot_count + 1
+	$LockedMarker.visible = is_next_plot
+	$LockedMarker.modulate = Color(1.0, 0.98, 0.88, 0.96)
+	# The next-plot preview must sit under the Player, not paint over their feet.
+	z_index = -1 if is_next_plot else 0
+	$LockedMarker.z_index = 0
 	set_process(unlocked and plot.state == plot.PlotState.GROWING)
 	$GrowthTime.visible = unlocked and plot.state == plot.PlotState.GROWING
 	refresh_elapsed = 0.0
@@ -45,10 +49,28 @@ func refresh() -> void:
 func _draw() -> void:
 	if plot.is_unlocked():
 		return
-	if FarmData.plot_number(plot.plot_id) != Inventory.unlocked_plot_count + 1 or not plot.player_near:
+	if FarmData.plot_number(plot.plot_id) != Inventory.unlocked_plot_count + 1:
 		return
-	draw_rect(Rect2(-31, -23, 62, 46), Color("E8B34F", 0.12), true)
-	draw_rect(Rect2(-31, -23, 62, 46), Color("E8B34F", 0.88), false, 2.0)
+	var near_player: bool = plot.player_near
+	var tile := PackedVector2Array([
+		Vector2(-29, -21), Vector2(-24, -23), Vector2(24, -22),
+		Vector2(30, -18), Vector2(29, 19), Vector2(24, 22),
+		Vector2(-24, 22), Vector2(-30, 18)
+	])
+	draw_colored_polygon(tile, Color("819d5b", 0.97))
+	var outline := tile.duplicate()
+	outline.append(tile[0])
+	draw_polyline(outline, Color("35492f", 0.9), 5.0, true)
+	draw_polyline(outline, Color("fff0b7", 1.0), 3.4 if near_player else 2.8, true)
+	draw_polyline(outline, Color("e8b34f", 0.98 if near_player else 0.82), 1.4, true)
+	draw_rect(Rect2(-24, -17, 48, 34), Color("dce6ad", 0.14), false, 1.0)
+	# Small grass stitches and a pair of flowers make the preview feel like lawn,
+	# while leaving the lock badge readable in the middle.
+	for tuft_x in [-22.0, 21.0]:
+		draw_line(Vector2(tuft_x, 14), Vector2(tuft_x - 2, 8), Color("c5d489", 0.95), 1.4, true)
+		draw_line(Vector2(tuft_x, 14), Vector2(tuft_x + 2, 7), Color("a9c46d", 0.95), 1.5, true)
+	draw_circle(Vector2(-17, -12), 1.8, Color("f2d38a"))
+	draw_circle(Vector2(17, 13), 1.8, Color("f3e5ca"))
 
 func _process(delta: float) -> void:
 	refresh_elapsed += delta

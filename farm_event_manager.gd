@@ -240,13 +240,19 @@ func _choose_position(key: int) -> Vector2:
 	if not is_instance_valid(_farm):
 		return Vector2.ZERO
 	var candidates: Array[Vector2] = []
-	for y in range(300, 2250, 96):
-		for x in range(220, 1620, 96):
-			var point := Vector2(x, y).snapped(Vector2(16, 16))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 0x4556504F + key * 733
+	for zone_id in SaveManager.unlocked_land_zones:
+		if not SaveManager.LandData.ZONES.has(zone_id):
+			continue
+		var area: Rect2 = SaveManager.LandData.ZONES[zone_id]["area"]
+		for _sample in range(16):
+			var point := Vector2(
+				rng.randf_range(area.position.x + 96.0, area.end.x - 96.0),
+				rng.randf_range(area.position.y + 96.0, area.end.y - 96.0)
+			).snapped(Vector2(16, 16))
 			if SafePlacement.is_clear(_farm, point, Vector2(52, 40), 58.0):
 				candidates.append(point)
 	if candidates.is_empty():
 		return Vector2.ZERO
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 0x4556504F + key * 733
 	return candidates[rng.randi_range(0, candidates.size() - 1)]

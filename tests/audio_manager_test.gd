@@ -21,7 +21,7 @@ func run_checks() -> void:
 		check(audio.music_enabled == bool(previous_settings.get_value("audio", "music_enabled", true)) and audio.sfx_enabled == bool(previous_settings.get_value("audio", "sfx_enabled", true)), "saved audio preferences load")
 	else:
 		check(audio.music_enabled and audio.sfx_enabled, "first-run audio defaults on")
-		check(is_equal_approx(audio.music_volume, 0.5) and is_equal_approx(audio.sfx_volume, 0.75), "default mix is 50% music, 75% SFX")
+		check(is_equal_approx(audio.music_volume, 0.42) and is_equal_approx(audio.sfx_volume, 0.62), "default mix is softer at 42% music and 62% SFX")
 	check(audio.SOUND_FILES.size() >= 30, "core sound library registered")
 	for sound_id in audio.SOUND_FILES:
 		for relative_path in audio.SOUND_FILES[sound_id]:

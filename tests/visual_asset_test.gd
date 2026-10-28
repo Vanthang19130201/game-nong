@@ -89,12 +89,13 @@ func run_checks() -> void:
 			continue
 		trees += 1
 		var sprite: Sprite2D = resource.get_node("Visuals/ResourceSprite")
-		check(sprite.texture.resource_path == "res://assets/environment/tree/Tree.png" and sprite.visible,"shared Tree texture on every Tree")
+		check(resource.tree_species in ["oak", "autumn", "pine", "blossom"] and sprite.visible,"each harvestable Tree uses a supported species visual")
+		check(sprite.texture.resource_path.begins_with("res://assets/environment/tree/") and sprite.texture.resource_path.get_extension() in ["png", "svg"],"Tree species uses a project tree asset")
 		check(not resource.get_node("Visual").visible and resource.get_node_or_null("Sprite2D") == null,"no duplicate legacy Tree sprite")
 		check(is_equal_approx(sprite.scale.x,sprite.scale.y) and is_equal_approx(sprite.position.y+sprite.get_rect().end.y*sprite.scale.y,40),"uniform Tree scale and ground offset")
 		check(farm.Placement.bounds(resource) == resource.global_transform*Rect2(-40,-40,80,80),"Tree placement footprint unchanged")
 		check(resource.get_node("CollisionShape2D").shape.size == Vector2(110,110),"Tree interaction shape unchanged")
-	check(trees == 8,"all eight Trees use shared visual")
+	check(trees == 32,"all harvestable Trees use species visuals")
 	var tree = manager.resources["tree_1"]
 	player.position = tree.global_position+Vector2(0,32)
 	await create_timer(0.1).timeout

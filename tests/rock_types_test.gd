@@ -147,7 +147,7 @@ func run_checks() -> void:
 				check(manager.resources[id].rock_type in TYPES and disk().get_value("resources",id)["rock_type"] == manager.resources[id].rock_type,"legacy rock randomly assigned once and saved")
 			check(manager.reset_game(),"legacy cleanup")
 		"rock_reset_read":
-			check(inv.stone == 0 and manager.resources.size() == 12,"reset preserves expanded resource count")
+			check(inv.stone == 0 and manager.resources.size() == 42,"reset preserves expanded resource count")
 			for id in IDS:
 				check(manager.resources[id].state == "AVAILABLE" and manager.resources[id].rock_type in TYPES and manager.resources[id].respawn_at == 0.0,"reset starts fresh rock")
 	print("PASS: " + stage)

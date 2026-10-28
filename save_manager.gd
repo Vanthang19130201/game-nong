@@ -62,7 +62,17 @@ const AnimalData = preload("res://animal_data.gd")
 var placed_decorations: Array = []
 var next_decoration_id: int = 1
 var unlocked_land_zones: Array[String] = ["farm_core"]
-const RESOURCE_IDS: Array[String] = ["tree_1", "tree_2", "tree_3", "tree_4", "tree_5", "tree_6", "tree_7", "tree_8", "rock_1", "rock_2", "rock_3", "rock_4"]
+const RESOURCE_IDS: Array[String] = [
+	"tree_1", "tree_2", "tree_3", "tree_4", "tree_5", "tree_6", "tree_7", "tree_8",
+	"rock_1", "rock_2", "rock_3", "rock_4",
+	"tree_south_01", "tree_south_02", "tree_south_03", "tree_south_04",
+	"tree_south_05", "tree_south_06", "tree_south_07", "tree_south_08",
+	"forest_tree_01", "forest_tree_02", "forest_tree_03", "forest_tree_04",
+	"forest_tree_05", "forest_tree_06", "forest_tree_07", "forest_tree_08",
+	"forest_tree_09", "forest_tree_10", "forest_tree_11", "forest_tree_12",
+	"farm_tree_01", "farm_tree_02", "farm_tree_03", "farm_tree_04",
+	"rock_south_01", "rock_south_02", "rock_south_03", "rock_south_04", "rock_south_05", "rock_south_06"
+]
 const STATION_IDS: Array[String] = ["feed_mill", "chicken_coop", "cow_shed", "pig_pen", "sheep_barn"]
 const SAVE_PATH: String = "user://save.cfg"
 const TEMP_PATH: String = "user://save.cfg.tmp"

@@ -4,6 +4,7 @@ const Progression = preload("res://progression_data.gd")
 const RockData = preload("res://rock_data.gd")
 @export var resource_id: String = ""
 @export var zone_id: String = "main"
+@export_enum("Oak:oak", "Autumn:autumn", "Pine:pine", "Blossom:blossom") var tree_species: String = "oak"
 var zone_active: bool = false
 @export_enum("wood", "stone") var resource_type: String = "wood"
 @export_enum("normal_rock", "large_rock", "dark_rock") var rock_type: String = "normal_rock"
