@@ -8,6 +8,8 @@ extends Node2D
 	"feed_mill",
 	"chicken_coop",
 	"cow_shed",
+	"pig_pen",
+	"sheep_barn",
 	"bakery",
 	"dairy",
 	"spinning_machine",
@@ -30,10 +32,10 @@ func _draw() -> void:
 	if building_kind == "house":
 		center = Vector2(0, 58)
 		radius = Vector2(138, 54)
-	elif building_kind in ["chicken_coop", "cow_shed"]:
+	elif building_kind in ["chicken_coop", "cow_shed", "pig_pen", "sheep_barn"]:
 		# Their animal pens already provide ground detail around the buildings.
 		center = Vector2(0, 24)
-		radius = Vector2(70, 30) if building_kind == "chicken_coop" else Vector2(88, 34)
+		radius = Vector2(70, 30) if building_kind == "chicken_coop" else Vector2(88, 34) if building_kind == "cow_shed" else Vector2(86, 34)
 	elif building_kind in ["bakery", "dairy", "spinning_machine"]:
 		radius = Vector2(86, 38)
 	elif building_kind == "warehouse":

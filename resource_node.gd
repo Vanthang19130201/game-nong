@@ -176,6 +176,11 @@ func _finish_harvest() -> void:
 	player.active_resource = null
 	respawn_timer.start(Progression.RESOURCE_RESPAWN[resource_type])
 	Inventory.set(resource_type, Inventory.get(resource_type) + amount)
+	AudioManager.play_random_sfx("axe_hit_wood" if resource_type == "wood" else "hammer_hit_rock", global_position)
+	if resource_type == "wood":
+		AudioManager.play_sfx("tree_break", global_position)
+	else:
+		AudioManager.play_sfx("rock_break", global_position)
 	_update_display()
 	Inventory.inventory_changed.emit()
 

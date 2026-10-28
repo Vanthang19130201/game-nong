@@ -57,11 +57,13 @@ const LandData = preload("res://land_data.gd")
 const DecorationData = preload("res://decoration_data.gd")
 const RockData = preload("res://rock_data.gd")
 const FeedData = preload("res://feed_mill_data.gd")
+const LoomData = preload("res://loom_data.gd")
+const AnimalData = preload("res://animal_data.gd")
 var placed_decorations: Array = []
 var next_decoration_id: int = 1
 var unlocked_land_zones: Array[String] = ["farm_core"]
 const RESOURCE_IDS: Array[String] = ["tree_1", "tree_2", "tree_3", "tree_4", "tree_5", "tree_6", "tree_7", "tree_8", "rock_1", "rock_2", "rock_3", "rock_4"]
-const STATION_IDS: Array[String] = ["feed_mill", "chicken_coop", "cow_shed"]
+const STATION_IDS: Array[String] = ["feed_mill", "chicken_coop", "cow_shed", "pig_pen", "sheep_barn"]
 const SAVE_PATH: String = "user://save.cfg"
 const TEMP_PATH: String = "user://save.cfg.tmp"
 const BACKUP_PATH: String = "user://save_backup.cfg"
@@ -71,12 +73,15 @@ var autosave_timer: Timer
 var bakery_queue: Array = []
 var dairy_queue: Array = []
 var spinning_machine_queue: Array = []
+var loom_queue: Array = []
+var animal_rosters: Dictionary = {"chicken": [], "cow": [], "pig": [], "sheep": []}
+var next_animal_ids: Dictionary = {"chicken": 1, "cow": 1, "pig": 1, "sheep": 1}
 var saved_dig_spots: Array = []
 var saved_dig_spots_day_key: int = -1
 var hidden_treasure_claimed: bool = false
 var PLOT_IDS: Array[String] = FarmData.plot_ids()
 var INVENTORY_DEFAULTS: Dictionary = CropData.inventory_defaults().merged({
-	"coins": 100, "chicken_feed": 0, "cow_feed": 0, "egg": 0, "milk": 0, "wood": 0, "stone": 0,
+	"coins": 100, "chicken_feed": 0, "cow_feed": 0, "pig_feed": 0, "sheep_feed": 0, "egg": 0, "milk": 0, "pork": 0, "wool": 0, "wool_yarn": 0, "cotton_cloth": 0, "wool_cloth": 0, "meat_pie": 0, "wood": 0, "stone": 0,
 	"small_fish": 0, "river_fish": 0, "golden_fish": 0, "moon_fish": 0,
 	"old_bottle": 0, "old_boot": 0, "coin_pouch": 0, "small_chest": 0, "lost_lure": 0, "ancient_coin": 0, "map_fragment": 0,
 	"bread": 0, "corn_bread": 0, "carrot_pie": 0,
@@ -93,6 +98,47 @@ var resources: Dictionary = {}
 var saved_resources: Dictionary = {}
 var buildings: Dictionary = {}
 var building_positions: Dictionary = {}
+
+func animal_records(animal_type: String) -> Array:
+	return animal_rosters.get(animal_type, [])
+
+func adult_animal_ids(animal_type: String, now: float = -1.0) -> Array[String]:
+	var ids: Array[String] = []
+	for record in animal_records(animal_type):
+		if AnimalData.stage_for(animal_type, float(record.get("born_at", 0.0)), now) >= 3:
+			ids.append(str(record.get("id", "")))
+	return ids
+
+func create_animal_record(animal_type: String, born_at: float = -1.0) -> Dictionary:
+	if not animal_rosters.has(animal_type):
+		return {}
+	var serial: int = int(next_animal_ids.get(animal_type, 1))
+	var animal_id: String = "%s_%04d" % [animal_type, serial]
+	next_animal_ids[animal_type] = serial + 1
+	var seed_value: int = AnimalData.stable_seed(animal_id)
+	var record := {"id":animal_id,"type":animal_type,"born_at":Time.get_unix_time_from_system() if born_at < 0.0 else born_at,"lucky_seed":seed_value,"lucky":AnimalData.lucky_pig(animal_id) if animal_type == "pig" else false}
+	var roster: Array = animal_rosters[animal_type]
+	roster.append(record)
+	animal_rosters[animal_type] = roster
+	return record
+
+func remove_animal_record(animal_type: String, animal_id: String) -> Dictionary:
+	var roster: Array = animal_rosters.get(animal_type, [])
+	for index in range(roster.size()):
+		if str(roster[index].get("id", "")) != animal_id:
+			continue
+		var removed: Dictionary = roster[index].duplicate(true)
+		roster.remove_at(index)
+		animal_rosters[animal_type] = roster
+		for station_id in STATION_IDS:
+			var station_data: Dictionary = saved_stations.get(station_id, {})
+			if stations.has(station_id) and is_instance_valid(stations[station_id]):
+				stations[station_id].remove_participant(animal_id)
+			elif station_data.has("participant_animal_ids"):
+				station_data["participant_animal_ids"].erase(animal_id)
+				saved_stations[station_id] = station_data
+		return removed
+	return {}
 
 
 func purchase_land(id: String) -> bool:
@@ -129,16 +175,70 @@ func register_building(id: String, building: Node2D) -> bool:
 func default_station(id: String) -> Dictionary:
 	var data: Dictionary = {
 		"state": "IDLE" if id == "feed_mill" else "HUNGRY",
-		"production_type": "", "started_at": 0.0, "ready_at": 0.0
+		"production_type": "", "started_at": 0.0, "ready_at": 0.0, "participant_animal_ids": []
 	}
 	if id == "chicken_coop":
 		data["chicken_count"] = Inventory.chicken_count
 	elif id == "cow_shed":
 		data["cow_count"] = Inventory.cow_count
+	elif id == "pig_pen":
+		data["pig_count"] = Inventory.pig_count
+	elif id == "sheep_barn":
+		data["sheep_count"] = Inventory.sheep_count
 	elif id == "feed_mill":
 		data["queue"] = []
 		data["outputs"] = []
 	return data
+
+
+func _restore_animal_rosters(data: ConfigFile) -> void:
+	var raw_rosters: Variant = data.get_value("animals", "roster", {})
+	var raw_next: Variant = data.get_value("animals", "next_ids", {})
+	var now: float = Time.get_unix_time_from_system()
+	for animal_type in Progression.ANIMALS:
+		var target_count: int = Inventory.get(animal_type + "_count")
+		var restored: Array = []
+		var seen: Dictionary = {}
+		var raw: Variant = raw_rosters.get(animal_type, []) if raw_rosters is Dictionary else []
+		if raw is Array:
+			for value in raw:
+				if restored.size() >= target_count:
+					break
+				if not value is Dictionary or str(value.get("type", animal_type)) != animal_type:
+					continue
+				var animal_id: String = str(value.get("id", ""))
+				if animal_id.is_empty() or seen.has(animal_id):
+					continue
+				var born_at: float = _read_time_value(value.get("born_at", -1.0), -1.0)
+				if born_at < 0.0:
+					continue
+				if born_at > now + 86400.0:
+					born_at = now
+				var seed_value: int = _read_int_value(value.get("lucky_seed", AnimalData.stable_seed(animal_id)), AnimalData.stable_seed(animal_id), 1)
+				var lucky_value: Variant = value.get("lucky", AnimalData.lucky_pig(animal_id))
+				var record := {"id":animal_id,"type":animal_type,"born_at":born_at,"lucky_seed":seed_value,"lucky":lucky_value == true if animal_type == "pig" else false}
+				restored.append(record)
+				seen[animal_id] = true
+		var saved_next: int = 1
+		if raw_next is Dictionary:
+			saved_next = _read_int_value(raw_next.get(animal_type, 1), 1, 1)
+		for index in range(restored.size(), target_count):
+			var serial: int = maxi(saved_next, index + 1)
+			var animal_id: String = "%s_%04d" % [animal_type, serial]
+			while seen.has(animal_id):
+				serial += 1
+				animal_id = "%s_%04d" % [animal_type, serial]
+			saved_next = serial + 1
+			var born: float = now - 86400.0 if not raw_rosters is Dictionary or not raw_rosters.has(animal_type) else AnimalData.adult_born_at(animal_type, now)
+			var record := {"id":animal_id,"type":animal_type,"born_at":born,"lucky_seed":AnimalData.stable_seed(animal_id),"lucky":AnimalData.lucky_pig(animal_id) if animal_type == "pig" else false}
+			restored.append(record)
+			seen[animal_id] = true
+		animal_rosters[animal_type] = restored
+		for record in restored:
+			var suffix: String = str(record["id"]).get_slice("_", 1)
+			if suffix.is_valid_int():
+				saved_next = maxi(saved_next, suffix.to_int() + 1)
+		next_animal_ids[animal_type] = maxi(saved_next, 1)
 
 
 func register_station(station: Node) -> bool:
@@ -203,7 +303,9 @@ func save_game() -> bool:
 	data.set_value("dairy", "dairy_queue", dairy_queue)
 	data.set_value("buildings","owns_spinning_machine",Inventory.owns_spinning_machine)
 	data.set_value("spinning_machine","spinning_machine_queue",spinning_machine_queue)
-	data.set_value("game", "version", 16)
+	data.set_value("buildings","owns_loom",Inventory.owns_loom)
+	data.set_value("loom","queue",loom_queue)
+	data.set_value("game", "version", 17)
 	data.set_value("discovery", "state", DiscoveryManager.get_save_data())
 	data.set_value("weather", "state", WeatherManager.get_save_data())
 	data.set_value("farm_event", "state", FarmEventManager.get_save_data())
@@ -259,6 +361,10 @@ func save_game() -> bool:
 		data.set_value("buildings", "owns_" + id, Inventory.owns_building(id))
 	data.set_value("animals", "chicken_count", Inventory.chicken_count)
 	data.set_value("animals", "cow_count", Inventory.cow_count)
+	data.set_value("animals", "pig_count", Inventory.pig_count)
+	data.set_value("animals", "sheep_count", Inventory.sheep_count)
+	data.set_value("animals", "roster", animal_rosters)
+	data.set_value("animals", "next_ids", next_animal_ids)
 	for id in STATION_IDS:
 		var station_data: Dictionary = saved_stations.get(id, default_station(id))
 		if stations.has(id) and is_instance_valid(stations[id]):
@@ -316,6 +422,13 @@ func reset_game() -> bool:
 	dairy_queue.clear()
 	Inventory.owns_spinning_machine = false
 	spinning_machine_queue.clear()
+	Inventory.owns_loom = false
+	loom_queue.clear()
+	for station_id in STATION_IDS:
+		Inventory.set("owns_" + station_id, false)
+	for animal_type in ["chicken", "cow", "pig", "sheep"]:
+		animal_rosters[animal_type] = []
+		next_animal_ids[animal_type] = 1
 	Inventory.has_fishing_rod = false
 	Inventory.fishing_rod_level = 0
 	Inventory.fishing_attempts_used = 0
@@ -352,6 +465,8 @@ func reset_game() -> bool:
 	Inventory.barn_capacity = 20
 	Inventory.chicken_count = 0
 	Inventory.cow_count = 0
+	Inventory.pig_count = 0
+	Inventory.sheep_count = 0
 	for id in STATION_IDS:
 		Inventory.set("owns_" + id, false)
 	OrderManager.reset_orders()
@@ -407,6 +522,9 @@ func _load_game() -> void:
 	var spinning_owned = data.get_value("buildings","owns_spinning_machine",false)
 	Inventory.owns_spinning_machine = spinning_owned if spinning_owned is bool else false
 	spinning_machine_queue = Inventory.SpinningData.restore_queue(data.get_value("spinning_machine","spinning_machine_queue",[])) if Inventory.owns_spinning_machine else []
+	var loom_owned = data.get_value("buildings","owns_loom",false)
+	Inventory.owns_loom = loom_owned if loom_owned is bool else false
+	loom_queue = LoomData.restore_queue(data.get_value("loom","queue",[])) if Inventory.owns_loom else []
 	for id in FarmData.BUILDINGS:
 		var position = data.get_value("building_positions", id, FarmData.BUILDINGS[id]["position"])
 		if not FarmData.valid_saved_building_position(id, position):
@@ -471,10 +589,12 @@ func _load_game() -> void:
 	var old_chickens: int = _read_int(data, "chicken_coop", "chicken_count", 0)
 	Inventory.chicken_count = clampi(_read_int(data, "animals", "chicken_count", old_chickens), 0, Inventory.animal_capacity("chicken"))
 	Inventory.cow_count = clampi(_read_int(data, "animals", "cow_count", 0), 0, Inventory.animal_capacity("cow"))
-	if not Inventory.owns_chicken_coop:
-		Inventory.chicken_count = 0
-	if not Inventory.owns_cow_shed:
-		Inventory.cow_count = 0
+	Inventory.pig_count = clampi(_read_int(data, "animals", "pig_count", 0), 0, Inventory.animal_capacity("pig"))
+	Inventory.sheep_count = clampi(_read_int(data, "animals", "sheep_count", 0), 0, Inventory.animal_capacity("sheep"))
+	for animal_type in Progression.ANIMALS:
+		if not Inventory.owns_building(Progression.ANIMALS[animal_type]["building"]):
+			Inventory.set(animal_type + "_count", 0)
+	_restore_animal_rosters(data)
 	var selected = data.get_value("player", "selected_crop", "WHEAT")
 	Inventory.selected_crop = "WHEAT"
 	var owned = data.get_value("player", "has_dog", false)
@@ -528,13 +648,23 @@ func _read_station(data: ConfigFile, id: String) -> Dictionary:
 	var state = data.get_value(id, "state", result["state"])
 	if state not in ["PRODUCING", "READY"]:
 		return result
-	var production = data.get_value(id, "production_type", "CHICKEN_FEED" if id == "feed_mill" else "EGG")
-	if id == "feed_mill":
-		result["production_type"] = production if production in ["CHICKEN_FEED", "COW_FEED"] else "CHICKEN_FEED"
-	else:
-		result["production_type"] = "EGG" if id == "chicken_coop" else "MILK"
-		var count: int = Inventory.chicken_count if id == "chicken_coop" else Inventory.cow_count
-		if count <= 0:
+	var product: Dictionary = Progression.PRODUCTS.get(id, {})
+	var production = data.get_value(id, "production_type", product.get("item", "CHICKEN_FEED"))
+	result["production_type"] = str(production).to_upper() if not product.is_empty() else "CHICKEN_FEED"
+	if not product.is_empty():
+		var animal_type: String = product["animal"]
+		var participants: Array[String] = []
+		var participants_raw: Variant = data.get_value(id, "participant_animal_ids", null)
+		if participants_raw is Array:
+			for animal_id in participants_raw:
+				if animal_id is String and _roster_has_id(animal_type, animal_id) and animal_id not in participants:
+					participants.append(animal_id)
+		else:
+			# Legacy active batches snapshot all migrated adult animals, preserving
+			# an already-started or READY product without charging feed again.
+			participants = adult_animal_ids(animal_type)
+		result["participant_animal_ids"] = participants
+		if participants.is_empty():
 			return default_station(id)
 	result["started_at"] = _read_time(data, id, "started_at", 0.0)
 	result["ready_at"] = _read_time(data, id, "ready_at", 0.0)
@@ -544,11 +674,27 @@ func _read_station(data: ConfigFile, id: String) -> Dictionary:
 	result["state"] = "READY" if state == "READY" or Time.get_unix_time_from_system() >= result["ready_at"] else "PRODUCING"
 	return result
 
+func _roster_has_id(animal_type: String, animal_id: String) -> bool:
+	for record in animal_records(animal_type):
+		if str(record.get("id", "")) == animal_id:
+			return true
+	return false
+
 func _read_time(data: ConfigFile, section: String, key: String, fallback: float) -> float:
 	var value = data.get_value(section, key, fallback)
 	if value is int or value is float:
 		if is_finite(float(value)) and value >= 0.0 and value <= 1000000000000.0:
 			return float(value)
+	return fallback
+
+func _read_time_value(value: Variant, fallback: float) -> float:
+	if (value is int or value is float) and is_finite(float(value)) and float(value) >= 0.0 and float(value) <= 1000000000000.0:
+		return float(value)
+	return fallback
+
+func _read_int_value(value: Variant, fallback: int, minimum: int = 0) -> int:
+	if value is int and value >= minimum:
+		return mini(value, 2147483647)
 	return fallback
 
 

@@ -116,7 +116,8 @@ func try_plant() -> void:
 	state = PlotState.GROWING
 	grow_timer.start(ready_at - planted_at)
 	_update_label()
-	Inventory.use_seed(selected)
+	if Inventory.use_seed(selected):
+		AudioManager.play_sfx("plant_seed", global_position)
 
 
 func _on_grow_timer_timeout() -> void:
@@ -146,6 +147,7 @@ func harvest() -> void:
 	_clear_crop()
 	_update_label()
 	if Inventory.collect_crop(harvested_crop, output_item):
+		AudioManager.play_random_sfx("harvest_crop", global_position)
 		if rare_variant.is_empty():
 			get_tree().call_group("farm_hud", "show_harvest_feedback", harvested_crop)
 		elif already_discovered_rare:

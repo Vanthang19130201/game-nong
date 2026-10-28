@@ -56,6 +56,7 @@ func _sell(fish: String, all: bool) -> void:
 	var amount: int = Inventory.get(fish) if all else 1
 	var previous_coins: int = Inventory.coins
 	if Inventory.sell_fish(fish, all):
+		AudioManager.play_sfx("ui_success")
 		var hud = get_tree().get_first_node_in_group("farm_hud")
 		if hud != null:
 			hud.show_transaction_feedback(tr("TRADE_ITEM") % [-amount, Localization.display_name(fish)] + "\n" + tr("TRADE_COINS") % (Inventory.coins - previous_coins))

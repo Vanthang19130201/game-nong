@@ -12,15 +12,26 @@ const FishingData = preload("res://fishing_data.gd")
 const BakeryData = preload("res://bakery_data.gd")
 const DairyData = preload("res://dairy_data.gd")
 const SpinningData = preload("res://spinning_machine_data.gd")
+const LoomData = preload("res://loom_data.gd")
+const AnimalData = preload("res://animal_data.gd")
 const TreasureData = preload("res://treasure_data.gd")
 const DOG_PRICE: int = 300
 const EGG_PRICE: int = 18
 const MILK_PRICE: int = 30
 const Progression = preload("res://progression_data.gd")
 var SILO_ITEMS: Array[String] = CropData.silo_items()
-const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "egg", "milk", "small_fish", "river_fish", "golden_fish", "moon_fish", "bread", "corn_bread", "carrot_pie", "egg_cake", "milk_cake", "pancake", "cream", "butter", "cheese", "cotton_thread", "old_bottle", "old_boot", "coin_pouch", "small_chest", "lost_lure", "ancient_coin", "map_fragment"]
+const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "pig_feed", "sheep_feed", "egg", "milk", "pork", "wool", "wool_yarn", "cotton_cloth", "wool_cloth", "meat_pie", "small_fish", "river_fish", "golden_fish", "moon_fish", "bread", "corn_bread", "carrot_pie", "egg_cake", "milk_cake", "pancake", "cream", "butter", "cheese", "cotton_thread", "old_bottle", "old_boot", "coin_pouch", "small_chest", "lost_lure", "ancient_coin", "map_fragment"]
 var owns_spinning_machine: bool = false
+var owns_loom: bool = false
 var cotton_thread: int = 0
+var cotton_cloth: int = 0
+var wool_cloth: int = 0
+var wool_yarn: int = 0
+var pig_feed: int = 0
+var sheep_feed: int = 0
+var pork: int = 0
+var wool: int = 0
+var meat_pie: int = 0
 var old_bottle: int = 0
 var old_boot: int = 0
 var coin_pouch: int = 0
@@ -85,12 +96,18 @@ var barn_capacity: int = 20
 var owns_feed_mill: bool = false
 var owns_chicken_coop: bool = false
 var owns_cow_shed: bool = false
+var owns_pig_pen: bool = false
+var owns_sheep_barn: bool = false
 var chicken_count: int = 0
 var cow_count: int = 0
+var pig_count: int = 0
+var sheep_count: int = 0
 var wood: int = 0
 var stone: int = 0
 var chicken_coop_level: int = 1
 var cow_shed_level: int = 1
+var pig_pen_level: int = 1
+var sheep_barn_level: int = 1
 var house_level: int = 1
 var silo_level: int = 1
 var barn_level: int = 1
@@ -110,6 +127,7 @@ func buy_dog() -> bool:
 	coins -= DOG_PRICE
 	has_dog = true
 	inventory_changed.emit()
+	AudioManager.play_sfx("ui_success")
 	return true
 
 
@@ -130,11 +148,13 @@ func sell_price(item: String) -> int:
 		return EGG_PRICE
 	if item == "milk":
 		return MILK_PRICE
+	if AnimalData.PRODUCT_PRICES.has(item):
+		return int(AnimalData.PRODUCT_PRICES[item])
 	if FishingData.FISH.has(item):
 		return FishingData.FISH[item]["sell_price"]
 	if TreasureData.ITEMS.has(item):
 		return int(TreasureData.ITEMS[item].get("sell_price", 0))
-	for recipes in [BakeryData.RECIPES,DairyData.RECIPES,SpinningData.RECIPES]:
+	for recipes in [BakeryData.RECIPES,DairyData.RECIPES,SpinningData.RECIPES,LoomData.RECIPES]:
 		if recipes.has(item):
 			# An order valuation alone does not establish a direct sale price.
 			return int(recipes[item].get("price",0))
@@ -154,7 +174,8 @@ func sellable_items() -> Array[String]:
 		for treasure in TreasureData.ITEMS:
 			if int(TreasureData.ITEMS[treasure].get("sell_price", 0)) > 0:
 				items.append(treasure)
-	for recipes in [BakeryData.RECIPES,DairyData.RECIPES,SpinningData.RECIPES]:
+	items.append_array(["pork","wool"])
+	for recipes in [BakeryData.RECIPES,DairyData.RECIPES,SpinningData.RECIPES,LoomData.RECIPES]:
 		for item in recipes:
 			if sell_price(item) > 0 and item not in items:
 				items.append(item)
@@ -524,7 +545,9 @@ func animal_trade_busy(animal: String) -> bool:
 	var state: String = SaveManager.saved_stations.get(id, {}).get("state", "HUNGRY")
 	if SaveManager.stations.has(id) and is_instance_valid(SaveManager.stations[id]):
 		state = SaveManager.stations[id].state
-	return state in ["PRODUCING", "READY"]
+	# Running batches snapshot participants and remove sold IDs safely. Keep
+	# READY batches protected so an earned product cannot be invalidated.
+	return state == "READY"
 
 
 func buy_animal(animal: String) -> bool:
@@ -539,13 +562,25 @@ func buy_animal(animal: String) -> bool:
 		return fail(tr("ERROR_ANIMAL_CAPACITY"))
 	if coins < info["buy"]:
 		return fail(tr("ERROR_COINS"))
+	var old_roster: Array = SaveManager.animal_records(animal).duplicate(true)
+	var old_next_id: int = int(SaveManager.next_animal_ids.get(animal, 1))
+	var old_coins: int = coins
+	var old_count: int = get(animal + "_count")
 	coins -= info["buy"]
 	set(animal + "_count", get(animal + "_count") + 1)
+	SaveManager.create_animal_record(animal)
+	if not SaveManager.save_game():
+		coins = old_coins
+		set(animal + "_count", old_count)
+		SaveManager.animal_rosters[animal] = old_roster
+		SaveManager.next_animal_ids[animal] = old_next_id
+		return fail(tr("ERROR_SAVE_FAILED"))
 	inventory_changed.emit()
+	AudioManager.play_sfx("ui_success")
 	return true
 
 
-func sell_animal(animal: String) -> bool:
+func sell_animal(animal: String, animal_id: String = "") -> bool:
 	if not Progression.ANIMALS.has(animal):
 		return false
 	if get(animal + "_count") <= 0:
@@ -553,9 +588,33 @@ func sell_animal(animal: String) -> bool:
 	if animal_trade_busy(animal):
 		return fail(tr("ERROR_BUSY_ANIMALS"))
 	var info: Dictionary = Progression.ANIMALS[animal]
+	var selected_record: Dictionary = {}
+	for record in SaveManager.animal_records(animal):
+		if animal_id.is_empty() or record.get("id", "") == animal_id:
+			selected_record = record.duplicate(true)
+			animal_id = str(record.get("id", ""))
+			break
+	if selected_record.is_empty():
+		return false
+	var old_roster: Array = SaveManager.animal_records(animal).duplicate(true)
+	var old_count: int = get(animal + "_count")
+	var old_coins: int = coins
+	var participants_before: Dictionary = {}
+	for station_id in SaveManager.STATION_IDS:
+		if SaveManager.stations.has(station_id) and is_instance_valid(SaveManager.stations[station_id]):
+			participants_before[station_id] = SaveManager.stations[station_id].participant_animal_ids.duplicate()
 	set(animal + "_count", get(animal + "_count") - 1)
 	coins += info["sell"]
+	SaveManager.remove_animal_record(animal, animal_id)
+	if not SaveManager.save_game():
+		set(animal + "_count", old_count)
+		coins = old_coins
+		SaveManager.animal_rosters[animal] = old_roster
+		for station_id in participants_before:
+			SaveManager.stations[station_id].participant_animal_ids = participants_before[station_id]
+		return fail(tr("ERROR_SAVE_FAILED"))
 	inventory_changed.emit()
+	AudioManager.play_sfx("ui_success")
 	return true
 
 func animal_capacity(animal: String) -> int:
@@ -600,6 +659,7 @@ func upgrade_structure(id: String) -> bool:
 		# Never shrink a larger capacity carried over from an older save.
 		set(id + "_capacity", maxi(get(id + "_capacity"), cost["capacity"]))
 	inventory_changed.emit()
+	AudioManager.play_sfx("upgrade_success")
 	return true
 
 
@@ -611,6 +671,7 @@ func build_dog_house() -> bool:
 	_pay_material_cost(Progression.DOG_HOUSE_COST)
 	has_dog_house = true
 	inventory_changed.emit()
+	AudioManager.play_sfx("building_place")
 	return true
 
 func ensure_tools_for_level() -> void:
@@ -646,6 +707,7 @@ func upgrade_tool(id: String) -> bool:
 	coins -= price
 	set(id + "_level", next)
 	inventory_changed.emit()
+	AudioManager.play_sfx("upgrade_success")
 	return true
 func is_zone_unlocked(id: String) -> bool:
 	match id:

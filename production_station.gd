@@ -3,7 +3,8 @@ extends Area2D
 signal state_changed
 
 const Progression = preload("res://progression_data.gd")
-@export_enum("feed_mill", "chicken_coop", "cow_shed") var station_id: String = "feed_mill"
+@export_enum("feed_mill", "chicken_coop", "cow_shed", "pig_pen", "sheep_barn") var station_id: String = "feed_mill"
+@export var is_preview: bool = false
 
 var state: String = "IDLE"
 var production_type: String = ""
@@ -20,6 +21,8 @@ var cow_count: int:
 
 
 func _ready() -> void:
+	if is_preview:
+		return
 	add_to_group("farm_interactables")
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
@@ -88,11 +91,13 @@ func produce(recipe: String = "chicken_feed") -> bool:
 		production_type = recipe.to_upper()
 		for item in info["requirements"]:
 			Inventory.set(item, Inventory.get(item) - info["requirements"][item])
+		AudioManager.play_sfx("production_start", global_position)
 	else:
 		var product: Dictionary = Progression.PRODUCTS[station_id]
 		duration = product["time"]
 		production_type = product["item"].to_upper()
 		Inventory.set(product["feed"], Inventory.get(product["feed"]) - 1)
+		AudioManager.play_sfx("animal_feed", global_position)
 	started_at = Time.get_unix_time_from_system()
 	ready_at = started_at + duration
 	state = "PRODUCING"
@@ -126,6 +131,12 @@ func collect() -> bool:
 	ready_at = 0.0
 	Inventory.set(output["item"], Inventory.get(output["item"]) + output["amount"])
 	Inventory.add_exp(output["exp"], false)
+	var collect_sound := "product_collect"
+	if station_id == "chicken_coop": collect_sound = "collect_egg"
+	elif station_id == "cow_shed": collect_sound = "collect_milk"
+	elif station_id == "sheep_barn": collect_sound = "collect_wool"
+	elif station_id == "pig_pen": collect_sound = "item_collect"
+	AudioManager.play_sfx(collect_sound, global_position)
 	_update_display()
 	Inventory.inventory_changed.emit()
 	return true
@@ -139,6 +150,7 @@ func _finish_production() -> void:
 		production_timer.start(remaining)
 		return
 	state = "READY"
+	AudioManager.play_sfx("production_ready", global_position)
 	_update_display()
 	SaveManager.save_game()
 
@@ -187,7 +199,8 @@ func interact(_player: Node2D = null) -> void:
 			if Inventory.get(product["animal"] + "_count") <= 0:
 				hud.show_floating_feedback(tr("ERROR_STATION_PRODUCE"))
 			elif Inventory.get(product["feed"]) <= 0:
-				hud.show_floating_feedback(tr("ANIMAL_NEED_CHICKEN_FEED" if station_id == "chicken_coop" else "ANIMAL_NEED_COW_FEED"))
+				var message_key: String = "ANIMAL_NEED_CHICKEN_FEED" if station_id == "chicken_coop" else "ANIMAL_NEED_COW_FEED" if station_id == "cow_shed" else "ANIMAL_NEED_FEED_GENERIC"
+				hud.show_floating_feedback(tr(message_key) % Localization.display_name(product["feed"]) if station_id in ["pig_pen", "sheep_barn"] else tr(message_key))
 			else:
 				produce()
 		"READY":

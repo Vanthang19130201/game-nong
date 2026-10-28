@@ -1,6 +1,6 @@
 extends Node2D
 
-@export_enum("house", "feed_mill", "chicken_coop", "cow_shed", "fish_market") var building_kind: String = "house"
+@export_enum("house", "feed_mill", "chicken_coop", "cow_shed", "pig_pen", "sheep_barn", "fish_market") var building_kind: String = "house"
 
 func refresh() -> void:
 	var building = get_parent()
@@ -13,6 +13,10 @@ func refresh() -> void:
 			building.get_node("StatusLabel").text = tr("WORLD_CHICKEN_STATUS") % [Inventory.chicken_count, Inventory.animal_capacity("chicken"), tr("WORLD_EGGS_READY") if building.state == "READY" else Localization.state(building.state)]
 		"cow_shed":
 			building.get_node("StatusLabel").text = tr("WORLD_COW_STATUS") % [Inventory.cow_count, Inventory.animal_capacity("cow"), tr("WORLD_MILK_READY") if building.state == "READY" else Localization.state(building.state)]
+		"pig_pen":
+			building.get_node("StatusLabel").text = tr("WORLD_PIG_STATUS") % [Inventory.pig_count, Inventory.animal_capacity("pig"), tr("WORLD_PORK_READY") if building.state == "READY" else Localization.state(building.state)]
+		"sheep_barn":
+			building.get_node("StatusLabel").text = tr("WORLD_SHEEP_STATUS") % [Inventory.sheep_count, Inventory.animal_capacity("sheep"), tr("WORLD_WOOL_READY") if building.state == "READY" else Localization.state(building.state)]
 		"fish_market":
 			_refresh_prompt()
 

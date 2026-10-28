@@ -201,11 +201,13 @@ func place_move() -> bool:
 		if not is_instance_valid(preview):
 			return false
 		if hud._trade(Inventory.buy_building.bind(placing_building,preview,proposed_position),placing_building,1):
+			AudioManager.play_sfx("building_place", proposed_position)
 			exit_mode()
 			return true
 		return false
 	if not placing_decoration.is_empty():
 		if hud.get_parent().decoration_manager.place(preview,proposed_position,preview.rotation_degrees):
+			AudioManager.play_sfx("building_place", proposed_position)
 			exit_mode()
 			return true
 		return false
@@ -227,6 +229,7 @@ func place_move() -> bool:
 			SaveManager.building_positions[selected_id] = previous
 		Inventory.fail(tr("EDIT_SAVE_FAILED"))
 		return false
+	AudioManager.play_sfx("building_place", selected.global_position)
 	if is_plot:
 		var field_visual = hud.get_parent().get_node_or_null("FarmFieldVisual")
 		if field_visual != null:

@@ -64,12 +64,16 @@ func _on_body_changed(_body: Node2D) -> void:
 func _refresh_prompt() -> void:
 	if prompt == null:
 		return
+	var product: Dictionary = station.Progression.PRODUCTS[station.station_id]
 	var near: bool = station.is_visible_in_tree() and station.can_interact()
 	prompt.text = ""
 	if near:
 		match station.state:
 			"HUNGRY": prompt.text = tr("ANIMAL_FEED_PROMPT")
-			"READY": prompt.text = tr("ANIMAL_EGG_PROMPT" if station.station_id == "chicken_coop" else "ANIMAL_MILK_PROMPT")
+			"READY":
+				if station.station_id == "chicken_coop": prompt.text = tr("ANIMAL_EGG_PROMPT")
+				elif station.station_id == "cow_shed": prompt.text = tr("ANIMAL_MILK_PROMPT")
+				else: prompt.text = tr("ANIMAL_COLLECT_PROMPT") % Localization.display_name(product["item"])
 			"PRODUCING": prompt.text = tr("WORLD_PRODUCTION_TIMER") % ceili(maxf(0.0, station.ready_at - Time.get_unix_time_from_system()))
 	var sprite: Sprite2D = get_parent().get_node("BuildingSprite")
 	var rect: Rect2 = sprite.transform * sprite.get_rect()

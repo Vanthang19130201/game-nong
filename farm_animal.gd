@@ -3,12 +3,28 @@ extends Area2D
 # Each animal uses the existing central interaction dispatcher. Production and
 # saved counts remain entirely in Inventory and the station.
 const APPEARANCE: Dictionary = {
-	"chicken": {"frames": preload("res://assets/animals/chicken/chicken_frames.tres"), "height": 40.0, "speed": 28.0, "radius": 8.0},
-	"cow": {"frames": preload("res://assets/animals/cow/cow_frames.tres"), "height": 64.0, "speed": 20.0, "radius": 12.0}
+	"chicken": {"adult_frames": preload("res://assets/animals/chicken/chicken_frames.tres"), "adult_size":40.0, "speed":28.0, "radius":8.0},
+	"cow": {"adult_frames": preload("res://assets/animals/cow/cow_frames.tres"), "adult_size":64.0, "speed":20.0, "radius":12.0},
+	"pig": {"adult_size":56.0, "speed":22.0, "radius":11.0},
+	"sheep": {"adult_size":58.0, "speed":20.0, "radius":11.0}
 }
+const AnimalData = preload("res://animal_data.gd")
+const STAGE_TEXTURES: Dictionary = {
+	# Use project-owned adult art as a safe visual fallback for early growth
+	# stages until separate chick/calf art exists.
+	"chicken": {1:"res://assets/animals/chicken/chicken.png", 2:"res://assets/animals/chicken/chicken.png"},
+	"cow": {1:"res://assets/animals/cow/cow.png", 2:"res://assets/animals/cow/cow.png"},
+	"pig": {1:"res://assets/animals/pig/pig.png", 2:"res://assets/animals/pig/pig.png", 3:"res://assets/animals/pig/pig.png"},
+	"sheep": {1:"res://assets/animals/sheep/sheep.png", 2:"res://assets/animals/sheep/sheep.png", 3:"res://assets/animals/sheep/sheep.png"}
+}
+const ANIMATIONS: Array[String] = ["idle_down", "idle_up", "idle_left", "idle_right", "walk_down", "walk_up", "walk_left", "walk_right"]
 
 var herd: Node2D
 var animal_type: String
+var animal_id: String = ""
+var born_at: float = 0.0
+var growth_stage: int = 3
+var lucky: bool = false
 var sale_pending: bool = false
 var target: Vector2
 var walking: bool = false
@@ -25,28 +41,69 @@ func _ready() -> void:
 	add_to_group("farm_interactables")
 	idle_timer.timeout.connect(choose_target)
 
-func configure(kind: String, group: Node2D) -> void:
+func configure(kind: String, group: Node2D, record: Dictionary) -> void:
 	herd = group
 	animal_type = kind
+	update_record(record)
 	var data: Dictionary = APPEARANCE[kind]
 	speed = data["speed"]
-	body_radius = data["radius"]
-	spacing = data["height"] * 0.8
-	sprite.sprite_frames = data["frames"]
-	var frame: Texture2D = sprite.sprite_frames.get_frame_texture("idle_down", 0)
-	sprite.scale = Vector2.ONE * data["height"] / frame.get_height()
-	sprite.offset.y = -frame.get_height() / 2.0
-	var shape := RectangleShape2D.new()
-	shape.size = frame.get_size() * sprite.scale
-	$CollisionShape2D.shape = shape
-	$CollisionShape2D.position.y = -data["height"] / 2.0
+	apply_appearance()
 	if not is_instance_valid(status_bubble):
 		status_bubble = preload("res://animal_status_bubble.gd").new()
 		status_bubble.name = "StatusBubble"
 		add_child(status_bubble)
-	status_bubble.configure(data["height"])
+	status_bubble.configure(data["adult_size"] * AnimalData.scale_for(kind,growth_stage))
 	refresh_status()
 	rest()
+
+func update_record(record: Dictionary) -> void:
+	if record.is_empty():
+		return
+	var previous_stage: int = growth_stage
+	animal_id = str(record.get("id", ""))
+	born_at = float(record.get("born_at", Time.get_unix_time_from_system()))
+	lucky = record.get("lucky", AnimalData.lucky_pig(animal_id)) == true
+	growth_stage = AnimalData.stage_for(animal_type,born_at)
+	if previous_stage != growth_stage and is_inside_tree():
+		apply_appearance()
+		if is_instance_valid(status_bubble):
+			status_bubble.configure(APPEARANCE[animal_type]["adult_size"] * AnimalData.scale_for(animal_type,growth_stage))
+
+func update_growth() -> void:
+	var new_stage: int = AnimalData.stage_for(animal_type,born_at)
+	if new_stage == growth_stage:
+		return
+	growth_stage = new_stage
+	apply_appearance()
+	if is_instance_valid(status_bubble):
+		status_bubble.configure(APPEARANCE[animal_type]["adult_size"] * AnimalData.scale_for(animal_type,growth_stage))
+	refresh_status()
+
+func apply_appearance() -> void:
+	var data: Dictionary = APPEARANCE[animal_type]
+	body_radius = data["radius"]
+	spacing = data["adult_size"] * AnimalData.scale_for(animal_type,growth_stage) * 0.8
+	if growth_stage >= 3 and data.has("adult_frames"):
+		sprite.sprite_frames = data["adult_frames"]
+	else:
+		sprite.sprite_frames = _create_stage_frames(STAGE_TEXTURES[animal_type][growth_stage])
+	var frame: Texture2D = sprite.sprite_frames.get_frame_texture("idle_down", 0)
+	var display_size: float = float(data["adult_size"]) * AnimalData.scale_for(animal_type,growth_stage)
+	sprite.scale = Vector2.ONE * display_size / frame.get_height()
+	sprite.offset.y = -frame.get_height() / 2.0
+	var shape := RectangleShape2D.new()
+	shape.size = frame.get_size() * sprite.scale
+	$CollisionShape2D.shape = shape
+	$CollisionShape2D.position.y = -display_size / 2.0
+
+func _create_stage_frames(path: String) -> SpriteFrames:
+	var frames := SpriteFrames.new()
+	var texture: Texture2D = load(path)
+	for animation_name in ANIMATIONS:
+		frames.add_animation(animation_name)
+		frames.set_animation_loop(animation_name,true)
+		frames.add_frame(animation_name,texture)
+	return frames
 
 func refresh_status() -> void:
 	if not is_instance_valid(status_bubble) or not is_instance_valid(herd):
@@ -76,7 +133,7 @@ func sell_confirmed() -> bool:
 	# instance, rather than the last animal in the group.
 	sale_pending = true
 	var previous_coins: int = Inventory.coins
-	if not Inventory.sell_animal(animal_type):
+	if not Inventory.sell_animal(animal_type,animal_id):
 		sale_pending = false
 		return false
 	if is_instance_valid(player.hud):

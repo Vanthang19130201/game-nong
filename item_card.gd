@@ -9,17 +9,35 @@ func build(id: String, title: String) -> void:
 	item_id = id
 	custom_minimum_size.x = 190
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var card_style := StyleBoxFlat.new()
+	card_style.bg_color = Color("f7edcf")
+	card_style.border_color = Color("a97750")
+	card_style.set_border_width_all(2)
+	card_style.set_corner_radius_all(11)
+	card_style.set_content_margin_all(9)
+	add_theme_stylebox_override("panel", card_style)
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation",8)
 	add_child(content)
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation",8)
 	content.add_child(header)
+	var icon_frame := PanelContainer.new()
+	icon_frame.custom_minimum_size = Vector2(54, 54)
+	var icon_style := StyleBoxFlat.new()
+	icon_style.bg_color = Color("efe0b9")
+	icon_style.border_color = Color("d2b780")
+	icon_style.set_border_width_all(1)
+	icon_style.set_corner_radius_all(8)
+	icon_frame.add_theme_stylebox_override("panel", icon_style)
+	header.add_child(icon_frame)
 	var icon := Control.new()
 	icon.set_script(Icon)
 	icon.item_id = id
-	icon.custom_minimum_size = Vector2(40,40)
-	header.add_child(icon)
+	icon.custom_minimum_size = Vector2(46,46)
+	icon.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	icon.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	icon_frame.add_child(icon)
 	var label := Label.new()
 	label.text = title
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

@@ -2,7 +2,7 @@ extends Node2D
 
 # Low, non-colliding pen artwork. As a child of its building it follows moves
 # and saved positions automatically; animal movement remains managed by AnimalGroup.
-@export_enum("chicken", "cow") var pen_type: String = "chicken"
+@export_enum("chicken", "cow", "pig", "sheep") var pen_type: String = "chicken"
 
 const DARK_WOOD := Color("5d412d")
 const WOOD := Color("9b7047")
@@ -20,6 +20,14 @@ func _ready() -> void:
 		half_size = Vector2(165, 165)
 		center_offset = Vector2(0, 20)
 		gate_width = 68.0
+	elif pen_type == "pig":
+		half_size = Vector2(142, 142)
+		center_offset = Vector2(0, 12)
+		gate_width = 72.0
+	elif pen_type == "sheep":
+		half_size = Vector2(145, 145)
+		center_offset = Vector2(0, 16)
+		gate_width = 72.0
 	else:
 		half_size = Vector2(145, 145)
 		center_offset = Vector2.ZERO
@@ -114,13 +122,28 @@ func _draw_props(center: Vector2) -> void:
 		_barrel(center + Vector2(94, 86), 0.62)
 		for offset in [Vector2(-45, 38), Vector2(-59, 42), Vector2(-30, 46), Vector2(28, 58)]:
 			draw_circle(center + offset, 2.0, Color("d8bd79"))
-	else:
+	elif pen_type == "cow":
 		_trough(center + Vector2(-112, 57), 1.2, false)
 		_trough(center + Vector2(111, 74), 0.72, true)
 		_hay(center + Vector2(-117, 106), 0.78)
 		_barrel(center + Vector2(112, -90), 0.72)
 		_draw_ellipse(center + Vector2(-30, 83), Vector2(35, 18), Color("72563e", 0.21))
 		_draw_ellipse(center + Vector2(-27, 80), Vector2(23, 10), Color("977849", 0.18))
+	elif pen_type == "pig":
+		_trough(center + Vector2(-108, 54), 1.08, false)
+		_trough(center + Vector2(107, 54), 0.74, true)
+		_hay(center + Vector2(-105, 103), 0.72)
+		_barrel(center + Vector2(108, -84), 0.68)
+		_draw_ellipse(center + Vector2(50, 92), Vector2(32, 15), Color("72563e", 0.22))
+		_draw_ellipse(center + Vector2(50, 89), Vector2(21, 9), Color("9a7951", 0.18))
+	else:
+		_trough(center + Vector2(-108, 61), 1.02, false)
+		_trough(center + Vector2(105, 64), 0.72, true)
+		_hay(center + Vector2(-108, 105), 0.78)
+		_barrel(center + Vector2(108, -83), 0.64)
+		# A small wool bundle gives the sheep yard its own visual identity.
+		for offset in [Vector2(76, 92), Vector2(88, 86), Vector2(98, 94), Vector2(86, 99)]:
+			draw_circle(center + offset, 7.0, Color("f1e4c9"))
 
 
 func _draw_grass_edges(center: Vector2) -> void:
@@ -130,7 +153,7 @@ func _draw_grass_edges(center: Vector2) -> void:
 	var bottom := center.y + half_size.y - 18
 	for point in [Vector2(left, top), Vector2(right, top), Vector2(left, bottom), Vector2(right, bottom)]:
 		_tuft(point)
-	if pen_type == "cow":
+	if pen_type in ["cow", "pig", "sheep"]:
 		_tuft(Vector2(center.x - 138, center.y - 55))
 		_tuft(Vector2(center.x + 138, center.y - 18))
 	else:

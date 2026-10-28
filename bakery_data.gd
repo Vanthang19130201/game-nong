@@ -7,7 +7,8 @@ const RECIPES: Dictionary = {
 	"carrot_pie": {"name": "Bánh cà rốt", "level": 5, "time": 45.0, "price": 80, "requirements": {"wheat": 2, "carrot": 1}},
 	"egg_cake": {"name": "Bánh trứng", "level": 7, "time": 30.0, "price": 45, "requirements": {"wheat": 1, "egg": 1}},
 	"milk_cake": {"name": "Bánh sữa", "level": 10, "time": 40.0, "price": 60, "requirements": {"wheat": 1, "milk": 1}},
-	"pancake": {"name": "Bánh kếp", "level": 11, "time": 50.0, "price": 85, "requirements": {"wheat": 1, "egg": 1, "milk": 1}}
+	"pancake": {"name": "Bánh kếp", "level": 11, "time": 50.0, "price": 85, "requirements": {"wheat": 1, "egg": 1, "milk": 1}},
+	"meat_pie": {"name":"Meat Pie","level":13,"time":55.0,"price":520,"order_price":624,"requirements":{"wheat":1,"pork":1}}
 }
 
 static func restore_queue(value: Variant) -> Array:

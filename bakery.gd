@@ -40,6 +40,7 @@ func enqueue(item: String) -> bool:
 	SaveManager.bakery_queue.append({"item": item, "state": "QUEUED", "started_at": start, "ready_at": start + recipe["time"]})
 	refresh()
 	Inventory.inventory_changed.emit()
+	AudioManager.play_sfx("production_start", global_position)
 	return true
 
 func collect() -> bool:
@@ -53,6 +54,7 @@ func collect() -> bool:
 	Inventory.set(item, Inventory.get(item) + 1)
 	refresh()
 	Inventory.inventory_changed.emit()
+	AudioManager.play_sfx("product_collect", global_position)
 	get_tree().call_group("farm_hud", "show_transaction_feedback", tr("TRADE_ITEM") % [1, Localization.display_name(item)])
 	return true
 
@@ -72,4 +74,5 @@ func refresh() -> void:
 
 func _finish_production() -> void:
 	refresh()
+	AudioManager.play_sfx("production_ready", global_position)
 	SaveManager.save_game()

@@ -4,13 +4,15 @@ const AnimalScene = preload("res://farm_animal.tscn")
 const Placement = preload("res://building_placement.gd")
 const FarmData = preload("res://farm_data.gd")
 
-@export_enum("chicken", "cow") var animal_type: String = "chicken"
+@export_enum("chicken", "cow", "pig", "sheep") var animal_type: String = "chicken"
 @export_range(120.0, 180.0) var wander_radius: float = 150.0
 var obstacles: Array[Rect2] = []
 var editing: bool = false
 var ground_y: float = 0.0
 var last_home: Vector2
 var refresh_timer: Timer
+var growth_timer: Timer
+var vocal_timer: Timer
 var home: Node2D
 var hud: Node
 
@@ -22,13 +24,23 @@ func _ready() -> void:
 	refresh_timer.wait_time = 0.5
 	refresh_timer.timeout.connect(_refresh_area)
 	add_child(refresh_timer)
+	growth_timer = Timer.new()
+	growth_timer.name = "GrowthRefreshTimer"
+	growth_timer.wait_time = 10.0
+	growth_timer.timeout.connect(_refresh_growth)
+	add_child(growth_timer)
+	vocal_timer = Timer.new()
+	vocal_timer.name = "AmbientVocalTimer"
+	vocal_timer.one_shot = true
+	vocal_timer.timeout.connect(_try_animal_vocal)
+	add_child(vocal_timer)
 	home.state_changed.connect(_refresh_status)
 	# farm.gd owns spawning and count synchronization, not the station scene.
 
 func animals() -> Array[Node]:
 	var result: Array[Node] = []
 	for child in get_children():
-		if child != refresh_timer:
+		if child not in [refresh_timer, growth_timer, vocal_timer]:
 			result.append(child)
 	return result
 
@@ -36,35 +48,67 @@ func _refresh_status() -> void:
 	for animal in animals():
 		animal.refresh_status()
 
+func _refresh_growth() -> void:
+	for animal in animals():
+		animal.update_growth()
+
 func sync_count() -> void:
-	var station_id: String = "chicken_coop" if animal_type == "chicken" else "cow_shed"
-	var count: int = Inventory.get(animal_type + "_count") if Inventory.owns_building(station_id) else 0
-	var current: Array[Node] = animals()
-	while current.size() > count:
-		var animal: Node = current.back()
-		for candidate in current:
-			if candidate.sale_pending:
-				animal = candidate
-				break
-		current.erase(animal)
-		animal.retire()
-		remove_child(animal)
-		animal.queue_free()
+	var station_id: String = Inventory.Progression.ANIMALS[animal_type]["building"]
+	var records: Array = SaveManager.animal_records(animal_type).duplicate(true) if Inventory.owns_building(station_id) else []
+	var existing: Dictionary = {}
+	for animal in animals():
+		existing[animal.animal_id] = animal
+	for animal_id in existing.keys():
+		if not records.any(func(record: Dictionary) -> bool: return record.get("id", "") == animal_id):
+			var retired: Node = existing[animal_id]
+			retired.retire()
+			remove_child(retired)
+			retired.queue_free()
 	global_position = home.global_position
 	_cache_obstacles()
-	while current.size() < count:
+	for record in records:
+		var animal_id: String = str(record["id"])
+		if existing.has(animal_id) and is_instance_valid(existing[animal_id]):
+			existing[animal_id].update_record(record)
+			continue
 		var animal = AnimalScene.instantiate()
 		add_child(animal)
-		animal.configure(animal_type, self)
+		animal.configure(animal_type, self, record)
 		_relocate(animal)
-		current.append(animal)
-	set_process(count > 0)
-	if count > 0:
+	set_process(not records.is_empty())
+	if not records.is_empty():
 		if refresh_timer.is_stopped():
 			refresh_timer.start()
+		if growth_timer.is_stopped():
+			growth_timer.start()
+		if vocal_timer.is_stopped():
+			_schedule_animal_vocal()
 	else:
 		refresh_timer.stop()
+		growth_timer.stop()
+		vocal_timer.stop()
 	last_home = global_position
+
+func _schedule_animal_vocal() -> void:
+	if is_instance_valid(vocal_timer):
+		vocal_timer.start(randf_range(8.0, 20.0))
+
+func _try_animal_vocal() -> void:
+	var player := get_tree().get_first_node_in_group("farm_player")
+	var nearby: Array[Node] = []
+	if is_instance_valid(player):
+		for animal in animals():
+			if is_instance_valid(animal) and animal.visible and player.global_position.distance_to(animal.global_position) <= 420.0:
+				nearby.append(animal)
+	if not nearby.is_empty():
+		var animal: Node = nearby[randi() % nearby.size()]
+		var sound_id := "chicken_cluck"
+		match animal.animal_type:
+			"cow": sound_id = "cow_moo"
+			"pig": sound_id = "pig_oink"
+			"sheep": sound_id = "sheep_baa"
+		AudioManager.play_sfx(sound_id, animal.global_position)
+	_schedule_animal_vocal()
 
 func _process(_delta: float) -> void:
 	if not is_instance_valid(home):

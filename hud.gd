@@ -347,6 +347,7 @@ func _trade(action: Callable, item: String, amount: int) -> bool:
 	if not action.call():
 		return false
 	show_transaction_feedback(tr("TRADE_ITEM") % [amount, Localization.display_name(item)] + "\n" + tr("TRADE_COINS") % (Inventory.coins - previous_coins))
+	AudioManager.play_sfx("ui_success")
 	return true
 
 
@@ -962,6 +963,7 @@ func _cancel_order(order_id: String) -> void:
 
 func _on_order_completed(_coins: int, experience: int) -> void:
 	# Coin changes already use the shared Inventory floating feedback.
+	AudioManager.play_sfx("ui_success")
 	if experience > 0:
 		show_floating_feedback(tr("ORDER_EXP_FEEDBACK") % experience)
 
@@ -1210,6 +1212,10 @@ func _setup_cozy_ui() -> void:
 	add_child(hotbar)
 	hotbar.visible = not storage_panel.visible
 	var menu: VBoxContainer = $SettingsPanel/Margin/Content/ContentScroll/Body
+	var audio_controls := VBoxContainer.new()
+	audio_controls.name = "AudioSettings"
+	audio_controls.set_script(preload("res://audio_settings_controls.gd"))
+	menu.add_child(audio_controls)
 	var shortcuts: Array = [
 		["UI_MENU_SHOP",_toggle_shop], ["UI_MENU_STORAGE",_toggle_storage],
 		["UI_MENU_ORDERS",open_orders], ["COLLECTION_TITLE",open_collection_book]
@@ -1237,7 +1243,7 @@ func _setup_cozy_ui() -> void:
 
 
 func _fit_menu() -> void:
-	settings_panel.size = Vector2(360,380).min(get_viewport().get_visible_rect().size-Vector2(24,32))
+	settings_panel.size = Vector2(390,510).min(get_viewport().get_visible_rect().size-Vector2(24,32))
 	settings_panel.position = (get_viewport().get_visible_rect().size-settings_panel.size)/2
 
 

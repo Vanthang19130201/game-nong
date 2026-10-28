@@ -4,6 +4,7 @@ var continue_button: Button
 var selection: Control
 var menu: CenterContainer
 var starting: bool = false
+var audio_settings_overlay: Control
 
 
 func _ready() -> void:
@@ -57,6 +58,11 @@ func _ready() -> void:
 	new_game.custom_minimum_size.y = 48
 	new_game.pressed.connect(show_character_select)
 	content.add_child(new_game)
+	var settings_button := Button.new()
+	settings_button.text = tr("SETTINGS")
+	settings_button.custom_minimum_size.y = 44
+	settings_button.pressed.connect(_open_audio_settings)
+	content.add_child(settings_button)
 
 	if not continue_button.disabled:
 		continue_button.grab_focus()
@@ -147,3 +153,43 @@ func continue_game() -> void:
 
 func _enter_farm() -> void:
 	get_tree().change_scene_to_file.call_deferred("res://main.tscn")
+
+func _open_audio_settings() -> void:
+	if is_instance_valid(audio_settings_overlay):
+		audio_settings_overlay.show()
+		return
+	audio_settings_overlay = Control.new()
+	audio_settings_overlay.name = "AudioSettingsOverlay"
+	audio_settings_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	audio_settings_overlay.z_index = 20
+	add_child(audio_settings_overlay)
+	var shade := ColorRect.new()
+	shade.color = Color(0.12, 0.10, 0.08, 0.35)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	audio_settings_overlay.add_child(shade)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	audio_settings_overlay.add_child(center)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(340, 220)
+	center.add_child(panel)
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 20)
+	panel.add_child(margin)
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 14)
+	margin.add_child(content)
+	var title := Label.new()
+	title.text = tr("SETTINGS")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	content.add_child(title)
+	var controls := VBoxContainer.new()
+	controls.set_script(preload("res://audio_settings_controls.gd"))
+	content.add_child(controls)
+	var close := Button.new()
+	close.text = tr("UI_CLOSE")
+	close.custom_minimum_size.y = 40
+	close.pressed.connect(audio_settings_overlay.hide)
+	content.add_child(close)

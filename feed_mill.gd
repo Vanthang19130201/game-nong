@@ -40,6 +40,7 @@ func produce(recipe: String = "chicken_feed") -> bool:
 	_reconcile()
 	_update_display()
 	Inventory.inventory_changed.emit()
+	AudioManager.play_sfx("production_start", global_position)
 	return true
 
 func collect() -> bool:
@@ -72,6 +73,7 @@ func cancel_job(job: Dictionary) -> bool:
 	_update_display()
 	if cancelled:
 		Inventory.inventory_changed.emit()
+		AudioManager.play_sfx("product_collect", global_position)
 	elif completed:
 		SaveManager.save_game()
 	collecting = false
@@ -117,6 +119,7 @@ func collect_all() -> bool:
 	_update_display()
 	if collected > 0:
 		Inventory.inventory_changed.emit()
+		AudioManager.play_sfx("product_collect", global_position)
 	elif completed:
 		SaveManager.save_game()
 	if full:
@@ -127,7 +130,9 @@ func collect_all() -> bool:
 
 func _finish_production() -> void:
 	_copy_active_timestamps()
-	_reconcile()
+	var completed := _reconcile()
+	if completed:
+		AudioManager.play_sfx("production_ready", global_position)
 	_update_display()
 	SaveManager.save_game()
 

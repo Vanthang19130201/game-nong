@@ -15,6 +15,10 @@ run/main_scene="res://start_menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[audio]
+
+buses/default_bus_layout="res://assets/audio/default_bus_layout.tres"
+
 [autoload]
 
 Localization="*res://localization.gd"
@@ -25,6 +29,7 @@ DiscoveryManager="*res://discovery_manager.gd"
 WeatherManager="*res://weather_manager.gd"
 FarmEventManager="*res://farm_event_manager.gd"
 SaveManager="*res://save_manager.gd"
+AudioManager="*res://audio_manager.gd"
 
 [display]
 

@@ -145,6 +145,7 @@ func set_equipped_tool(item_id: String) -> void:
 func play_tool_swing(item_id: String, target_world_position: Vector2) -> void:
 	if item_id != equipped_tool_id or not is_instance_valid(tool_visual):
 		return
+	AudioManager.play_sfx("axe_swing" if item_id == "axe" else "hammer_swing", global_position)
 	tool_visual.play_swing(target_world_position)
 
 

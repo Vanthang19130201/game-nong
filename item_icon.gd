@@ -2,11 +2,13 @@ extends Control
 
 # Crop artwork with project-owned vector fallbacks for other items and seeds.
 var _crop_texture: Texture2D
+var _visual_texture: Texture2D
 
 @export var item_id: String = "":
 	set(value):
 		item_id = value
 		_crop_texture = _get_crop_texture()
+		_visual_texture = _get_visual_texture()
 		queue_redraw()
 
 const CROP_TEXTURE_PATHS: Dictionary = {
@@ -15,6 +17,28 @@ const CROP_TEXTURE_PATHS: Dictionary = {
 	"carrot": "res://assets/crops/carrot/stage_3.png",
 }
 static var _texture_cache: Dictionary = {}
+static var _visual_texture_cache: Dictionary = {}
+const VISUAL_TEXTURE_PATHS: Dictionary = {
+	"chicken": "res://assets/animals/chicken/chicken.png",
+	"cow": "res://assets/animals/cow/cow.png",
+	"pig": "res://assets/animals/pig/pig.png",
+	"sheep": "res://assets/animals/sheep/sheep.png",
+	"house": "res://assets/buildings/house/house1.png",
+	"warehouse": "res://assets/buildings/warehouse/warehouse.svg",
+	"feed_mill": "res://assets/buildings/feed_mill/feed_mill.svg",
+	"chicken_coop": "res://assets/buildings/chicken_coop/chicken_coop.png",
+	"cow_shed": "res://assets/buildings/cow_shed/cow_shed.png",
+	"pig_pen": "res://assets/buildings/pig_pen/pig_pen.png",
+	"sheep_barn": "res://assets/buildings/sheep_barn/sheep_barn.png",
+	"bakery": "res://assets/buildings/bakery/bakery.svg",
+	"dairy": "res://assets/buildings/dairy/dairy.svg",
+	"spinning_machine": "res://assets/buildings/spinning_machine/spinning_machine.svg",
+	"dog_house": "res://assets/buildings/dog_house/dog_house.svg",
+	"market_stall": "res://assets/buildings/market_stall/market_stall.svg",
+	"order_board": "res://assets/buildings/order_board/order_board.svg",
+	"fish_market": "res://assets/buildings/fish_market/fish_market.svg",
+	"fishing_bridge": "res://assets/buildings/fishing_bridge/fishing_bridge.svg"
+}
 
 const INK := Color("68462f")
 const GREEN := Color("67974e")
@@ -31,6 +55,7 @@ const COLORS: Dictionary = {
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_crop_texture = _get_crop_texture()
+	_visual_texture = _get_visual_texture()
 	resized.connect(queue_redraw)
 
 func _draw() -> void:
@@ -39,6 +64,12 @@ func _draw() -> void:
 		if texture_size.x > 0.0 and texture_size.y > 0.0:
 			var fit_size := texture_size * minf(size.x / texture_size.x, size.y / texture_size.y)
 			draw_texture_rect(_crop_texture, Rect2((size - fit_size) * 0.5, fit_size), false)
+			return
+	if _visual_texture != null:
+		var visual_size := Vector2(_visual_texture.get_size())
+		if visual_size.x > 0.0 and visual_size.y > 0.0:
+			var fit_size := visual_size * minf(size.x * 0.9 / visual_size.x, size.y * 0.9 / visual_size.y)
+			draw_texture_rect(_visual_texture, Rect2((size - fit_size) * 0.5, fit_size), false)
 			return
 	var side: float = minf(size.x,size.y)
 	draw_set_transform((size-Vector2.ONE*side)/2,0,Vector2.ONE*side/64)
@@ -157,6 +188,15 @@ func _draw() -> void:
 			_poly([Vector2(13,12),Vector2(43,12),Vector2(52,22),Vector2(52,52),Vector2(13,52)],Color("e1d0a7"))
 			draw_line(Vector2(21,25),Vector2(43,25),Color("897454"),2,true)
 			draw_line(Vector2(21,33),Vector2(39,33),Color("897454"),2,true)
+	elif id == "loom":
+		# A small woven-frame mark keeps the Loom card recognizable before a
+		# dedicated production-building illustration is added.
+		draw_rect(Rect2(15,12,7,44),Color("9b7047"),true)
+		draw_rect(Rect2(42,12,7,44),Color("9b7047"),true)
+		draw_rect(Rect2(18,15,28,5),Color("c49a62"),true)
+		draw_rect(Rect2(18,47,28,5),Color("c49a62"),true)
+		for x in range(22,45,5):
+			draw_line(Vector2(x,21),Vector2(x-2,46),Color("efe0bd"),2,true)
 	elif id in ["chicken_feed","cow_feed","cotton_thread"]:
 		draw_style_box(_rounded(Color("b88757")),Rect2(15,19,34,36))
 		draw_circle(Vector2(32,36),11,Color("e9cb8d"))
@@ -176,6 +216,17 @@ func _get_crop_texture() -> Texture2D:
 		return cached if cached is Texture2D else null
 	var loaded: Resource = load(path) if ResourceLoader.exists(path) else null
 	_texture_cache[path] = loaded
+	return loaded if loaded is Texture2D else null
+
+func _get_visual_texture() -> Texture2D:
+	var path: String = VISUAL_TEXTURE_PATHS.get(item_id, "")
+	if path.is_empty():
+		return null
+	if _visual_texture_cache.has(path):
+		var cached: Variant = _visual_texture_cache[path]
+		return cached if cached is Texture2D else null
+	var loaded: Resource = load(path) if ResourceLoader.exists(path) else null
+	_visual_texture_cache[path] = loaded
 	return loaded if loaded is Texture2D else null
 
 func _poly(points: Array, color: Color) -> void:

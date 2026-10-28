@@ -36,8 +36,8 @@ func _process(_delta: float) -> void:
 func interact(_player: Node2D = null) -> void:
 	if can_interact():
 		var manager := get_tree().get_first_node_in_group("dig_spot_manager")
-		if is_instance_valid(manager):
-			manager.collect_spot(spot_id)
+		if is_instance_valid(manager) and manager.collect_spot(spot_id):
+			AudioManager.play_sfx("dig_find" if is_hidden_treasure else "dig_hit", global_position)
 
 func get_interaction_position() -> Vector2:
 	return global_position

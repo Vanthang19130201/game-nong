@@ -178,5 +178,7 @@ func _sell(amount: int) -> void:
 	_refresh_selection()
 	if not Inventory.sell_item(selected_item,amount):
 		get_tree().call_group("farm_hud","show_floating_feedback",tr("STALL_NOT_ENOUGH_ITEMS"))
+	else:
+		AudioManager.play_sfx("ui_success")
 	selling = false
 	refresh()

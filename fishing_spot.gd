@@ -295,6 +295,11 @@ func _begin_cast() -> bool:
 	_set_visual_mode(
 		"WAITING"
 	)
+	AudioManager.play_sfx("fishing_cast", session_player_origin)
+	get_tree().create_timer(0.22).timeout.connect(func() -> void:
+		if state == State.WAITING_FOR_BITE:
+			AudioManager.play_sfx("fishing_splash", session_cast_world_position)
+	)
 
 	return true
 
@@ -375,6 +380,7 @@ func _advance_state() -> void:
 			_set_visual_mode(
 				"BITE"
 			)
+			AudioManager.play_sfx("fishing_bite", session_cast_world_position)
 
 			if now() >= deadline:
 				_fail(
@@ -467,10 +473,11 @@ func _catch_fish() -> void:
 		+ CATCH_DISPLAY_TIME
 	)
 
-	Inventory.add_item(
+	if Inventory.add_item(
 		fish,
 		1
-	)
+	):
+		AudioManager.play_sfx("treasure_found" if TreasureData.ITEMS.has(fish) else "fish_caught", session_cast_world_position)
 
 
 func _roll_fish() -> String:
@@ -531,6 +538,7 @@ func _fail(
 	last_caught_fish = ""
 
 	state = State.FAILED
+	AudioManager.play_sfx("fishing_fail", session_cast_world_position)
 
 	_set_visual_mode(
 		"FAILED"
