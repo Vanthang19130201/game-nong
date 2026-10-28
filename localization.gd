@@ -114,8 +114,16 @@ func _enter_tree() -> void:
 	for locale in CATALOGS:
 		var translation := Translation.new()
 		translation.locale = locale
-		for key in CATALOGS[locale].MESSAGES:
-			translation.add_message(key, CATALOGS[locale].MESSAGES[key])
+		var messages: Dictionary = CATALOGS[locale].MESSAGES
+		for key in messages:
+			translation.add_message(key, messages[key])
+		# English copy is still being expanded.  A complete Vietnamese fallback is
+		# preferable to exposing an untranslated raw key in a live UI.
+		if locale == "en":
+			var vietnamese: Dictionary = CATALOGS["vi"].MESSAGES
+			for key in vietnamese:
+				if not messages.has(key):
+					translation.add_message(key, vietnamese[key])
 		TranslationServer.add_translation(translation)
 	TranslationServer.set_locale("vi")
 

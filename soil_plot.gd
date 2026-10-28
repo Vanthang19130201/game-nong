@@ -148,6 +148,8 @@ func harvest() -> void:
 		return
 	var previous_planted_at: float = planted_at
 	var previous_ready_at: float = ready_at
+	if $Visuals.has_method("play_harvest_pop"):
+		$Visuals.play_harvest_pop()
 	_clear_crop()
 	if not Inventory.collect_crop(harvested_crop, output_item, HARVEST_AMOUNT):
 		# Inventory preflight and grant stay in one synchronous action. Restore the

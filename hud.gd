@@ -1109,7 +1109,23 @@ func _buy_animal(animal: String) -> void:
 
 
 func _upgrade_structure(id: String) -> void:
-	Inventory.upgrade_structure(id)
+	if Inventory.upgrade_structure(id):
+		_play_world_pop(SaveManager.buildings.get(id))
+
+
+func _play_world_pop(subject: Variant) -> void:
+	# A small visual confirmation for successful build/upgrade transactions.
+	# It changes no placement, collision, save field, or gameplay timer.
+	if not (subject is Node2D):
+		return
+	var node := subject as Node2D
+	if not is_instance_valid(node):
+		return
+	var base_scale := node.scale
+	node.scale = base_scale * 0.9
+	var tween := node.create_tween()
+	tween.tween_property(node, "scale", base_scale * 1.045, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(node, "scale", base_scale, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
 func _build_dog_house() -> void:

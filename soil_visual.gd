@@ -13,6 +13,8 @@ const FarmData = preload("res://farm_data.gd")
 @onready var default_soil_texture: Texture2D = $SoilSprite.texture
 var displayed_stage: int = 0
 var refresh_elapsed: float = 0.0
+var sway_phase: float = 0.0
+var crop_base_position := Vector2(0, 12)
 
 func refresh() -> void:
 	var label: Label = plot.get_node("PlantLabel")
@@ -38,7 +40,7 @@ func refresh() -> void:
 	# The next-plot preview must sit under the Player, not paint over their feet.
 	z_index = -1 if is_next_plot else 0
 	$LockedMarker.z_index = 0
-	set_process(unlocked and plot.state == plot.PlotState.GROWING)
+	set_process(unlocked and plot.state != plot.PlotState.EMPTY)
 	$GrowthTime.visible = unlocked and plot.state == plot.PlotState.GROWING
 	refresh_elapsed = 0.0
 	_refresh_crop()
@@ -73,6 +75,16 @@ func _draw() -> void:
 	draw_circle(Vector2(17, 13), 1.8, Color("f3e5ca"))
 
 func _process(delta: float) -> void:
+	sway_phase += delta
+	if $CropSprite.visible:
+		var mature: bool = plot.state == plot.PlotState.READY
+		var strength := 0.027 if mature else 0.014
+		$CropSprite.rotation = sin(sway_phase * (1.8 if mature else 1.35)) * strength
+		$CropSprite.position = crop_base_position + Vector2(sin(sway_phase * 1.4) * (1.0 if mature else 0.45), 0)
+		# Keep the crop rooted to the soil while it sways. Rotating a sprite
+		# about its center otherwise makes its feet visually float by a pixel.
+		var crop_rect: Rect2 = $CropSprite.transform * $CropSprite.get_rect()
+		$CropSprite.position.y += crop_base_position.y - crop_rect.end.y
 	refresh_elapsed += delta
 	if refresh_elapsed >= 0.25:
 		refresh_elapsed = 0.0
@@ -91,6 +103,8 @@ func _refresh_crop() -> void:
 	$CropAccent.set_crop_visual(displayed_stage, plot.state == plot.PlotState.READY)
 	$CropSprite.hide()
 	$FallbackCropVisual.hide()
+	$CropSprite.rotation = 0.0
+	$CropSprite.position = crop_base_position
 	if displayed_stage == 0:
 		$CropSprite.texture = null
 		return
@@ -117,3 +131,28 @@ func _refresh_crop() -> void:
 		$FallbackCropVisual.position = Vector2(-target_size.x / 2.0, 12.0 - target_size.y)
 		$FallbackCropVisual.modulate = Color.WHITE if displayed_stage == 3 else Color(0.75,1,0.7)
 		$FallbackCropVisual.show()
+
+
+func play_harvest_pop() -> void:
+	if displayed_stage <= 0:
+		return
+	var burst := Node2D.new()
+	burst.name = "HarvestLeafBurst"
+	burst.z_index = 3
+	add_child(burst)
+	var colors := [Color("8eae52"), Color("c9d46e"), Color("e7c76d"), Color("f1dfad")]
+	var tween := create_tween()
+	for index in range(7):
+		var leaf := Polygon2D.new()
+		leaf.polygon = PackedVector2Array([
+			Vector2(0, -4), Vector2(3, -1), Vector2(2, 4), Vector2(-2, 4), Vector2(-3, -1)
+		])
+		leaf.color = colors[index % colors.size()]
+		leaf.position = Vector2(0, -6)
+		burst.add_child(leaf)
+		var angle := -PI * 0.92 + float(index) * PI * 0.31
+		var destination := leaf.position + Vector2(cos(angle) * (12.0 + index * 2.0), sin(angle) * 16.0 - 8.0)
+		tween.parallel().tween_property(leaf, "position", destination, 0.34).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.parallel().tween_property(leaf, "rotation", float(index - 3) * 0.55, 0.34)
+		tween.parallel().tween_property(leaf, "modulate:a", 0.0, 0.2).set_delay(0.16)
+	tween.chain().tween_callback(burst.queue_free)

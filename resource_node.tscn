@@ -67,6 +67,6 @@ show_percentage = false
 script = ExtResource("91_visual")
 
 [node name="ResourceSprite" type="Sprite2D" parent="Visuals"]
-z_index = -1
+z_index = 0
 script = ExtResource("90_art")
 fallback_paths = Array[NodePath]([NodePath("../../Visual")])

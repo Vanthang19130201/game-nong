@@ -102,6 +102,9 @@ if (-not [string]::IsNullOrWhiteSpace($onlyStage)) {
 }
 foreach ($stage in $stages) {
     $log = Join-Path $testRoot "$stage.log"
+	# Godot appends to --log-file. Start every stage with a clean transient
+	# log so a resolved failure from a previous run cannot fail this run.
+	[IO.File]::WriteAllText($log, '')
     $ErrorActionPreference = 'Continue'
     $testScript = if ($stage.StartsWith('fishing_')) { 'fishing_test.gd' } else { 'core_stability_test.gd' }
     if ($stage.StartsWith('upgrade_treasure_')) { $testScript = 'upgrade_treasure_test.gd' }

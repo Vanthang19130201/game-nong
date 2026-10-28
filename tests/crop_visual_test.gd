@@ -42,7 +42,8 @@ func prepare() -> void:
 	for plot in manager.plots.values():
 		var visuals = plot.get_node("Visuals")
 		check(plot.scene_file_path == "res://soil_plot.tscn" and plot.scale == Vector2.ONE, "all plots use the real shared scene with original root scale")
-		check(visuals.get_node("SoilSprite").visible == plot.is_unlocked() and visuals.get_node("LockedMarker").visible != plot.is_unlocked(), "soil versus small lock marker")
+		var is_next_locked_plot: bool = not plot.is_unlocked() and inv.FarmData.plot_number(plot.plot_id) == inv.unlocked_plot_count + 1
+		check(visuals.get_node("SoilSprite").visible == plot.is_unlocked() and visuals.get_node("LockedMarker").visible == is_next_locked_plot, "soil versus next unlock marker")
 		check(not visuals.get_node("CropSprite").visible and not visuals.get_node("FallbackCropVisual").visible and not visuals.get_node("GrowthTime").visible, "empty or locked plot has no crop or timer")
 		check(plot.get_node("CollisionShape2D").shape.size == Vector2(68,52), "original interaction shape preserved")
 	check(inv.buy_plot(9), "same existing plot purchase")

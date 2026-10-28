@@ -7,6 +7,10 @@ var upgrade_visual: Node2D
 
 func _ready() -> void:
 	add_to_group("farm_interactables")
+	var chimney_smoke := Node2D.new()
+	chimney_smoke.name = "ChimneySmoke"
+	chimney_smoke.set_script(preload("res://chimney_smoke.gd"))
+	add_child(chimney_smoke)
 	upgrade_visual = Node2D.new()
 	upgrade_visual.name = "UpgradeVisual"
 	upgrade_visual.z_index = 1

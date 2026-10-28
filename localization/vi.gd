@@ -160,6 +160,7 @@ const MESSAGES: Dictionary = {
     "EDIT_MODE_HINT": "CHỈNH SỬA NÔNG TRẠI\nClick công trình để chọn\nESC: Thoát",
     "EDIT_MOVING_HINT": "Đang di chuyển: %s\nChuột trái: Đặt\nESC: Hủy",
     "EDIT_SAVE_FAILED": "Chưa lưu được vị trí. Hãy thử lại.",
+	"ERROR_SAVE_FAILED": "Chưa lưu được thay đổi. Hãy thử lại.",
     "MOUSE_INTERACT_HINT": "Nhấp: %s",
     "MOUSE_SOIL_PLOT": "Ô đất",
     "MOUSE_TREE": "Cây",

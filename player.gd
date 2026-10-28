@@ -33,6 +33,8 @@ var action_motion_base_rotation: float = 0.0
 var action_motion_active: bool = false
 
 @export var speed: float = 200.0
+@export var acceleration: float = 1450.0
+@export var deceleration: float = 1800.0
 
 @export var farm_bounds: Rect2 = Rect2(
 	-600,
@@ -51,6 +53,14 @@ var action_motion_active: bool = false
 
 func _ready() -> void:
 	add_to_group("farm_player")
+	var shadow := Node2D.new()
+	shadow.name = "PlayerShadow"
+	shadow.set_script(preload("res://player_shadow.gd"))
+	add_child(shadow)
+	var surface_feedback := Node2D.new()
+	surface_feedback.name = "SurfaceFeedback"
+	surface_feedback.set_script(preload("res://surface_feedback.gd"))
+	add_child(surface_feedback)
 	tool_visual = Node2D.new()
 	tool_visual.name = "ToolVisual"
 	tool_visual.set_script(preload("res://tool_visual.gd"))
@@ -81,7 +91,7 @@ func _ready() -> void:
 
 
 func _physics_process(
-	_delta: float
+	delta: float
 ) -> void:
 
 	var direction := Input.get_vector(
@@ -105,17 +115,22 @@ func _physics_process(
 	# CÂU CÁ - BẮT E TRỰC TIẾP
 	# ==================================================
 
-	if fishing_active:
-		direction = Vector2.ZERO
-
-	elif (
+	var movement_locked: bool = fishing_active or (
 		is_instance_valid(hud)
 		and hud.blocks_world_input()
 		and not hud.edit_farm.active
-	):
+	)
+	if movement_locked:
 		direction = Vector2.ZERO
-
-	velocity = direction * speed
+		# Opening a modal or entering a fishing pose stops immediately instead of
+		# allowing acceleration smoothing to slide the character through UI.
+		velocity = Vector2.ZERO
+	else:
+		var target_velocity := direction * speed
+		var rate := acceleration if direction.length_squared() > 0.01 else deceleration
+		velocity = velocity.move_toward(target_velocity, rate * delta)
+		if velocity.length_squared() < 1.0:
+			velocity = Vector2.ZERO
 
 	move_and_slide()
 
@@ -123,6 +138,10 @@ func _physics_process(
 		farm_bounds.position,
 		farm_bounds.end
 	)
+	# WorldDepth also maintains static actors. Keeping the Player current here
+	# makes front/behind transitions respond on the exact walking frame.
+	z_as_relative = false
+	z_index = clampi(floori(global_position.y / 8.0), 1, 600)
 	if is_instance_valid(tool_visual):
 		tool_visual.set_facing(_facing_name())
 
@@ -600,6 +619,8 @@ func begin_fishing_pose() -> void:
 		)
 	if is_instance_valid(tool_visual):
 		tool_visual.set_facing(_facing_name())
+		if tool_visual.has_method("begin_fishing_action"):
+			tool_visual.begin_fishing_action()
 	start_action_motion("fishing")
 
 
@@ -617,6 +638,8 @@ func end_fishing_pose() -> void:
 	):
 		visual.clear_forced_facing()
 	if is_instance_valid(tool_visual):
+		if tool_visual.has_method("end_fishing_action"):
+			tool_visual.end_fishing_action()
 		tool_visual.set_facing(_facing_name())
 
 

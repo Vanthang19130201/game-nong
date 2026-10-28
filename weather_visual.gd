@@ -70,6 +70,8 @@ func _draw() -> void:
 		var x: float = fposmod(float(cloud["x"]) * _view_size.x + cloud_phase * float(cloud["speed"]), _view_size.x + width * 2.0) - width
 		var y: float = float(cloud["y"]) * _view_size.y + sin(cloud_phase * 0.12 + index) * 5.0
 		_draw_cloud(Vector2(x, y), Vector2(width, float(cloud["h"])), body_color, shadow_color, light_color)
+	if rain_visible:
+		_draw_rain_impacts()
 
 
 func _draw_cloud(center: Vector2, size: Vector2, body: Color, shadow: Color, light: Color) -> void:
@@ -90,11 +92,24 @@ func _draw_cloud(center: Vector2, size: Vector2, body: Color, shadow: Color, lig
 	draw_circle(center + Vector2(w * 0.24, -h * 0.20), h * 0.15, light)
 
 
+func _draw_rain_impacts() -> void:
+	# Screen-space impacts make rain legible even when the camera is over grass
+	# rather than water.  They are faint and sparse so the player stays readable.
+	for index in range(18):
+		var phase := fposmod(cloud_phase * 1.7 + float(index) * 0.173, 1.0)
+		var point := Vector2(
+			_view_size.x * (0.05 + fposmod(float(index) * 0.271, 0.9)),
+			_view_size.y * (0.20 + fposmod(float(index) * 0.417 + phase * 0.3, 0.72))
+		)
+		var radius := 1.5 + phase * 3.5
+		draw_arc(point, radius, 0.08, PI - 0.08, 10, Color("cde6e4", 0.18 * (1.0 - phase)), 1.0, true)
+
+
 func _on_weather_changed(weather_id: String) -> void:
 	rain_visible = weather_id == "rain"
 	cloud_visible = weather_id == "cloudy" or rain_visible
 	weather_overlay.visible = weather_id != "sunny"
-	weather_overlay.color = Color(0.46, 0.56, 0.64, 0.045) if weather_id == "cloudy" else Color(0.34, 0.44, 0.48, 0.075)
+	weather_overlay.color = Color(0.46, 0.56, 0.64, 0.05) if weather_id == "cloudy" else Color(0.34, 0.44, 0.48, 0.095)
 	rain_particles.emitting = rain_visible
 	set_process(cloud_visible)
 	queue_redraw()

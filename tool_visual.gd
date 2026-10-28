@@ -7,8 +7,11 @@ const HAMMER_TEXTURE: Texture2D = preload("res://assets/characters/farm_hammer.p
 var tool_id: String = ""
 var facing: String = ""
 var base_rotation: float = 0.0
+var rest_position: Vector2 = Vector2.ZERO
 var swinging: bool = false
 var swing_tween: Tween
+var fishing_pose: bool = false
+var fishing_tween: Tween
 var rod_sprite: Sprite2D
 var axe_sprite: Sprite2D
 var hammer_sprite: Sprite2D
@@ -57,7 +60,11 @@ func _create_tool_sprite(
 
 
 func set_equipped(item_id: String, direction: String) -> void:
-	tool_id = item_id if item_id in ["axe", "hammer", "fishing_rod"] else ""
+	var next_tool := item_id if item_id in ["axe", "hammer", "fishing_rod"] else ""
+	if next_tool != tool_id:
+		stop_swing()
+		end_fishing_action()
+	tool_id = next_tool
 	set_facing(direction)
 	visible = not tool_id.is_empty()
 	if is_instance_valid(rod_sprite):
@@ -94,20 +101,28 @@ func set_facing(direction: String) -> void:
 			z_index = 1
 	if not swinging:
 		rotation = base_rotation
+	rest_position = position
 	queue_redraw()
 
 
 func play_swing(target_world_position: Vector2) -> void:
 	if tool_id not in ["axe", "hammer"] or swinging:
 		return
+	end_fishing_action()
 	swinging = true
 	var direction := (target_world_position - global_position).normalized()
 	var aim_rotation := direction.angle() + PI * 0.5
 	var windup := base_rotation - signf(wrapf(aim_rotation - base_rotation, -PI, PI)) * 0.42
 	swing_tween = create_tween().set_loops()
-	swing_tween.tween_property(self, "rotation", windup, 0.16).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	swing_tween.tween_property(self, "rotation", aim_rotation, 0.10).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
-	swing_tween.tween_property(self, "rotation", base_rotation, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	swing_tween.tween_property(self, "position", rest_position - direction * 2.5, 0.16).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	swing_tween.parallel().tween_property(self, "rotation", windup, 0.16).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	swing_tween.parallel().tween_property(self, "scale", Vector2(1.04, 0.96), 0.16)
+	swing_tween.tween_property(self, "position", rest_position + direction * 5.0, 0.10).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	swing_tween.parallel().tween_property(self, "rotation", aim_rotation, 0.10).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	swing_tween.parallel().tween_property(self, "scale", Vector2(0.98, 1.04), 0.10)
+	swing_tween.tween_property(self, "position", rest_position, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	swing_tween.parallel().tween_property(self, "rotation", base_rotation, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	swing_tween.parallel().tween_property(self, "scale", Vector2.ONE, 0.18)
 
 
 func stop_swing() -> void:
@@ -116,11 +131,38 @@ func stop_swing() -> void:
 	swing_tween = null
 	swinging = false
 	rotation = base_rotation
+	position = rest_position
+	scale = Vector2.ONE
 
 
 func _finish_swing() -> void:
 	swinging = false
 	rotation = base_rotation
+	position = rest_position
+	scale = Vector2.ONE
+
+
+func begin_fishing_action() -> void:
+	if tool_id != "fishing_rod" or fishing_pose:
+		return
+	fishing_pose = true
+	if fishing_tween != null and fishing_tween.is_valid():
+		fishing_tween.kill()
+	fishing_tween = create_tween().set_loops()
+	fishing_tween.tween_property(self, "rotation", base_rotation - 0.075, 0.34).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	fishing_tween.parallel().tween_property(self, "position", rest_position + Vector2(0, -1.5), 0.34).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	fishing_tween.tween_property(self, "rotation", base_rotation + 0.035, 0.46).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	fishing_tween.parallel().tween_property(self, "position", rest_position + Vector2(0, 0.8), 0.46).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+func end_fishing_action() -> void:
+	if fishing_tween != null and fishing_tween.is_valid():
+		fishing_tween.kill()
+	fishing_tween = null
+	fishing_pose = false
+	if not swinging:
+		rotation = base_rotation
+		position = rest_position
 
 
 func tip_world_position() -> Vector2:

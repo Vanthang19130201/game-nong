@@ -23,7 +23,7 @@ const VISUAL_TEXTURE_PATHS: Dictionary = {
 	"cow": "res://assets/animals/cow/cow.png",
 	"pig": "res://assets/animals/pig/pig.png",
 	"sheep": "res://assets/animals/sheep/sheep.png",
-	"house": "res://assets/buildings/house/house1.png",
+	"house": "res://assets/buildings/house/house_cozy_v2.png",
 	"warehouse": "res://assets/buildings/warehouse/warehouse.svg",
 	"feed_mill": "res://assets/buildings/feed_mill/feed_mill.svg",
 	"chicken_coop": "res://assets/buildings/chicken_coop/chicken_coop.png",

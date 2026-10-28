@@ -19,6 +19,7 @@ const TREE_SPECIES_TEXTURES: Dictionary = {
 @onready var default_texture: Texture2D = $ResourceSprite.texture
 var _last_state: String = ""
 var _tree_shake_tween: Tween
+var _ambient_sway_phase: float = 0.0
 
 
 func _ready() -> void:
@@ -81,14 +82,21 @@ func refresh() -> void:
 			texture = typed_texture
 		if not rock_textures.has(resource_node.rock_type) and RockData.texture_paths.size() < RockData.TYPES.size():
 			sprite_color = color.lightened(0.5)
-	if depleted:
-		texture = stump_texture if wood else depleted_rock_texture
+	if depleted and not wood:
+		texture = depleted_rock_texture
 	var fallback: Texture2D = default_texture
 	if not wood and fallback == tree_texture:
 		fallback = null
-	$ResourceSprite.texture = texture if texture != null else fallback
-	$ResourceSprite.region_enabled = false
-	$ResourceSprite.visible = not (wood and depleted)
+	if wood and depleted:
+		# The stump is drawn by this visual node. Clear the former tree texture so
+		# it cannot return via a fallback during respawn or scene refresh.
+		$ResourceSprite.texture = null
+		$ResourceSprite.region_enabled = false
+		$ResourceSprite.visible = false
+	else:
+		$ResourceSprite.texture = texture if texture != null else fallback
+		$ResourceSprite.region_enabled = false
+		$ResourceSprite.visible = true
 	if wood and depleted:
 		# artwork_sprite.gd enables the ColorRect fallback when its sprite hides;
 		# a depleted tree should show only the stump, never the green placeholder.
@@ -138,6 +146,7 @@ func _spawn_leaf_burst() -> void:
 	var burst := Node2D.new()
 	burst.name = "ChopLeafBurst"
 	add_child(burst)
+	_request_impact_shake()
 	var colors := [Color("78a84b"), Color("a4bf55"), Color("d0bd62"), Color("5d9145")]
 	var origin: Vector2 = $ResourceSprite.position + Vector2(0, -40)
 	var tween := create_tween()
@@ -155,10 +164,68 @@ func _spawn_leaf_burst() -> void:
 		tween.parallel().tween_property(leaf, "position", origin + spread, 0.58).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tween.parallel().tween_property(leaf, "rotation", float(index % 2) * 2.4 - 1.2, 0.58)
 		tween.parallel().tween_property(leaf, "modulate:a", 0.0, 0.42).set_delay(0.16)
+	# A few warm chips distinguish a final tree break from the ordinary leaf
+	# shake, while staying entirely visual and short-lived.
+	for index in range(5):
+		var chip := Polygon2D.new()
+		chip.polygon = PackedVector2Array([
+			Vector2(-3, -1), Vector2(3, -2), Vector2(4, 2), Vector2(-2, 3)
+		])
+		chip.color = Color("b5814f") if index % 2 == 0 else Color("d1a36a")
+		chip.position = Vector2(0, 28)
+		burst.add_child(chip)
+		var chip_angle := -PI * 0.85 + float(index) * PI * 0.42
+		var chip_end := chip.position + Vector2(cos(chip_angle) * (18.0 + index * 3.0), sin(chip_angle) * 17.0 + 13.0)
+		tween.parallel().tween_property(chip, "position", chip_end, 0.34).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.parallel().tween_property(chip, "rotation", float(index - 2) * 0.75, 0.34)
+		tween.parallel().tween_property(chip, "modulate:a", 0.0, 0.18).set_delay(0.16)
 	tween.chain().tween_callback(burst.queue_free)
 
 
-func _process(_delta: float) -> void:
+func _request_impact_shake() -> void:
+	var player := get_tree().get_first_node_in_group("farm_player")
+	if not is_instance_valid(player):
+		return
+	var camera := player.get_node_or_null("Camera2D")
+	if camera != null and camera.has_method("request_impact_shake"):
+		camera.request_impact_shake(2.2, 0.12)
+
+
+func play_rock_break() -> void:
+	var burst := Node2D.new()
+	burst.name = "RockChipBurst"
+	add_child(burst)
+	_request_impact_shake()
+	var colors := [Color("9ba28f"), Color("6e766b"), Color("c4c5a8")]
+	var tween := create_tween()
+	for index in range(6):
+		var chip := Polygon2D.new()
+		chip.polygon = PackedVector2Array([
+			Vector2(-3, -2), Vector2(4, -1), Vector2(2, 4), Vector2(-3, 3)
+		])
+		chip.color = colors[index % colors.size()]
+		chip.position = Vector2(0, 29)
+		burst.add_child(chip)
+		var angle := -PI * 0.94 + float(index) * PI * 0.37
+		var finish := chip.position + Vector2(cos(angle) * (16.0 + index * 3.0), sin(angle) * 18.0 + 12.0)
+		tween.parallel().tween_property(chip, "position", finish, 0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.parallel().tween_property(chip, "rotation", float(index - 3) * 0.8, 0.32)
+		tween.parallel().tween_property(chip, "modulate:a", 0.0, 0.18).set_delay(0.14)
+	tween.chain().tween_callback(burst.queue_free)
+
+
+
+func _process(delta: float) -> void:
+	_ambient_sway_phase += delta
+	if resource_node.resource_type == "wood" and resource_node.state == "AVAILABLE" and (_tree_shake_tween == null or not _tree_shake_tween.is_valid()):
+		var strength := 0.008
+		if WeatherManager.current_weather == "cloudy":
+			strength = 0.012
+		elif WeatherManager.current_weather == "rain":
+			strength = 0.016
+		$ResourceSprite.rotation = sin(_ambient_sway_phase * 0.72 + global_position.x * 0.013) * strength
+	elif _tree_shake_tween == null or not _tree_shake_tween.is_valid():
+		$ResourceSprite.rotation = 0.0
 	_refresh_label()
 
 

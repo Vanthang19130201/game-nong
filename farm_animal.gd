@@ -32,6 +32,11 @@ var speed: float
 var body_radius: float
 var spacing: float
 var status_bubble: Node2D
+var facing: String = "down"
+var base_sprite_position: Vector2 = Vector2.ZERO
+var base_sprite_scale: Vector2 = Vector2.ONE
+var life_phase: float = 0.0
+var nibble_time: float = 0.0
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var idle_timer: Timer = $IdleTimer
 @onready var player: Node2D = get_tree().get_first_node_in_group("farm_player")
@@ -91,6 +96,8 @@ func apply_appearance() -> void:
 	var display_size: float = float(data["adult_size"]) * AnimalData.scale_for(animal_type,growth_stage)
 	sprite.scale = Vector2.ONE * display_size / frame.get_height()
 	sprite.offset.y = -frame.get_height() / 2.0
+	base_sprite_scale = sprite.scale
+	base_sprite_position = sprite.position
 	var shape := RectangleShape2D.new()
 	shape.size = frame.get_size() * sprite.scale
 	$CollisionShape2D.shape = shape
@@ -151,8 +158,10 @@ func retire() -> void:
 func rest() -> void:
 	walking = false
 	target = position
-	sprite.animation = "idle_down"
-	sprite.stop()
+	if randf() < 0.24:
+		facing = ["down", "left", "right", "up"][randi() % 4]
+	_play_animation("idle_" + facing)
+	nibble_time = randf_range(0.7, 1.35) if randf() < 0.36 else 0.0
 	idle_timer.start(randf_range(2.0, 5.0))
 
 func choose_target() -> void:
@@ -166,7 +175,8 @@ func choose_target() -> void:
 	target = point
 	walking = true
 	idle_timer.stop()
-	sprite.play("walk_down")
+	facing = _facing_for(point - position)
+	_play_animation("walk_" + facing)
 
 func _physics_process(delta: float) -> void:
 	if not walking or herd.editing:
@@ -175,11 +185,46 @@ func _physics_process(delta: float) -> void:
 	if not herd.is_position_valid(next, body_radius):
 		rest()
 		return
-	if absf(next.x - position.x) > 0.01:
-		sprite.flip_h = next.x < position.x
+	var direction := next - position
+	if direction.length_squared() > 0.01:
+		facing = _facing_for(direction)
+		_play_animation("walk_" + facing)
 	position = next
 	# Animals behind their home render behind its artwork, without changing
 	# the building's placement footprint or collision layers.
-	z_index = -2 if position.y < herd.ground_y else 0
+	z_index = clampi(roundi(position.y / 8.0), -24, 24)
 	if position.distance_to(target) < 1.0:
 		rest()
+
+
+func _process(delta: float) -> void:
+	life_phase += delta
+	if not is_instance_valid(sprite):
+		return
+	if walking:
+		sprite.position = base_sprite_position + Vector2(0, sin(life_phase * 10.0) * 0.55)
+		sprite.scale = base_sprite_scale
+		sprite.rotation = 0.0
+		return
+	nibble_time = maxf(0.0, nibble_time - delta)
+	var rest_bob := sin(life_phase * 2.25 + float(animal_id.hash() % 7)) * 0.45
+	sprite.position = base_sprite_position + Vector2(0, rest_bob)
+	if nibble_time > 0.0:
+		sprite.rotation = sin(life_phase * 9.0) * 0.035
+		sprite.scale = base_sprite_scale * Vector2(1.025, 0.975)
+	else:
+		sprite.rotation = 0.0
+		sprite.scale = base_sprite_scale
+
+
+func _facing_for(direction: Vector2) -> String:
+	if absf(direction.x) > absf(direction.y):
+		return "right" if direction.x > 0.0 else "left"
+	return "down" if direction.y > 0.0 else "up"
+
+
+func _play_animation(name: String) -> void:
+	if sprite.sprite_frames == null or not sprite.sprite_frames.has_animation(name):
+		return
+	if sprite.animation != name or not sprite.is_playing():
+		sprite.play(name)

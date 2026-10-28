@@ -202,6 +202,8 @@ func place_move() -> bool:
 			return false
 		if hud._trade(Inventory.buy_building.bind(placing_building,preview,proposed_position),placing_building,1):
 			AudioManager.play_sfx("building_place", proposed_position)
+			if hud.has_method("_play_world_pop"):
+				hud._play_world_pop(SaveManager.buildings.get(placing_building, preview))
 			exit_mode()
 			return true
 		return false

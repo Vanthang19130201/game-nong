@@ -116,7 +116,11 @@ func run_checks() -> void:
 	check(camera.get_screen_center_position().x < 0.0, "camera reaches western expansion")
 	camera.pan_by(Vector2(0,100000))
 	check_view()
-	check(camera.get_screen_center_position().y < 0.0, "camera reaches northern expansion")
+	# The current world starts at y=0, so the center itself must remain at
+	# least half a viewport inside the map. check_view() above verifies the
+	# actual northern edge; this checks the corresponding clamped center.
+	var north_center_limit: float = root.get_visible_rect().size.y / camera.zoom.y / 2.0
+	check(camera.get_screen_center_position().y <= north_center_limit + 0.1, "camera reaches northern map edge")
 	camera.end_pan()
 	camera.request_zoom(100)
 	check(is_equal_approx(camera.target_zoom,1.5), "maximum zoom 1.5")

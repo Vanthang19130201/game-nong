@@ -89,10 +89,17 @@ func show_floating_feedback(text: String) -> void:
 	label.set_meta("slot", slot)
 	add_child(label)
 	label.reset_size()
+	# A short pop makes harvests, coins and produced goods feel collected without
+	# creating another world node or changing the inventory transaction.
+	label.pivot_offset = label.size * 0.5
+	label.scale = Vector2.ONE * 0.76
 	var side: float = -12.0 if slot % 2 == 0 else 12.0
 	label.position = Vector2(side-label.size.x/2.0, -label.size.y-slot*22.0)
 	_update_anchor()
 	set_process(true)
+	var pop_tween := label.create_tween()
+	pop_tween.tween_property(label, "scale", Vector2.ONE * 1.08, 0.11).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	pop_tween.tween_property(label, "scale", Vector2.ONE, 0.13).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	var tween := label.create_tween().set_parallel(true)
 	label.set_meta("tween", tween)
 	tween.tween_property(label, "position:y", label.position.y-26.0, 1.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)

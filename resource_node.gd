@@ -182,6 +182,8 @@ func _finish_harvest() -> void:
 		AudioManager.play_sfx("tree_break", global_position)
 	else:
 		AudioManager.play_sfx("rock_break", global_position)
+		if $Visuals.has_method("play_rock_break"):
+			$Visuals.play_rock_break()
 	_update_display()
 	Inventory.inventory_changed.emit()
 

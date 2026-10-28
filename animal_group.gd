@@ -17,8 +17,10 @@ var home: Node2D
 var hud: Node
 
 func _ready() -> void:
+	add_to_group("farm_animal_groups")
 	global_position = home.global_position
 	z_index = home.z_index
+	z_as_relative = false
 	y_sort_enabled = true
 	refresh_timer = Timer.new()
 	refresh_timer.wait_time = 0.5
@@ -69,7 +71,13 @@ func sync_count() -> void:
 	for record in records:
 		var animal_id: String = str(record["id"])
 		if existing.has(animal_id) and is_instance_valid(existing[animal_id]):
-			existing[animal_id].update_record(record)
+			var existing_animal: Node2D = existing[animal_id]
+			existing_animal.update_record(record)
+			# A newly purchased juvenile can briefly have no free random point
+			# before surrounding stations finish registering. Re-check it on each
+			# sync so a valid adult record never remains invisibly stranded.
+			if not existing_animal.visible:
+				_relocate(existing_animal)
 			continue
 		var animal = AnimalScene.instantiate()
 		add_child(animal)
@@ -142,7 +150,8 @@ func _cache_obstacles() -> void:
 			if not SaveManager.DecorationData.TYPES[node.decoration_id]["solid"] or node.is_open:
 				continue
 		obstacles.append(Placement.bounds(node))
-	# Include our own building even before its parent has registered it.
+	# Include our own building even before its parent has registered it. Animals
+	# roam around their shelter but never through its footprint.
 	var home_rect: Rect2 = Placement.bounds(home)
 	if home_rect not in obstacles:
 		obstacles.append(home_rect)

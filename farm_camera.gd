@@ -21,6 +21,10 @@ var saved_following_player: bool = true
 var saved_pan_center: Vector2 = Vector2.ZERO
 var saved_position_smoothing: bool = true
 
+var shake_time: float = 0.0
+var shake_duration: float = 0.0
+var shake_strength: float = 0.0
+
 @onready var hud: Node = get_tree().get_first_node_in_group("farm_hud")
 
 
@@ -55,6 +59,23 @@ func _process(delta: float) -> void:
 		pan_center = _clamp_center(pan_center)
 		global_position = pan_center
 		force_update_scroll()
+	_update_impact_shake(delta)
+
+
+func request_impact_shake(strength: float = 2.0, duration: float = 0.12) -> void:
+	shake_strength = maxf(shake_strength, clampf(strength, 0.0, 5.0))
+	shake_duration = maxf(shake_duration, clampf(duration, 0.04, 0.22))
+	shake_time = shake_duration
+
+
+func _update_impact_shake(delta: float) -> void:
+	if shake_time <= 0.0:
+		offset = Vector2.ZERO
+		return
+	shake_time = maxf(0.0, shake_time - delta)
+	var fade := shake_time / maxf(shake_duration, 0.001)
+	var angle := Time.get_ticks_msec() * 0.055
+	offset = Vector2(cos(angle * 1.73), sin(angle * 2.21)) * shake_strength * fade
 
 
 func _input(event: InputEvent) -> void:

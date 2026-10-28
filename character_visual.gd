@@ -20,6 +20,9 @@ var forced_facing: String = ""
 
 var facing_before_force: String = "down"
 
+var base_offset: Vector2 = Vector2.ZERO
+var walk_phase: float = 0.0
+
 
 func _ready() -> void:
 	if use_selected_character:
@@ -142,10 +145,11 @@ func refresh_character_size() -> void:
 			ground_y - position.y
 		) / factor
 	)
+	base_offset = offset
 
 
 func _process(
-	_delta: float
+	delta: float
 ) -> void:
 
 	var moving: bool = false
@@ -221,6 +225,22 @@ func _process(
 		and not is_playing()
 	):
 		play(requested)
+
+	var speed_ratio := 0.0
+	if body is CharacterBody2D:
+		var speed_value: Variant = body.get("speed")
+		var player_speed: float = float(speed_value) if speed_value is int or speed_value is float else 0.0
+		if player_speed > 0.0:
+			speed_ratio = clampf(body.velocity.length() / player_speed, 0.0, 1.0)
+	if moving:
+		walk_phase += delta * lerpf(6.0, 10.0, speed_ratio)
+		speed_scale = lerpf(0.82, 1.3, speed_ratio)
+		# A restrained bob keeps the feet grounded without fighting the action
+		# tween, which animates the sprite's position separately.
+		offset = base_offset + Vector2(0, sin(walk_phase) * 1.0)
+	else:
+		speed_scale = 1.0
+		offset = offset.lerp(base_offset, clampf(delta * 10.0, 0.0, 1.0))
 
 	visible = (
 		has_art

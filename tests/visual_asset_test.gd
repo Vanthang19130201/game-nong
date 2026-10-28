@@ -62,6 +62,9 @@ func run_checks() -> void:
 	root.add_child(farm)
 	current_scene = farm
 	player = farm.get_node("Player")
+	var house_sprite: Sprite2D = farm.get_node("House/Visuals/HouseSprite")
+	check(house_sprite.texture != null and house_sprite.texture.resource_path == "res://assets/buildings/house/house_cozy_v2.png", "main House uses the cozy replacement artwork")
+	check(farm.get_node("WorldAmbient") is Node2D and farm.get_node("WorldDepth") is Node, "ambient and Y-depth presentation layers exist")
 	await create_timer(0.1).timeout
 	for id in ["chicken_coop","cow_shed"]:
 		check(not manager.buildings[id].is_visible_in_tree(),"unowned buildings remain hidden")
@@ -102,6 +105,9 @@ func run_checks() -> void:
 		check(resource.get_node("CollisionShape2D").shape.size == Vector2(110,110),"Tree interaction shape unchanged")
 	check(trees == 32,"all harvestable Trees use species visuals")
 	var tree = manager.resources["tree_1"]
+	# Gathering now correctly requires the matching equipped tool. Keep this
+	# visual regression test on the normal player-facing Axe path.
+	farm.get_node("HUD/Hotbar").select_slot(5)
 	player.position = tree.global_position+Vector2(0,32)
 	await create_timer(0.1).timeout
 	check(tree.harvest(),"original Axe gathering starts")
