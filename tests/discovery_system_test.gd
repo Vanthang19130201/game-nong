@@ -27,6 +27,19 @@ func run_checks() -> void:
 	await process_frame
 	var manager: Node = farm.get_node("DigSpotManager")
 	check(save_manager.reset_game(), "start from clean isolated state")
+	var merchant_day: int = -1
+	for day_key in range(1, 180):
+		events._roll_merchant_for_day(day_key)
+		if events.merchant_active:
+			merchant_day = day_key
+			break
+	check(merchant_day > 0, "merchant can appear on a daily one-in-three roll")
+	events.setup(farm)
+	events._roll_merchant_for_day(merchant_day)
+	check(events.merchant_active and not events.merchant_stock.is_empty(), "appearing merchant has daily stock")
+	check(events.merchant_position != Vector2.ZERO, "appearing merchant receives a visible meeting position")
+	var order_board: Node2D = farm.get_node("OrderBoard") as Node2D
+	check(events.merchant_position.distance_to(order_board.global_position) <= 210.0, "merchant is placed beside the Order Board")
 	for item in inventory.BARN_ITEMS:
 		check(inventory.get(item) != null, "inventory has storage field " + item)
 	check(discovery.discover_item("wheat"), "first crop discovery recorded")

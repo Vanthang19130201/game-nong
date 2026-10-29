@@ -78,6 +78,8 @@ func _ready() -> void:
 func show_character_select() -> void:
 	if starting:
 		return
+	if not SaveManager.reset_for_character_selection():
+		return
 
 	if selection == null:
 		selection = preload("res://character_select.tscn").instantiate()
@@ -87,6 +89,7 @@ func show_character_select() -> void:
 
 		add_child(selection)
 	else:
+		selection.prepare_for_new_game()
 		selection.show()
 
 	menu.hide()
@@ -98,6 +101,7 @@ func _cancel_selection() -> void:
 
 	if selection != null:
 		selection.hide()
+	SaveManager.cancel_character_selection()
 
 	menu.show()
 
@@ -147,12 +151,20 @@ func continue_game() -> void:
 	if not SaveManager.has_existing_game:
 		return
 
+	if not SaveManager.prepare_continue_game():
+		return
 	starting = true
 	_enter_farm()
 
 
 func _enter_farm() -> void:
-	get_tree().change_scene_to_file.call_deferred("res://main.tscn")
+	var result := get_tree().change_scene_to_file("res://main.tscn")
+	if result != OK:
+		push_error("[NewGame] Could not load farm scene. Error: %s" % result)
+		starting = false
+		if selection != null:
+			selection.confirm_button.disabled = false
+			selection.error_label.text = tr("RESET_FAILED")
 
 func _open_audio_settings() -> void:
 	if is_instance_valid(audio_settings_overlay):

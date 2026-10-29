@@ -79,10 +79,10 @@ func run_checks() -> void:
 			inv.coins = 10000
 			inv.inventory_changed.emit()
 			panel.upgrade_rows["silo"]["button"].pressed.emit()
-			check(inv.silo_level == 2 and inv.silo_capacity == 50 and inv.wood == 90 and inv.stone == 95 and inv.coins == 9800, "Silo exact existing upgrade")
-			check(panel.upgrade_rows["silo"]["label"].text.contains("50 → 80") and disk().get_value("upgrades","silo_level") == 2, "upgrade UI and autosave")
+			check(inv.silo_level == 2 and inv.silo_capacity == 70 and inv.wood == 90 and inv.stone == 95 and inv.coins == 9800, "Silo exact existing upgrade")
+			check(panel.upgrade_rows["silo"]["label"].text.contains("70 → 100") and disk().get_value("upgrades","silo_level") == 2, "upgrade UI and autosave")
 			panel.upgrade_rows["barn"]["button"].pressed.emit()
-			check(inv.barn_level == 2 and inv.barn_capacity == 35 and inv.wood == 82 and inv.stone == 87 and inv.coins == 9550, "Barn exact existing upgrade")
+			check(inv.barn_level == 2 and inv.barn_capacity == 60 and inv.wood == 82 and inv.stone == 87 and inv.coins == 9550, "Barn exact existing upgrade")
 			inv.wood = 0
 			inv.stone = 0
 			inv.coins = 0

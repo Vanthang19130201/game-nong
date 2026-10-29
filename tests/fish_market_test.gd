@@ -73,7 +73,7 @@ func run_checks() -> void:
 		check(not inv.sell_fish("coins",true) and not inv.sell_fish("unknown"), "reject invalid item")
 		await key(KEY_E)
 		check(panel.visible and spot.state == spot.State.IDLE, "E under market is blocked")
-		check(hud.storage_panel.capacity_labels["barn"].text.contains(tr("BUILDING_BARN") + ": 1 / 20") and hud.storage_panel.item_cells["perch"].quantity == inv.perch, "Storage grid refreshed")
+		check(hud.storage_panel.capacity_labels["barn"].text.contains(tr("BUILDING_BARN") + ": 1 / 30") and hud.storage_panel.item_cells["perch"].quantity == inv.perch, "Storage grid refreshed")
 		var saved := ConfigFile.new()
 		check(saved.load(manager.SAVE_PATH) == OK and saved.get_value("inventory","coins") == 1375 and saved.get_value("inventory","perch") == 1, "sale auto saved")
 		await key(KEY_ESCAPE)

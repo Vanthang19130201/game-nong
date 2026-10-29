@@ -17,7 +17,7 @@ func set_selected_character(id: String, persist: bool = true) -> bool:
 		selected_character_changed.emit()
 	return save_game() if persist else true
 
-func start_new_game(character_id: String, new_player_name: String) -> bool:
+func start_new_game(character_id: String, new_player_name: String = "Farmer") -> bool:
 	var clean_name := new_player_name.strip_edges()
 
 	if clean_name.is_empty():
@@ -26,7 +26,9 @@ func start_new_game(character_id: String, new_player_name: String) -> bool:
 	if clean_name.length() > 16:
 		clean_name = clean_name.left(16)
 
-	if not reset_game():
+	# The menu has already detached the previous farm scene. Build a fresh
+	# default state in memory, then replace the save only after confirmation.
+	if not reset_game(false):
 		return false
 
 	character_selection_pending = false
@@ -38,19 +40,48 @@ func start_new_game(character_id: String, new_player_name: String) -> bool:
 	if not set_selected_character(character_id, false):
 		return false
 
-	return save_game()
+	var saved := save_game()
+	has_existing_game = saved
+	return saved
 
 
 func reset_for_character_selection() -> bool:
-	if not reset_game():
-		return false
-
+	# Opening character creation is not confirmation. Do not reset singleton
+	# data or write/delete the old save here; Back and quitting must preserve it.
+	_detach_runtime_scene_references()
 	character_selection_pending = true
-	has_existing_game = false
-	player_name = ""
-	player_name_changed.emit()
+	return true
 
-	return save_game()
+
+func cancel_character_selection() -> void:
+	# This flag is runtime-only until a new character is confirmed.
+	character_selection_pending = false
+
+
+func prepare_continue_game() -> bool:
+	# Continue must deserialize into clean singleton state, rather than reuse the
+	# farm that was released while returning to title.
+	if not has_existing_game:
+		return false
+	_detach_runtime_scene_references()
+	resetting = true
+	character_selection_pending = false
+	_load_game()
+	resetting = false
+	return has_existing_game
+
+
+func _detach_runtime_scene_references() -> void:
+	# Dictionaries below own scene Node references. Clearing them does not free or
+	# mutate the old scene, but prevents stale registration and save snapshots.
+	plots.clear()
+	stations.clear()
+	resources.clear()
+	buildings.clear()
+	if GameClock.has_method("suspend_gameplay"):
+		GameClock.suspend_gameplay()
+	if FarmEventManager.has_method("detach_farm"):
+		FarmEventManager.detach_farm()
 
 const FarmData = preload("res://farm_data.gd")
 const CropData = preload("res://crop_data.gd")
@@ -433,7 +464,9 @@ func empty_plot(id: String) -> Dictionary:
 
 func save_game() -> bool:
 	_capture_pet_positions()
-	if resetting:
+	# Character selection is intentionally non-destructive. Block delayed
+	# autosaves from outgoing scene nodes until confirm/cancel.
+	if resetting or character_selection_pending:
 		return false
 	var data := ConfigFile.new()
 	var calendar: Dictionary = GameClock.get_save_data()
@@ -556,16 +589,12 @@ func _capture_pet_positions() -> void:
 		pet_dogs[pet_id] = profile
 
 
-func reset_game() -> bool:
-	# If deleting the old save fails, leave the current game untouched.
-	for path in [TEMP_PATH, BACKUP_TEMP_PATH, BACKUP_PATH, SAVE_PATH]:
-		if FileAccess.file_exists(path):
-			var error := DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
-			if error != OK:
-				push_warning("Could not delete save. Error: %s" % error)
-				return false
-
+func reset_game(persist: bool = true) -> bool:
+	# Do not delete a valid save before its replacement is written. save_game()
+	# writes atomically after the clean defaults have been assembled.
 	resetting = true
+	character_selection_pending = false
+	has_existing_game = false
 	player_name = ""
 	player_name_changed.emit()
 	set_selected_character(CharacterData.DEFAULT_ID, false)
@@ -630,8 +659,8 @@ func reset_game() -> bool:
 		saved_resources[id] = {"state": "AVAILABLE", "respawn_at": 0.0}
 		if resources.has(id) and is_instance_valid(resources[id]):
 			resources[id].restore_save_data(saved_resources[id])
-	Inventory.silo_capacity = 30
-	Inventory.barn_capacity = 20
+	Inventory.silo_capacity = 40
+	Inventory.barn_capacity = 30
 	Inventory.chicken_count = 0
 	Inventory.cow_count = 0
 	Inventory.pig_count = 0
@@ -656,7 +685,11 @@ func reset_game() -> bool:
 		hud.close_all_panels()
 	FarmEventManager.refresh_for_new_game()
 	resetting = false
-	return save_game()
+	if not persist:
+		return true
+	var saved := save_game()
+	has_existing_game = saved
+	return saved
 
 
 func _load_game() -> void:
@@ -764,14 +797,14 @@ func _load_game() -> void:
 	Inventory.has_dog_house = dog_house if dog_house is bool else false
 	for id in RESOURCE_IDS:
 		saved_resources[id] = _read_resource(data.get_value("resources", id, 0.0))
-	Inventory.silo_capacity = maxi(30, _read_int(data, "storage", "silo_capacity", 30, 1))
+	Inventory.silo_capacity = maxi(40, _read_int(data, "storage", "silo_capacity", 40, 1))
 	Inventory.barn_capacity = maxi(
-	20,
+	30,
 	_read_int(
 		data,
 		"storage",
 		"barn_capacity",
-		20,
+		30,
 		1
 	)
 )

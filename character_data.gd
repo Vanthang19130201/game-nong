@@ -2,6 +2,7 @@ extends RefCounted
 
 const DEFAULT_ID: String = "farmer_01"
 const ANIMATIONS: Array[String] = ["idle_down", "idle_up", "idle_left", "idle_right", "walk_down", "walk_up", "walk_left", "walk_right"]
+const Player1AnimationFrames = preload("res://player1_animation_frames.gd")
 const CHARACTERS: Dictionary = {
 	"farmer_01": {"name": "Farmer 1", "frames": "res://assets/characters/farmer_01/frames.tres"},
 	"farmer_02": {"name": "Farmer 2", "frames": "res://assets/characters/farmer_02/frames.tres"},
@@ -17,9 +18,9 @@ static func frames_for(value: String) -> SpriteFrames:
 	var id := valid_id(value)
 	if _cache.has(id):
 		return _cache[id] as SpriteFrames
-	var path: String = CHARACTERS[id]["frames"]
-	var frames := _read_frames(path)
-	if complete(frames):
+	var frames: SpriteFrames = Player1AnimationFrames.frames() if id == "farmer_01" else _read_frames(str(CHARACTERS[id]["frames"]))
+	if complete(frames) and id != "farmer_01":
+		var path: String = str(CHARACTERS[id]["frames"])
 		# A matching PNG replaces the SVG atlas, preserving authored animations.
 		var png_path := path.get_base_dir().path_join("character.png")
 		var png: Texture2D = load(png_path) as Texture2D if ResourceLoader.exists(png_path) else null
@@ -34,7 +35,7 @@ static func frames_for(value: String) -> SpriteFrames:
 						atlas.region = Rect2(texture.region.position * ratio, texture.region.size * ratio)
 						atlas.atlas = png
 						frames.set_frame(animation, index, atlas, frames.get_frame_duration(animation, index))
-	else:
+	if not complete(frames):
 		frames = frames_for(DEFAULT_ID) if id != DEFAULT_ID else fallback_frames()
 	_cache[id] = frames
 	return frames

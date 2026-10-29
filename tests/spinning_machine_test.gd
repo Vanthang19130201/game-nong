@@ -154,6 +154,8 @@ func run_checks() -> void:
 			inv.cotton = 2
 			check(not machine.enqueue() and inv.cotton == 2 and manager.spinning_machine_queue.is_empty(),"insufficient Cotton is never consumed")
 			enqueue_all(machine)
+			check(machine.cancel_job_at(2) and inv.cotton == 3 and manager.spinning_machine_queue.size() == 2,"Spinning cancel refunds one queued recipe")
+			check(machine.enqueue() and inv.cotton == 0 and manager.spinning_machine_queue.size() == 3,"Spinning refills the cancelled queue slot")
 			await move_producing(machine)
 			finish_all(machine)
 			var ready: Array = manager.spinning_machine_queue.duplicate(true)

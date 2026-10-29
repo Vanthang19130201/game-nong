@@ -48,12 +48,20 @@ func check_characters() -> void:
 		check(Data.complete(frames), "complete directional frames " + id)
 		check(frames == Data.frames_for(id), "frames are cached " + id)
 		for name in Data.ANIMATIONS:
-			check(frames.get_frame_count(name) == (4 if name.begins_with("walk") else 1), "idle/walk frame counts " + id + name)
+			var expected_count: int = 6 if id == "farmer_01" else (4 if name.begins_with("walk") else 1)
+			check(frames.get_frame_count(name) == expected_count, "idle/walk frame counts " + id + name)
 		var first := frames.get_frame_texture("idle_down", 0)
 		var png_path: String = "res://assets/characters/" + id + "/character.png"
-		var expected_path: String = png_path if ResourceLoader.exists(png_path) else "res://assets/characters/" + id + "/character.svg"
+		var expected_path: String = "res://assets/characters/farmer_01/player1/player1_idle_down.png" if id == "farmer_01" else (png_path if ResourceLoader.exists(png_path) else "res://assets/characters/" + id + "/character.svg")
 		check(first is AtlasTexture and first.atlas.resource_path == expected_path, "distinct character artwork " + id)
 		check(first.atlas.get_image().get_pixel(0, 0).a == 0.0, "transparent sheet " + id)
+		if id == "farmer_01":
+			check(first.region == Rect2(0, 0, 362, 724), "Player 1 uses the fixed first 362x724 cell")
+			for name in Data.ANIMATIONS:
+				check(is_equal_approx(frames.get_animation_speed(name), 8.0 if name.begins_with("walk") else 3.0), "Player 1 animation FPS " + name)
+				for frame_index in range(6):
+					var frame: AtlasTexture = frames.get_frame_texture(name, frame_index) as AtlasTexture
+					check(frame != null and frame.region == Rect2(frame_index * 362, 0, 362, 724), "Player 1 fixed grid cell " + name + str(frame_index))
 	check(Data.valid_id(42) == "farmer_01" and Data.valid_id("bad_id") == "farmer_01", "invalid ids use default")
 	check(Data.complete(Data.fallback_frames()), "neutral fallback supports every direction")
 	check(Data._read_frames("res://__missing_character_frames__.tres") == null, "missing frame resource is rejected safely")
@@ -203,7 +211,7 @@ func run_checks() -> void:
 				var atlas: AtlasTexture = frames.get_frame_texture(animation, 0)
 				check(atlas.atlas.resource_path.ends_with("farmer_02/character.png") and atlas.region.size == Vector2(96,128), "PNG replaces SVG with normalized atlas coordinates")
 		"character_missing":
-			for id in ["farmer_01", "farmer_04"]:
+			for id in ["farmer_04"]:
 				var path: String = Data.CHARACTERS[id]["frames"]
 				var backup := path + ".testbackup"
 				check(DirAccess.rename_absolute(path, backup) == OK, "temporarily remove frames in isolated project")
@@ -211,8 +219,9 @@ func run_checks() -> void:
 				var frames := Data.frames_for(id)
 				var restored := DirAccess.rename_absolute(backup, path)
 				check(restored == OK and Data.complete(frames), "missing character frames resolve to complete fallback " + id)
-				if id == "farmer_01":
-					check(frames.get_frame_texture("idle_down", 0).resource_path.ends_with("fallback.svg"), "missing default frames use neutral silhouette")
+			Data._cache.erase("farmer_01")
+			var player_one_frames := Data.frames_for("farmer_01")
+			check(Data.complete(player_one_frames) and player_one_frames.get_frame_count("walk_down") == 6, "Player 1 supplied strips remain complete after cache refresh")
 			Data._cache.clear()
 	print("PASS: " + stage)
 	quit()

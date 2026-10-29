@@ -80,6 +80,12 @@ func cancel_job(job: Dictionary) -> bool:
 	_update_display()
 	return cancelled
 
+
+func cancel_job_at(index: int) -> bool:
+	if index < 0 or index >= queue.size():
+		return false
+	return cancel_job(queue[index])
+
 func _can_refund(ingredients: Dictionary) -> bool:
 	var silo_amount: int = 0
 	var barn_amount: int = 0

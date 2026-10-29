@@ -46,7 +46,7 @@ func run_checks() -> void:
 		if event is InputEventKey and event.physical_keycode == KEY_TAB:
 			tab_bound = true
 	check(tab_bound, "physical Tab binding")
-	check(cells["wheat_seed"].quantity == 10 and panel.capacity_labels["silo"].text.contains("10 / 30"), "existing inventory grid data")
+	check(cells["wheat_seed"].quantity == 10 and panel.capacity_labels["silo"].text.contains("10 / 40"), "existing inventory grid data")
 	check(panel.tabs.get_tab_count() == 3 and panel.tabs.get_tab_title(2) == "NGUYÊN LIỆU", "three Vietnamese tabs")
 	await key(KEY_TAB)
 	check(panel.visible and hud.blocks_world_input() and hud.crop_selector.disabled, "Tab opens modal")
@@ -114,7 +114,7 @@ func run_checks() -> void:
 	check(inv.upgrade_structure("house") and cells["wood"].quantity == 0 and cells["stone"].quantity == 0, "upgrade refresh")
 	hud._toggle_storage()
 	check(manager.reset_game() and not panel.visible, "reset closes storage")
-	check(cells["wheat_seed"].quantity == 10 and panel.capacity_labels["barn"].text.contains("0 / 20") and cells["wood"].quantity == 0 and cells["stone"].quantity == 0, "reset data refresh")
+	check(cells["wheat_seed"].quantity == 10 and panel.capacity_labels["barn"].text.contains("0 / 30") and cells["wood"].quantity == 0 and cells["stone"].quantity == 0, "reset data refresh")
 	# P uses the same modal as the HUD button, for both tabs.
 	check(InputMap.action_get_events("toggle_shop_build")[0].physical_keycode == KEY_P, "physical P binding")
 	hud._toggle_storage()

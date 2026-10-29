@@ -80,7 +80,7 @@ func prepare() -> void:
 	check(farm.get_node("Bakery").enqueue("bread"), "bakery queue fixture")
 	inv.house_level = 2
 	inv.silo_level = 2
-	inv.silo_capacity = 50
+	inv.silo_capacity = 70
 	inv.wood = 10
 	inv.stone = 10
 	var decoration = load("res://decoration.tscn").instantiate()
@@ -122,7 +122,7 @@ func run_checks() -> void:
 		for station in manager.stations.values():
 			check(station.ready_at == disk().get_value(station.station_id,"ready_at"), "production timestamp restored")
 		check(manager.bakery_queue.size() == 1 and manager.bakery_queue[0]["item"] == "bread", "bakery queue restored")
-		check(inv.house_level == 2 and inv.silo_level == 2 and inv.silo_capacity == 50, "moved landmarks keep progression")
+		check(inv.house_level == 2 and inv.silo_level == 2 and inv.silo_capacity == 70, "moved landmarks keep progression")
 		check(farm.decoration_manager.instances["decor_0001"].position == Vector2(1408,1984) and is_equal_approx(farm.decoration_manager.instances["decor_0001"].rotation_degrees, 90), "decoration move/rotation restored")
 		check(manager.reset_game(), "cleanup")
 	else:
@@ -217,7 +217,7 @@ func run_checks() -> void:
 		editor.rotate_preview()
 		editor.update_preview(Vector2(1408,1984))
 		check(editor.valid_position and editor.place_move(), "decoration uses shared move validation")
-		check(root.get_node("OrderManager").orders == orders_before and inv.house_level == 2 and inv.silo_capacity == 50, "landmarks keep levels, storage and order data")
+		check(root.get_node("OrderManager").orders == orders_before and inv.house_level == 2 and inv.silo_capacity == 70, "landmarks keep levels, storage and order data")
 		for item in inventory_before:
 			check(inv.get(item) == inventory_before[item], "moving does not change inventory " + item)
 		check(farm.dog.walking and farm.dog.target == dog_target and farm.dog.idle_timer.is_stopped(), "DogHouse move preserves dog state")

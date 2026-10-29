@@ -9,6 +9,9 @@ const SafePlacement = preload("res://safe_world_placement.gd")
 const TreasureData = preload("res://treasure_data.gd")
 const DecorationData = preload("res://decoration_data.gd")
 
+# The merchant is a daily chance encounter: exactly one chance in three.
+const MERCHANT_APPEAR_CHANCE: float = 1.0 / 3.0
+
 # Limited, deterministic merchant exchanges. They reuse the daily stock and
 # existing transaction path instead of introducing a second shop system.
 const MERCHANT_EXCHANGES: Dictionary = {
@@ -54,12 +57,26 @@ func setup(farm_root: Node2D) -> void:
 	if not current_event_id.is_empty() and (event_position == Vector2.ZERO or not SafePlacement.is_clear(_farm, event_position, Vector2(52, 40), 58.0)):
 		event_position = _choose_position(current_day_key)
 		SaveManager.save_game.call_deferred()
-	if merchant_day_key != WeatherData.day_key() or merchant_stock.is_empty() and merchant_active:
-		_roll_merchant_for_day(WeatherData.day_key())
-	if merchant_active and (merchant_position == Vector2.ZERO or not SafePlacement.is_clear(_farm, merchant_position, Vector2(38, 54), 36.0)):
-		merchant_position = _choose_merchant_position()
+	# Keep a rolled daily absence stable. A day is only rolled again when it is
+	# new, or when a saved active merchant lacks its stock/meeting point.
+	var merchant_today: int = WeatherData.day_key()
+	if merchant_day_key != merchant_today or merchant_active and (merchant_stock.is_empty() or merchant_position == Vector2.ZERO):
+		_roll_merchant_for_day(merchant_today)
+	if merchant_active:
+		# Keep the merchant beside the Order Board instead of the market stall.
+		# Re-evaluate once during setup so an already-saved daily merchant moves
+		# to the new meeting point immediately.
+		var merchant_meeting_point: Vector2 = _choose_merchant_position()
+		if merchant_meeting_point != Vector2.ZERO and merchant_position != merchant_meeting_point:
+			merchant_position = merchant_meeting_point
+			SaveManager.save_game.call_deferred()
 	changed.emit(current_event_id)
 	merchant_changed.emit()
+
+
+func detach_farm() -> void:
+	# Farm is scene-owned; never keep an old world through a menu transition.
+	_farm = null
 
 func is_active(event_id: String) -> bool:
 	return current_event_id == event_id
@@ -94,6 +111,7 @@ func restore(data: Variant) -> void:
 	changed.emit(current_event_id)
 
 func reset() -> void:
+	_farm = null
 	current_event_id = ""
 	current_day_key = WeatherData.day_key()
 	event_position = Vector2.ZERO
@@ -242,7 +260,7 @@ func _roll_merchant_for_day(key: int) -> void:
 	last_merchant_exchange.clear()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 0x4D455243 + key * 1877
-	if rng.randf() >= 0.25:
+	if rng.randf() >= MERCHANT_APPEAR_CHANCE:
 		merchant_changed.emit()
 		return
 	merchant_active = true
@@ -269,15 +287,18 @@ func _make_merchant_stock(rng: RandomNumberGenerator) -> Array:
 func _choose_merchant_position() -> Vector2:
 	if not is_instance_valid(_farm):
 		return Vector2.ZERO
-	var stall: Node2D = SaveManager.buildings.get("market_stall") as Node2D
-	var center: Vector2 = stall.global_position if is_instance_valid(stall) else Vector2(920, 650)
-	var offsets: Array[Vector2] = [Vector2(-144, 118), Vector2(144, 118), Vector2(-160, -110), Vector2(160, -110), Vector2(0, 160), Vector2(0, -160)]
+	var order_board: Node2D = _farm.get_node_or_null("OrderBoard") as Node2D
+	var center: Vector2 = order_board.global_position if is_instance_valid(order_board) else Vector2(920, 420)
+	# Place the trader beside the Order Board, where every player regularly
+	# visits. Safe points are preferred so the character does not cover another
+	# interactable; the final point remains deliberate and visible even on a
+	# crowded/legacy farm where placement probes reject every candidate.
+	var offsets: Array[Vector2] = [Vector2(128, 96), Vector2(-128, 96), Vector2(112, -96), Vector2(-112, -96), Vector2(160, 32), Vector2(-160, 32)]
 	for offset in offsets:
-		var point := (center + offset).snapped(Vector2(16, 16))
+		var point: Vector2 = (center + offset).snapped(Vector2(16, 16))
 		if SafePlacement.is_clear(_farm, point, Vector2(38, 54), 36.0):
 			return point
-	merchant_active = false
-	return Vector2.ZERO
+	return (center + Vector2(128, 96)).snapped(Vector2(16, 16))
 
 func _sanitize_merchant_stock(value: Variant) -> Array:
 	var result: Array = []

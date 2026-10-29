@@ -103,8 +103,8 @@ var egg: int = 0
 var has_dog: bool = false
 var cow_feed: int = 0
 var milk: int = 0
-var silo_capacity: int = 30
-var barn_capacity: int = 20
+var silo_capacity: int = 40
+var barn_capacity: int = 30
 var owns_feed_mill: bool = false
 var owns_chicken_coop: bool = false
 var owns_cow_shed: bool = false
@@ -912,7 +912,7 @@ func base_storage_capacity(storage: String, level: int = -1) -> int:
 	)
 
 	if resolved_level <= 1:
-		return 30 if storage == "silo" else 20
+		return 40 if storage == "silo" else 30
 
 	var upgrades: Dictionary = Progression.UPGRADES[storage]
 	var data: Dictionary = upgrades.get(resolved_level, {})
@@ -920,7 +920,7 @@ func base_storage_capacity(storage: String, level: int = -1) -> int:
 	return int(
 		data.get(
 			"capacity",
-			30 if storage == "silo" else 20
+			40 if storage == "silo" else 30
 		)
 	)
 

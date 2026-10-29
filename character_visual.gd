@@ -25,6 +25,7 @@ var walk_phase: float = 0.0
 
 
 func _ready() -> void:
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	if use_selected_character:
 		SaveManager.selected_character_changed.connect(
 			refresh_character
@@ -95,16 +96,6 @@ func refresh_character_size() -> void:
 		texture.get_height()
 	)
 
-	var factor: float = (
-		target_character_height
-		/ source_height
-	)
-
-	scale = Vector2(
-		factor,
-		factor
-	)
-
 	var ground_y: float = 0.0
 
 	var collision := (
@@ -136,6 +127,17 @@ func refresh_character_size() -> void:
 			bottom = float(
 				used.end.y
 			)
+
+	# The supplied Player 1 sheets retain generous transparent canvas space.
+	# Fit its visible character, not that padding, to the existing target height;
+	# other character options retain their established scaling behaviour.
+	var scale_height: float = source_height
+	if SaveManager.selected_character_id == "farmer_01" and frame_image != null:
+		var visible: Rect2i = frame_image.get_used_rect()
+		if visible.has_area():
+			scale_height = float(visible.size.y)
+	var factor: float = target_character_height / scale_height
+	scale = Vector2(factor, factor)
 
 	offset = Vector2(
 		0,

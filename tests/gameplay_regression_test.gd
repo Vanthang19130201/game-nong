@@ -143,7 +143,7 @@ func run_checks() -> void:
 	hud.reset_confirmation.get_ok_button().pressed.emit()
 	assert(not inv.has_dog and not is_instance_valid(main.dog) and not inv.has_axe)
 	assert(inv.chicken_count == 0 and inv.cow_count == 0 and inv.axe_level == 0)
-	assert(inv.silo_capacity == 30 and inv.barn_capacity == 20 and orders.orders.size() == 3)
+	assert(inv.silo_capacity == 40 and inv.barn_capacity == 30 and orders.orders.size() == 3)
 	await create_timer(0.15).timeout
 	assert(not is_instance_valid(main) and is_instance_valid(current_scene))
 	assert(inv.player_level == 1 and inv.player_exp == 0 and inv.coins == 100)

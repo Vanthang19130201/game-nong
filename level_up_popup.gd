@@ -63,6 +63,9 @@ func _show_next() -> void:
 	active_event = pending_events[0]
 	_render_event()
 	_fit()
+	# Grid cards are created at runtime, so run one additional fit after the
+	# container has calculated their minimum sizes.
+	call_deferred("_fit")
 	visible = true
 	card.scale = Vector2(0.96, 0.96)
 	card.modulate.a = 0.0
@@ -94,14 +97,15 @@ func _render_event() -> void:
 func _add_unlock_card(unlock: Dictionary) -> void:
 	var entry := PanelContainer.new()
 	entry.theme_type_variation = &"CardPanel"
-	entry.custom_minimum_size = Vector2(190, 48)
+	entry.custom_minimum_size = Vector2(0, 52)
 	entry.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	entry.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	unlock_grid.add_child(entry)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	entry.add_child(row)
 	var icon := Control.new()
-	icon.custom_minimum_size = Vector2(30, 30)
+	icon.custom_minimum_size = Vector2(28, 28)
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon.set_script(ItemIcon)
 	icon.item_id = str(unlock.get("icon_id", unlock.get("id", "")))
@@ -141,14 +145,25 @@ func clear_events() -> void:
 
 func _fit() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
-	var column_count: int = 1 if viewport_size.x < 520.0 else 2
+	var column_count: int = 1 if viewport_size.x < 620.0 else 2
 	unlock_grid.columns = column_count
 	var unlock_count: int = int(active_event.get("unlocks", []).size())
 	var unlock_rows: int = ceili(float(unlock_count) / float(column_count))
-	# The old fixed 520px card left a large blank panel at levels with only a
-	# few unlocks. Keep it compact, while preserving enough room for 4+ items.
-	var desired_height: float = 282.0 + float(unlock_rows) * 58.0 if unlock_count > 0 else 282.0
-	var card_size := Vector2(minf(560.0, viewport_size.x - 32.0), minf(desired_height, viewport_size.y - 32.0))
+	# Size from the actual, compact sections instead of preserving the old 500px
+	# empty card. Current progression has at most four unlocks at one level.
+	var desired_height: float = 278.0
+	if unlock_count > 0:
+		desired_height += 42.0 + float(unlock_rows) * 60.0
+	var horizontal_padding: float = 40.0
+	var max_height: float = viewport_size.y * 0.84
+	# PanelContainer can grow to its content minimum after GridContainer has
+	# laid out generated unlock cards. Include that minimum before centering so
+	# the final card size cannot shift the popup downward afterward.
+	var content_minimum: Vector2 = card.get_combined_minimum_size()
+	var card_width: float = maxf(content_minimum.x, minf(560.0, viewport_size.x - horizontal_padding))
+	var card_height: float = maxf(content_minimum.y, minf(desired_height, max_height))
+	var card_size := Vector2(card_width, card_height)
+	card.custom_minimum_size = Vector2.ZERO
 	card.anchor_left = 0.0
 	card.anchor_top = 0.0
 	card.anchor_right = 0.0

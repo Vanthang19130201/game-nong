@@ -190,6 +190,8 @@ func run_checks() -> void:
 			check(inv.wheat == 0 and manager.bakery_queue.size() == 3, "deduct at enqueue")
 			check(not bakery.enqueue("bread") and not bakery.collect(), "queue limit and no early collection")
 			check(disk().get_value("bakery", "bakery_queue").size() == 3, "queue autosave")
+			check(bakery.cancel_job_at(2) and inv.wheat == 2 and manager.bakery_queue.size() == 2, "Bakery cancel refunds the queued recipe once")
+			check(bakery.enqueue("bread") and inv.wheat == 0 and manager.bakery_queue.size() == 3, "Bakery can refill its cancelled slot")
 			for entry in manager.bakery_queue:
 				entry["started_at"] = Time.get_unix_time_from_system()-100
 				entry["ready_at"] = Time.get_unix_time_from_system()-1

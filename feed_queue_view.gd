@@ -134,10 +134,13 @@ func _make_slot(parent: Control, title: String) -> Dictionary:
 	return {"card":card,"icon":icon,"name":name_label,"title":title,"status":status,"progress":progress,"cancel":cancel,"job":{},"amount":amount}
 
 func _cancel_slot(index: int) -> void:
-	if not is_instance_valid(station) or not station.player_near or station.collecting:
+	if not is_instance_valid(station):
 		return
-	var job: Dictionary = slots[index]["job"]
-	station.cancel_job(job)
+	if station.has_method("cancel_job_at"):
+		station.cancel_job_at(index)
+	elif station.has_method("cancel_job"):
+		var job: Dictionary = slots[index]["job"]
+		station.cancel_job(job)
 	refresh(station)
 
 func refresh(value: Node) -> void:
@@ -168,8 +171,9 @@ func _display(view: Dictionary, entry: Dictionary) -> void:
 	view["job"] = entry
 	var cancel: Button = view["cancel"]
 	if cancel != null:
-		cancel.visible = is_feed and not entry.is_empty() and entry.get("state","") in ["PRODUCING","QUEUED"]
-		cancel.disabled = not is_feed or station.collecting or not station.player_near
+		var is_cancellable: bool = not entry.is_empty() and entry.get("state", "") in ["PRODUCING", "QUEUED"]
+		cancel.visible = is_cancellable
+		cancel.disabled = not is_cancellable or not _can_cancel_jobs()
 	view["icon"].modulate.a = 0.25 if entry.is_empty() else 1.0
 	view["progress"].hide()
 	if entry.is_empty():
@@ -197,4 +201,12 @@ func _display(view: Dictionary, entry: Dictionary) -> void:
 		var seconds: int = ceili(remaining)
 		view["status"].text += "\n%d:%02d" % [floori(seconds/60.0),seconds%60]
 		view["progress"].value = clampf(1.0-remaining/maxf(0.001,entry["ready_at"]-entry["started_at"]),0.0,1.0)
+
+
+func _can_cancel_jobs() -> bool:
+	if not is_instance_valid(station):
+		return false
+	if is_feed:
+		return station.player_near and not station.collecting
+	return station.has_method("can_interact") and station.can_interact()
 

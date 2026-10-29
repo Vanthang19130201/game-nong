@@ -31,6 +31,17 @@ func claim(level: int) -> void:
 	check(inv.last_rewarded_level == level, "claim saved at level %d" % level)
 
 
+func check_compact_popup_in_viewport() -> void:
+	popup._fit()
+	await process_frame
+	var card_rect: Rect2 = popup.get_node("Card").get_global_rect()
+	var viewport_rect: Rect2 = popup.get_viewport_rect()
+	var button_rect: Rect2 = popup.get_node("Card/Margin/Content/ClaimButton").get_global_rect()
+	check(viewport_rect.encloses(card_rect), "level popup fits the active viewport")
+	check(card_rect.encloses(button_rect), "level popup claim stays inside card")
+	check(card_rect.get_center().distance_to(viewport_rect.get_center()) <= 1.0, "level popup stays centered in the active viewport: card=%s viewport=%s" % [card_rect, viewport_rect])
+
+
 func run_checks() -> void:
 	await process_frame
 	inv = root.get_node("Inventory")
@@ -132,6 +143,7 @@ func run_checks() -> void:
 	var claim_rect: Rect2 = popup.get_node("Card/Margin/Content/ClaimButton").get_global_rect()
 	check(popup.active_event["unlocks"].size() == 4 and popup_card.encloses(unlock_rect), "largest unlock group fits in card")
 	check(popup_card.encloses(claim_rect) and Rect2(Vector2.ZERO,Vector2(1152,648)).encloses(claim_rect), "level 15 claim button is not clipped: card=%s button=%s" % [popup_card, claim_rect])
+	await check_compact_popup_in_viewport()
 	await claim(15)
 	check(inv.coins == coins_before + 525, "level 15 milestone reward")
 

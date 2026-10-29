@@ -81,28 +81,28 @@ const BUILDINGS: Dictionary = {
 	"chicken_coop": {
 		"name": "Chicken Coop",
 		"level": 5,
-		"price": 800,
+		"price": 600,
 		"placement_required": true
 	},
 
 	"cow_shed": {
 		"name": "Cow Shed",
 		"level": 8,
-		"price": 1500,
+		"price": 800,
 		"placement_required": true
 	},
 
 	"pig_pen": {
 		"name": "Pig Pen",
 		"level": 11,
-		"price": 2500,
+		"price": 2000,
 		"placement_required": true
 	},
 
 	"sheep_barn": {
 		"name": "Sheep Barn",
 		"level": 13,
-		"price": 2100,
+		"price": 2500,
 		"placement_required": true
 	},
 
@@ -123,14 +123,14 @@ const BUILDINGS: Dictionary = {
 	"spinning_machine": {
 		"name": "Spinning Machine",
 		"level": 17,
-		"price": 5000,
+		"price": 3000,
 		"placement_required": true
 	},
 
 	"loom": {
 		"name": "Loom",
 		"level": 18,
-		"price": 6000,
+		"price": 3500,
 		"placement_required": true
 	}
 }
@@ -188,35 +188,35 @@ const UPGRADES: Dictionary = {
 		3: {"wood": 90, "stone": 60, "coins": 6000, "queue_capacity": 5}
 	},
 	"silo": {
-		2: {"wood": 10, "stone": 5, "coins": 200, "capacity": 50},
-		3: {"wood": 25, "stone": 15, "coins": 850, "capacity": 80},
-		4: {"wood": 45, "stone": 28, "coins": 2200, "capacity": 120},
-		5: {"wood": 75, "stone": 50, "coins": 4800, "capacity": 180}
+		2: {"wood": 10, "stone": 5, "coins": 200, "capacity": 70},
+		3: {"wood": 25, "stone": 15, "coins": 850, "capacity": 100},
+		4: {"wood": 45, "stone": 28, "coins": 2200, "capacity": 130},
+		5: {"wood": 75, "stone": 50, "coins": 4800, "capacity": 160}
 	},
 	"barn": {
 	2: {
 		"wood": 12,
 		"stone": 10,
 		"coins": 350,
-		"capacity": 40
+		"capacity": 60
 	},
 	3: {
 		"wood": 30,
 		"stone": 20,
 		"coins": 1300,
-		"capacity": 70
+		"capacity": 90
 	},
 	4: {
 		"wood": 58,
 		"stone": 38,
 		"coins": 3000,
-		"capacity": 110
+		"capacity": 120
 	},
 	5: {
 		"wood": 95,
 		"stone": 60,
 		"coins": 6200,
-		"capacity": 160
+		"capacity": 150
 	}
 }
 }

@@ -211,6 +211,65 @@ func enqueue(
 	return true
 
 
+func cancel_job_at(index: int) -> bool:
+	if (
+		is_preview
+		or not Inventory.owns_bakery
+		or index < 0
+		or index >= SaveManager.bakery_queue.size()
+	):
+		return false
+	refresh()
+	var job: Dictionary = SaveManager.bakery_queue[index]
+	if str(job.get("state", "")) not in ["QUEUED", "PRODUCING"]:
+		return false
+	var recipe: Dictionary = Data.RECIPES.get(str(job.get("item", "")), {})
+	var requirements: Dictionary = recipe.get("requirements", {})
+	if requirements.is_empty() or not _can_refund(requirements):
+		get_tree().call_group("farm_hud", "show_floating_feedback", tr("FEED_REFUND_FULL"))
+		return false
+	for ingredient in requirements:
+		Inventory.set(ingredient, Inventory.get(ingredient) + int(requirements[ingredient]))
+	SaveManager.bakery_queue.remove_at(index)
+	_reflow_queue()
+	refresh()
+	Inventory.inventory_changed.emit()
+	AudioManager.play_sfx("product_collect", global_position)
+	return true
+
+
+func _can_refund(requirements: Dictionary) -> bool:
+	var silo_amount: int = 0
+	var barn_amount: int = 0
+	for item in requirements:
+		if item in Inventory.SILO_ITEMS:
+			silo_amount += int(requirements[item])
+		elif item in Inventory.BARN_ITEMS:
+			barn_amount += int(requirements[item])
+		else:
+			return false
+	return (
+		Inventory.storage_used("silo") + silo_amount <= Inventory.silo_capacity
+		and Inventory.storage_used("barn") + Inventory.reserved_barn_slots + barn_amount <= Inventory.barn_capacity
+	)
+
+
+func _reflow_queue() -> void:
+	# Keep the active job's progress, then close any gap left by a cancelled job.
+	var next_start: float = Time.get_unix_time_from_system()
+	for index in range(SaveManager.bakery_queue.size()):
+		var entry: Dictionary = SaveManager.bakery_queue[index]
+		if index == 0 and str(entry.get("state", "")) == "PRODUCING":
+			next_start = maxf(next_start, float(entry.get("ready_at", next_start)))
+			continue
+		var recipe: Dictionary = Data.RECIPES.get(str(entry.get("item", "")), {})
+		var duration: float = float(recipe.get("time", 0.0))
+		entry["started_at"] = next_start
+		entry["ready_at"] = next_start + duration
+		entry["state"] = "QUEUED"
+		next_start = float(entry["ready_at"])
+
+
 func collect() -> bool:
 
 	if is_preview:

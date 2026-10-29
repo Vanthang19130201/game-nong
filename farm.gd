@@ -22,6 +22,8 @@ var animal_groups: Dictionary = {}
 
 
 func _ready() -> void:
+	# The outgoing farm suspends the clock. Only a live new farm resumes it.
+	GameClock.resume_gameplay()
 	_create_farm_grid()
 	_create_field_visual()
 	_setup_fishing_waters()

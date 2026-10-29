@@ -163,6 +163,8 @@ func run_checks() -> void:
 			check(not dairy.state_changed.is_connected(hud.dairy_panel.refresh),"panel signal disconnected after close")
 			check(not dairy.enqueue("cream") and manager.dairy_queue.is_empty(),"missing milk never enqueues")
 			enqueue_all(dairy)
+			check(dairy.cancel_job_at(2) and inv.milk == 4 and manager.dairy_queue.size() == 2,"Dairy cancel refunds one queued recipe")
+			check(dairy.enqueue("cheese") and inv.milk == 0 and manager.dairy_queue.size() == 3,"Dairy refills the cancelled queue slot")
 			check(not orders.item_available("cream"),"Dairy orders also require a renewable milk source")
 			inv.owns_feed_mill = true
 			inv.owns_cow_shed = true

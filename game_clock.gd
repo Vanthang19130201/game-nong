@@ -11,19 +11,33 @@ var minutes: float = 360.0
 var season: String = "spring"
 var gameplay_hud: Node
 var gameplay_player: Node2D
+var gameplay_suspended: bool = false
 
 func _process(delta: float) -> void:
 	if is_gameplay_active():
 		advance(delta)
 
 func is_gameplay_active() -> bool:
-	if get_tree().paused or SaveManager.resetting:
+	if gameplay_suspended or get_tree().paused or SaveManager.resetting:
 		return false
 	if not is_instance_valid(gameplay_hud):
 		gameplay_hud = get_tree().get_first_node_in_group("farm_hud")
 	if not is_instance_valid(gameplay_player):
 		gameplay_player = get_tree().get_first_node_in_group("farm_player")
 	return gameplay_hud != null and gameplay_player != null and gameplay_player.is_inside_tree() and not gameplay_hud.blocks_world_input()
+
+
+func suspend_gameplay() -> void:
+	# Do not advance an outgoing farm while it is being released for menu/new game.
+	gameplay_suspended = true
+	gameplay_hud = null
+	gameplay_player = null
+
+
+func resume_gameplay() -> void:
+	gameplay_suspended = false
+	gameplay_hud = null
+	gameplay_player = null
 
 func advance(seconds: float) -> void:
 	if not is_finite(seconds) or seconds <= 0.0:

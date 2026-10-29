@@ -26,10 +26,12 @@ func bind_farm() -> void:
 
 func assert_height(height: float) -> void:
 	var texture: Texture2D = sprite.sprite_frames.get_frame_texture("idle_down", 0)
-	check(is_equal_approx(texture.get_height() * sprite.scale.y, height), "display height matches target " + str(height))
+	var image: Image = texture.get_image()
+	var used: Rect2i = image.get_used_rect()
+	var visible_height: float = float(used.size.y if used.has_area() else texture.get_height())
+	check(is_equal_approx(visible_height * sprite.scale.y, height), "display height matches target " + str(height))
 	check(is_equal_approx(sprite.scale.x, sprite.scale.y), "aspect ratio preserved")
 	check(player.scale == Vector2.ONE, "player root stays unscaled")
-	var used := texture.get_image().get_used_rect()
 	var visible_bottom: float = sprite.position.y + (sprite.offset.y + used.end.y - texture.get_height() * 0.5) * sprite.scale.y
 	check(is_equal_approx(visible_bottom, player.get_node("CollisionShape2D").position.y), "visible feet/shadow anchored to unchanged collision center")
 
@@ -97,7 +99,10 @@ func run_checks() -> void:
 					check(sprite.scale == fitted, "animation process never resets fitted scale")
 				check(collision.transform == original_transform and collision.shape == original_shape and collision.shape.size == original_size, "collision unchanged for every skin and height")
 				check(player.speed == original_speed and camera.zoom == camera_zoom, "speed and camera unchanged")
-				first[str(height)] = sprite.sprite_frames.get_frame_texture("idle_down", 0).get_height() * sprite.scale.y
+			var current_texture: Texture2D = sprite.sprite_frames.get_frame_texture("idle_down", 0)
+			var current_image: Image = current_texture.get_image()
+			var current_used: Rect2i = current_image.get_used_rect()
+			first[str(height)] = float(current_used.size.y if current_used.has_area() else current_texture.get_height()) * sprite.scale.y
 			check(manager.set_selected_character("farmer_01", false), "capture Farmer 1 consistently")
 			player.velocity = Vector2.ZERO
 			sprite.facing = "down"
@@ -124,7 +129,9 @@ func run_checks() -> void:
 		empty.add_frame("idle_down", real_frames.get_frame_texture("idle_down", 0))
 		sprite.target_character_height = 72.0
 		sprite.refresh_character_size()
-		check(is_equal_approx(sprite.scale.y * empty.get_frame_texture("idle_down", 1).get_height(), 72.0), "uses first valid idle frame")
+		var empty_texture: Texture2D = empty.get_frame_texture("idle_down", 1)
+		var empty_used: Rect2i = empty_texture.get_image().get_used_rect()
+		check(is_equal_approx(sprite.scale.y * float(empty_used.size.y if empty_used.has_area() else empty_texture.get_height()), 72.0), "uses first valid idle frame")
 		sprite.sprite_frames = real_frames
 		sprite.refresh_character_size()
 		# A higher resolution replacement still fits the same world height.

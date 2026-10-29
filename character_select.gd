@@ -121,6 +121,7 @@ func _ready() -> void:
 		picture.custom_minimum_size = Vector2(88, 96)
 		picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		picture.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		inner.add_child(picture)
 
@@ -164,6 +165,7 @@ func _ready() -> void:
 	detail.add_child(portrait)
 
 	preview = AnimatedSprite2D.new()
+	preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	preview.position = Vector2(100, 108)
 	portrait.add_child(preview)
 
@@ -231,6 +233,20 @@ func _ready() -> void:
 	_fit_layout()
 
 	name_input.grab_focus()
+
+
+func prepare_for_new_game() -> void:
+	# This selector is reused after Back; clear every transient UI field first.
+	selected_id = Data.DEFAULT_ID
+	if name_input != null:
+		name_input.text = ""
+	if error_label != null:
+		error_label.text = ""
+	if confirm_button != null:
+		confirm_button.disabled = true
+	select_character(selected_id)
+	if name_input != null:
+		name_input.grab_focus()
 
 
 func select_character(id: String) -> void:
