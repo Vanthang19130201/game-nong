@@ -95,10 +95,12 @@ const ANIMATION_FPS: Dictionary = {
 	"sniff": 7.0, "scratch": 9.0, "shake": 12.0, "alert": 7.0
 }
 const LOOPING_ANIMATIONS: Array[StringName] = [&"idle", &"walk", &"run", &"sit_idle", &"lie_idle", &"sleep", &"eat"]
-const SHIBA_STRIP_FRAME_SIZE := Vector2i(192, 192)
-const SHIBA_STRIP_GROUND_Y := 154.0
-const SHIBA_STRIP_SCALE := 0.48
-const SHIBA_STRIP_SAFE_MARGIN := 12
+const SHIBA_STRIP_FRAME_SIZE := Vector2i(256, 256)
+const SHIBA_STRIP_GROUND_Y := 210.0
+# 256px frames preserve all anatomy while this calibrated scale keeps the
+# world-facing Shiba at the same cozy gameplay height as before.
+const SHIBA_STRIP_SCALE := 0.40
+const SHIBA_STRIP_SAFE_MARGIN := 24
 const SHIBA_STRIP_ANIMATIONS: Dictionary = {
 	# The user-uploaded source contains single key poses for actions. Keep those
 	# transparent instead of pretending repeated art is a multi-frame sequence.

@@ -4,10 +4,13 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $sourceDir = Join-Path $root 'assets/animals/dogs/shiba/from_uploaded'
 $outputDir = Join-Path $root 'assets/animals/dogs/shiba/animations'
-$canvas = 192
-$safeMargin = 12
-$groundY = 154
-$scale = 0.39
+# A generously padded runtime canvas.  The art itself stays at the same
+# on-screen size; only the transparent frame grows so ears, curled tails and
+# paws have room throughout every pose.
+$canvas = 256
+$safeMargin = 24
+$groundY = 210
+$scale = 0.46
 
 $runSource = [System.Drawing.Bitmap]::new((Join-Path $sourceDir 'uploaded_run_sequence.png'))
 $actionSource = [System.Drawing.Bitmap]::new((Join-Path $sourceDir 'uploaded_action_poses.png'))
@@ -28,7 +31,7 @@ function Get-CleanCell([System.Drawing.Bitmap]$source, [System.Drawing.Rectangle
         for ($x = 0; $x -lt $width; $x++) {
 			# The upload's opaque grid/separators live at cell edges. The dog itself
 			# has room inside the grid, so ignore that matte before component analysis.
-            $insideSourceSafeZone = $x -ge 12 -and $y -ge 12 -and $x -lt $width - 12 -and $y -lt $height - 12
+            $insideSourceSafeZone = $x -ge 16 -and $y -ge 16 -and $x -lt $width - 16 -and $y -lt $height - 16
             $active[$y * $width + $x] = $insideSourceSafeZone -and $source.GetPixel($cell.X + $x, $cell.Y + $y).A -gt 32
         }
     }
@@ -75,10 +78,10 @@ function Get-CleanCell([System.Drawing.Bitmap]$source, [System.Drawing.Rectangle
     # small, warm components that belong to the body neighbourhood, while
     # rejecting the border-attached grid/checker remnants.
     $bodyZone = [System.Drawing.Rectangle]::FromLTRB(
-        [math]::Max(12, $bodyBounds.Left - 28),
-        [math]::Max(12, $bodyBounds.Top - 28),
-        [math]::Min($width - 12, $bodyBounds.Right + 28),
-        [math]::Min($height - 12, $bodyBounds.Bottom + 28)
+        [math]::Max(16, $bodyBounds.Left - 36),
+        [math]::Max(16, $bodyBounds.Top - 36),
+        [math]::Min($width - 16, $bodyBounds.Right + 36),
+        [math]::Min($height - 16, $bodyBounds.Bottom + 36)
     )
 	foreach ($component in $components) {
 		$componentBounds = $component.Bounds

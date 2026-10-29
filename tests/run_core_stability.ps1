@@ -65,6 +65,13 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'audio_manager_test.gd') -Destin
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'dog_pet_test.gd') -Destination $testRoot -Force
 $projectPath = Join-Path $testRoot 'project.godot'
 Add-Content -LiteralPath $projectPath -Value "`n[debug]`nfile_logging/enable_file_logging=false"
+# Generated Shiba frames retain their filenames while their canvas can grow.
+# Godot's import cache can otherwise retain the old texture dimensions, so
+# clear only the disposable/generated Shiba cache before a forced reimport.
+$sourceImportCache = Join-Path $projectRoot '.godot/imported'
+if (Test-Path -LiteralPath $sourceImportCache) {
+    Get-ChildItem -LiteralPath $sourceImportCache -Filter 'shiba_*.png-*' -File | Remove-Item -Force
+}
 # Refresh the source project's imports before copying them.  This matters when
 # a generated sprite strip changes its dimensions while keeping its filename.
 & $Godot --headless --path $projectRoot --import
@@ -77,6 +84,7 @@ $cacheRoot = Join-Path $testRoot '.godot'
 New-Item -ItemType Directory -Path $cacheRoot -Force | Out-Null
 $testImports = Join-Path $cacheRoot 'imported'
 New-Item -ItemType Directory -Path $testImports -Force | Out-Null
+Get-ChildItem -LiteralPath $testImports -Filter 'shiba_*.png-*' -File -ErrorAction SilentlyContinue | Remove-Item -Force
 Get-ChildItem -LiteralPath $importSource -Force | Copy-Item -Destination $testImports -Recurse -Force
 $uidCache = Join-Path $projectRoot '.godot/uid_cache.bin'
 if (Test-Path -LiteralPath $uidCache) { Copy-Item -LiteralPath $uidCache -Destination $cacheRoot -Force }

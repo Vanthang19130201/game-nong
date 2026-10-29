@@ -186,5 +186,7 @@ func run_checks() -> void:
 	check(not weather_visual.rain_particles.emitting and weather_visual.cloud_visible and weather_visual.cloud_phase > cloud_phase_before, "cloudy weather animates moving clouds without rain")
 	farm.get_node("HUD/Calendar").refresh()
 	check(farm.get_node("HUD/Calendar/Content/Time/WeatherIcon").texture != null, "weather icon remains set")
+	# The stability runner selects this stage by its canonical name.
+	print("PASS: discovery_core")
 	print("PASS: discovery, deterministic crops, weather layering, events, treasure hunt, Mystery Seed, and merchant stock persistence")
 	quit()

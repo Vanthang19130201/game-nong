@@ -184,7 +184,7 @@ func run_checks() -> void:
 			check(distinct_atlas_regions(sprite.sprite_frames, &"run") >= 2, "legacy/cream run uses multiple real source regions")
 			check(distinct_atlas_regions(sprite.sprite_frames, &"wake_up") >= 3, "legacy/cream wake-up has a real pose transition")
 		if runtime.variant_id == "shiba":
-			check(sprite.scale.y > 0.42 and sprite.scale.y < 0.54, "Shiba uses the calibrated uploaded-art 192px strip scale")
+			check(sprite.scale.y > 0.36 and sprite.scale.y < 0.44, "Shiba uses the calibrated padded 256px strip scale")
 		elif runtime.variant_id == "cream":
 			check(sprite.scale.y > 0.40 and sprite.scale.y < 0.52, "Cream uses its separate full-body 160px strip scale")
 		else:
