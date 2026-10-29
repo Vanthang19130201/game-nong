@@ -34,8 +34,6 @@ func fish_count() -> int:
 	var total: int = 0
 	for fish_id in inv.FishingData.CATCHABLE_FISH_IDS:
 		total += inv.get(fish_id)
-	for fish_id in inv.FishingData.LEGACY_FISH_IDS:
-		total += inv.get(fish_id)
 	return total
 
 func start_session() -> bool:
@@ -98,7 +96,7 @@ func run_checks() -> void:
 	if stage == "fishing_read":
 		check(inv.has_fishing_rod and inv.fishing_rod_level == 3, "rod save restore")
 		check(inv.fishing_attempts_used == 1 and inv.fishing_attempts_remaining() == 14 and inv.fishing_cycle_started_at > 0.0, "attempt charge survives restart")
-		check(inv.small_fish == 2 and inv.river_fish == 3 and inv.golden_fish == 1, "fish save restore")
+		check(inv.tilapia == 2 and inv.perch == 3 and inv.koi_gold == 1, "fish save restore")
 		check(spot.state == spot.State.IDLE and inv.reserved_barn_slots == 0 and hud.fishing_ui.active_spot == null, "session not restored/no free reward")
 	else:
 		check(manager.reset_game(), "reset isolated fixture")
@@ -128,7 +126,7 @@ func run_checks() -> void:
 		if stage == "fishing_write":
 			inv.coins = 2800
 			check(inv.upgrade_fishing_rod() and inv.upgrade_fishing_rod(), "rod purchase persistence")
-			check(inv.add_item("small_fish",2) and inv.add_item("river_fish",3) and inv.add_item("golden_fish",1), "fish persistence fixture")
+			check(inv.add_item("tilapia",2) and inv.add_item("perch",3) and inv.add_item("koi_gold",1), "fish persistence fixture")
 			check(start_session(), "start session before closing")
 			check(manager.save_game(), "save mid-session")
 			var data := ConfigFile.new()

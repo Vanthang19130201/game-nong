@@ -41,7 +41,7 @@ func run_checks() -> void:
 	await create_timer(0.1).timeout
 	var stage: String = OS.get_cmdline_user_args()[0]
 	if stage == "market_read":
-		check(inv.coins == 123456 and inv.small_fish == 0 and inv.river_fish == 1 and inv.golden_fish == 0, "sale result restored")
+		check(inv.coins == 123456 and inv.tilapia == 0 and inv.perch == 1 and inv.koi_gold == 0, "sale result restored")
 		check(inv.player_level == 10 and market.visible, "market fixed on load")
 		check(inv.storage_used("barn") == 1, "Barn restored after selling")
 	else:
@@ -52,30 +52,30 @@ func run_checks() -> void:
 		await create_timer(0.1).timeout
 		await key(KEY_E)
 		check(market.visible and market.position.x > 1940 and not market.can_interact() and not panel.visible, "level 9 visible but locked")
-		check(not orders.item_available("river_fish") and not inv.sell_fish("river_fish"), "fish orders/sales level gated")
+		check(not orders.item_available("perch") and not inv.sell_fish("perch"), "fish orders/sales level gated")
 		inv.add_exp(900)
 		await create_timer(0.1).timeout
-		check(market.can_interact() and inv.has_fishing_rod and orders.item_available("river_fish"), "level 10 market/rod/order access")
+		check(market.can_interact() and inv.has_fishing_rod and orders.item_available("perch"), "level 10 market/rod/order access")
 		inv.coins = 1000
-		check(inv.add_item("small_fish",3) and inv.add_item("river_fish",2) and inv.add_item("golden_fish",1), "stock test fish")
+		check(inv.add_item("tilapia",3) and inv.add_item("perch",2) and inv.add_item("koi_gold",1), "stock test fish")
 		await key(KEY_E)
 		check(panel.visible and spot.state == spot.State.IDLE and hud.blocks_world_input(), "E opens market only")
-		check(panel.rows["small_fish"]["label"].text == tr("MARKET_ROW") % [localization.display_name("small_fish"),3,25] and panel.rows["river_fish"]["label"].text == tr("MARKET_ROW") % [localization.display_name("river_fish"),2,40], "market data labels")
-		panel.rows["small_fish"]["one"].pressed.emit()
-		check(inv.small_fish == 2 and inv.coins == 1025 and inv.storage_used("barn") == 5, "sell one atomic")
-		panel.rows["small_fish"]["all"].pressed.emit()
-		check(inv.small_fish == 0 and inv.coins == 1075 and inv.storage_used("barn") == 3, "sell all one species")
-		panel.rows["small_fish"]["all"].pressed.emit()
-		check(inv.coins == 1075 and panel.rows["small_fish"]["one"].disabled, "repeat sale cannot duplicate reward")
-		panel.rows["river_fish"]["one"].pressed.emit()
-		panel.rows["golden_fish"]["all"].pressed.emit()
-		check(inv.coins == 1215 and inv.river_fish == 1 and inv.storage_used("barn") == 1, "all fish prices/Barn")
+		check(panel.rows["tilapia"]["label"].text == tr("MARKET_ROW") % [localization.display_name("tilapia"),3,30] and panel.rows["perch"]["label"].text == tr("MARKET_ROW") % [localization.display_name("perch"),2,35], "market data labels")
+		panel.rows["tilapia"]["one"].pressed.emit()
+		check(inv.tilapia == 2 and inv.coins == 1030 and inv.storage_used("barn") == 5, "sell one atomic")
+		panel.rows["tilapia"]["all"].pressed.emit()
+		check(inv.tilapia == 0 and inv.coins == 1090 and inv.storage_used("barn") == 3, "sell all one species")
+		panel.rows["tilapia"]["all"].pressed.emit()
+		check(inv.coins == 1090 and panel.rows["tilapia"]["one"].disabled, "repeat sale cannot duplicate reward")
+		panel.rows["perch"]["one"].pressed.emit()
+		panel.rows["koi_gold"]["all"].pressed.emit()
+		check(inv.coins == 1375 and inv.perch == 1 and inv.storage_used("barn") == 1, "all fish prices/Barn")
 		check(not inv.sell_fish("coins",true) and not inv.sell_fish("unknown"), "reject invalid item")
 		await key(KEY_E)
 		check(panel.visible and spot.state == spot.State.IDLE, "E under market is blocked")
-		check(hud.storage_panel.capacity_labels["barn"].text.contains(tr("BUILDING_BARN") + ": 1 / 20") and hud.storage_panel.item_cells["river_fish"].quantity == inv.river_fish, "Storage grid refreshed")
+		check(hud.storage_panel.capacity_labels["barn"].text.contains(tr("BUILDING_BARN") + ": 1 / 20") and hud.storage_panel.item_cells["perch"].quantity == inv.perch, "Storage grid refreshed")
 		var saved := ConfigFile.new()
-		check(saved.load(manager.SAVE_PATH) == OK and saved.get_value("inventory","coins") == 1215 and saved.get_value("inventory","river_fish") == 1, "sale auto saved")
+		check(saved.load(manager.SAVE_PATH) == OK and saved.get_value("inventory","coins") == 1375 and saved.get_value("inventory","perch") == 1, "sale auto saved")
 		await key(KEY_ESCAPE)
 		check(not panel.visible and not hud.blocks_world_input(), "ESC closes market")
 		# Both areas overlap here: only the closer Market receives E.
@@ -106,10 +106,10 @@ func run_checks() -> void:
 					saw_fish = true
 			check(order["coin_reward"] == ceili(total*orders.Data.TIERS[order["difficulty"]]["coins"]) and order["exp_reward"] > 0, "difficulty reward remains above direct sale with EXP")
 		check(saw_fish, "fish appear in level 10 orders")
-		orders.orders[0] = {"order_id":"order_999999", "requirements":{"river_fish":1}, "coin_reward":50,"exp_reward":5}
-		check(orders.complete_order("order_999999") and inv.river_fish == 0 and inv.coins == 1265, "fish order consumes fish")
+		orders.orders[0] = {"order_id":"order_999999", "requirements":{"perch":1}, "coin_reward":50,"exp_reward":5}
+		check(orders.complete_order("order_999999") and inv.perch == 0 and inv.coins == 1425, "fish order consumes fish")
 		check(not orders.complete_order("order_999999"), "order cannot be rewarded twice")
-		check(inv.add_item("river_fish",1), "persist remaining fish")
+		check(inv.add_item("perch",1), "persist remaining fish")
 		inv.coins = 123456
 		inv.inventory_changed.emit()
 	print("PASS: ", stage)

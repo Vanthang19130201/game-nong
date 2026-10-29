@@ -1,5 +1,7 @@
 extends Node2D
 
+const FishingData = preload("res://fishing_data.gd")
+
 enum Mode {
 	HIDDEN,
 	WAITING,
@@ -14,7 +16,8 @@ var elapsed: float = 0.0
 
 var cast_origin: Vector2 = Vector2.ZERO
 
-var caught_fish_id: String = "small_fish"
+var caught_fish_id: String = "tilapia"
+var caught_fish_sprite: Sprite2D
 
 @export var bobber_position: Vector2 = Vector2(
 	-114,
@@ -24,6 +27,12 @@ var caught_fish_id: String = "small_fish"
 
 func _ready() -> void:
 	z_index = 10
+	caught_fish_sprite = Sprite2D.new()
+	caught_fish_sprite.name = "CaughtFishSprite"
+	caught_fish_sprite.z_index = 2
+	caught_fish_sprite.centered = true
+	caught_fish_sprite.visible = false
+	add_child(caught_fish_sprite)
 
 	visible = false
 
@@ -43,6 +52,22 @@ func set_cast_origin(value: Vector2) -> void:
 
 func set_caught_fish(fish_id: String) -> void:
 	caught_fish_id = fish_id
+	if not is_instance_valid(caught_fish_sprite):
+		return
+	var fish_info: Dictionary = FishingData.FISH.get(fish_id, {})
+	var asset_path: String = str(fish_info.get("asset_path", ""))
+	var artwork: Texture2D = null
+	if not asset_path.is_empty():
+		artwork = load(asset_path) as Texture2D
+	caught_fish_sprite.texture = artwork
+	if artwork == null:
+		caught_fish_sprite.visible = false
+		return
+	var artwork_size: Vector2 = artwork.get_size()
+	var scale_factor: float = 46.0 / maxf(artwork_size.x, artwork_size.y)
+	caught_fish_sprite.scale = Vector2.ONE * scale_factor
+	if mode == Mode.CAUGHT:
+		caught_fish_sprite.visible = true
 
 
 func show_waiting() -> void:
@@ -76,6 +101,10 @@ func set_mode(new_mode: Mode) -> void:
 	visible = (
 		mode != Mode.HIDDEN
 	)
+	if is_instance_valid(caught_fish_sprite):
+		if mode == Mode.CAUGHT and caught_fish_sprite.texture != null:
+			_update_caught_fish_sprite()
+		caught_fish_sprite.visible = mode == Mode.CAUGHT and caught_fish_sprite.texture != null
 
 	set_process(visible)
 
@@ -88,8 +117,22 @@ func set_mode(new_mode: Mode) -> void:
 
 func _process(delta: float) -> void:
 	elapsed += delta
+	if mode == Mode.CAUGHT:
+		_update_caught_fish_sprite()
 
 	queue_redraw()
+
+
+func _update_caught_fish_sprite() -> void:
+	if not is_instance_valid(caught_fish_sprite) or caught_fish_sprite.texture == null:
+		return
+	var hand_point: Vector2 = cast_origin + Vector2(18, -9)
+	var water_point: Vector2 = _current_bobber_position()
+	# Keep the hooked fish near the upper part of the line, closer to Player
+	# than the water, so it stays readable over both pond and river.
+	caught_fish_sprite.position = water_point.lerp(hand_point, 0.66) + Vector2(0, sin(elapsed * 7.0) * 2.0 - 7.0)
+	var line_to_player: Vector2 = hand_point - water_point
+	caught_fish_sprite.rotation = line_to_player.angle() - PI + sin(elapsed * 5.0) * 0.09
 
 
 func _draw() -> void:
@@ -135,6 +178,8 @@ func _draw() -> void:
 			_draw_catch_sequence(
 				bobber
 			)
+			if caught_fish_id == "moon_fish" and is_instance_valid(caught_fish_sprite) and caught_fish_sprite.visible:
+				_draw_moon_fish_catch_effect(caught_fish_sprite.position)
 
 		Mode.FAILED:
 			_draw_line(
@@ -391,6 +436,10 @@ func _draw_catch_sequence(
 		+ Vector2(18, -9)
 	)
 
+	var caught_position: Vector2 = water_point.lerp(hand_point, 0.66)
+	if is_instance_valid(caught_fish_sprite):
+		caught_position = caught_fish_sprite.position
+	_draw_line(cast_origin, caught_position)
 	var jump_duration := 0.48
 
 	if elapsed < jump_duration:
@@ -413,40 +462,32 @@ func _draw_catch_sequence(
 			* 48.0
 		)
 
-		_draw_line(
-			cast_origin,
-			fish_position
-		)
-
 		_draw_splash(
 			water_point,
 			1.0 - t
 		)
 
-		_draw_fish(
-			fish_position,
-			lerpf(
-				-0.9,
-				-0.05,
-				t
-			),
-			1.0
-		)
+		# The exact caught-species art is drawn by CaughtFishSprite.
 
 	else:
 		# Sau khi bay tới người chơi,
 		# cá đứng gần tay như đang được cầm lên.
-		_draw_held_fish(
-			hand_point
-		)
+		_draw_held_fish(caught_position)
 
-		_draw_hold_sparkles(
-			hand_point
-		)
+		_draw_hold_sparkles(caught_position)
 
-		_draw_success_glow(
-			hand_point
-		)
+		_draw_success_glow(caught_position)
+
+
+func _draw_moon_fish_catch_effect(center: Vector2) -> void:
+	var pulse: float = 0.5 + sin(elapsed * 5.0) * 0.5
+	draw_circle(center, 28.0 + pulse * 4.0, Color(0.53, 0.56, 1.0, 0.10))
+	draw_arc(center + Vector2(-12.0, -13.0), 7.0, -1.1, 2.3, 16, Color(0.90, 0.90, 1.0, 0.92), 1.4, true)
+	for index: int in range(3):
+		var angle: float = elapsed * 1.8 + float(index) * TAU / 3.0
+		var sparkle: Vector2 = center + Vector2(cos(angle), sin(angle * 1.3)) * (24.0 + pulse * 3.0)
+		draw_line(sparkle + Vector2(-2.4, 0.0), sparkle + Vector2(2.4, 0.0), Color(0.93, 0.91, 1.0, 0.9), 1.2, true)
+		draw_line(sparkle + Vector2(0.0, -2.4), sparkle + Vector2(0.0, 2.4), Color(0.93, 0.91, 1.0, 0.9), 1.2, true)
 
 
 func _draw_splash(
@@ -500,12 +541,6 @@ func _draw_splash(
 func _draw_held_fish(
 	center: Vector2
 ) -> void:
-
-	_draw_fish(
-		center,
-		-0.05,
-		1.08
-	)
 
 	# Một điểm màu da nhỏ tạo cảm giác tay đang giữ cá.
 	draw_circle(
@@ -579,15 +614,7 @@ func _draw_hold_sparkles(
 # ==================================================
 
 func _fish_color() -> Color:
-	match caught_fish_id:
-		"golden_fish":
-			return Color("efbd45")
-
-		"river_fish":
-			return Color("78a9bd")
-
-		_:
-			return Color("c79b68")
+	return Color("c79b68")
 
 
 func _draw_fish(

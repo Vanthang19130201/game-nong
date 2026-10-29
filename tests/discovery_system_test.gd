@@ -139,15 +139,15 @@ func run_checks() -> void:
 	# Exchanges live in the same daily stock and are fully transactional. They
 	# must never reroll or consume a treasure item when their reward cannot fit.
 	events.merchant_stock = [
-		{"kind":"exchange", "exchange_id":"lost_lure_river_fish", "display_item":"lost_lure", "quantity":1},
+		{"kind":"exchange", "exchange_id":"lost_lure_loach", "display_item":"lost_lure", "quantity":1},
 		{"kind":"exchange", "exchange_id":"river_relic_bundle", "display_item":"old_bottle", "quantity":1},
 		{"kind":"exchange", "exchange_id":"ancient_coin_treasure", "display_item":"ancient_coin", "quantity":1}
 	]
 	inventory.lost_lure = 1
-	inventory.river_fish = 0
+	inventory.loach = 0
 	check(events.can_exchange_stock(0), "Lost Lure exchange is available only with its required treasure and storage")
 	check(events.exchange_merchant_stock(0), "Lost Lure exchange commits atomically")
-	check(inventory.lost_lure == 0 and inventory.river_fish == 1 and events.merchant_stock[0]["quantity"] == 0, "Lost Lure exchange consumes once and grants one River Fish")
+	check(inventory.lost_lure == 0 and inventory.loach == 1 and events.merchant_stock[0]["quantity"] == 0, "Lost Lure exchange consumes once and grants one Loach")
 	check(not events.exchange_merchant_stock(0), "spent exchange cannot be claimed twice")
 	events.merchant_stock[0]["quantity"] = 1
 	inventory.lost_lure = 1

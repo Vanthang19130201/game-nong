@@ -2,8 +2,8 @@ extends RefCounted
 
 const QUEUE_LIMIT: int = 3
 const RECIPES: Dictionary = {
-	"cotton_cloth": {"name":"Cotton Cloth","level":18,"time":90.0,"price":900,"order_price":1080,"requirements":{"cotton_thread":2}},
-	"wool_cloth": {"name":"Wool Cloth","level":18,"time":120.0,"price":1500,"order_price":1800,"requirements":{"wool_yarn":2}}
+	"cotton_cloth": {"name":"Cotton Cloth","level":18,"time":180.0,"price":900,"order_price":1080,"requirements":{"cotton_thread":2}},
+	"wool_cloth": {"name":"Wool Cloth","level":18,"time":240.0,"price":1500,"order_price":1800,"requirements":{"wool_yarn":2}}
 }
 
 static func restore_queue(value: Variant) -> Array:

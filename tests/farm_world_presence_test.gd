@@ -146,13 +146,13 @@ func run_checks() -> void:
 	await create_timer(0.15).timeout
 	if "--capture" in OS.get_cmdline_user_args():
 		await capture_map("fishing-ready", Vector2(2050, 950))
-	var fish_before: int = inv.small_fish + inv.river_fish + inv.golden_fish
+	var fish_before: int = inv.tilapia + inv.perch + inv.catfish + inv.loach + inv.snakehead + inv.salmon + inv.koi_orange + inv.koi_gold + inv.moon_fish
 	await key(KEY_E)
 	check(spot.state == spot.State.WAITING_FOR_BITE and hud.fishing_ui.active_spot == spot, "E at the dock starts the existing fishing session")
 	spot.deadline = spot.now() - 0.01
 	spot._advance_state()
 	await key(KEY_SPACE)
-	check(spot.state == spot.State.SUCCESS and inv.small_fish + inv.river_fish + inv.golden_fish == fish_before + 1, "existing fishing reaction grants one fish")
+	check(spot.state == spot.State.SUCCESS and inv.tilapia + inv.perch + inv.catfish + inv.loach + inv.snakehead + inv.salmon + inv.koi_orange + inv.koi_gold + inv.moon_fish == fish_before + 1, "existing fishing reaction grants one fish")
 	spot.cancel_session()
 	var market: Area2D = farm.get_node("FishMarket")
 	player.global_position = market.global_position

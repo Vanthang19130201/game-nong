@@ -12,10 +12,10 @@ const DecorationData = preload("res://decoration_data.gd")
 # Limited, deterministic merchant exchanges. They reuse the daily stock and
 # existing transaction path instead of introducing a second shop system.
 const MERCHANT_EXCHANGES: Dictionary = {
-	"lost_lure_river_fish": {
+	"lost_lure_loach": {
 		"display_item": "lost_lure",
 		"requirements": {"lost_lure": 1},
-		"reward": {"type": "item", "item": "river_fish", "amount": 1}
+		"reward": {"type": "item", "item": "loach", "amount": 1}
 	},
 	"river_relic_bundle": {
 		"display_item": "old_bottle",
@@ -242,7 +242,7 @@ func _roll_merchant_for_day(key: int) -> void:
 	last_merchant_exchange.clear()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 0x4D455243 + key * 1877
-	if rng.randf() >= 0.16:
+	if rng.randf() >= 0.25:
 		merchant_changed.emit()
 		return
 	merchant_active = true
@@ -262,7 +262,7 @@ func _make_merchant_stock(rng: RandomNumberGenerator) -> Array:
 		stock.append({"item":crop_id + "_seed", "price":crop_price, "quantity":rng.randi_range(2, 4)})
 	# Three fixed exchange offers keep the daily merchant compact, readable and
 	# save-stable while connecting treasure to Fishing, Coins and other treasure.
-	for exchange_id in ["lost_lure_river_fish", "river_relic_bundle", "ancient_coin_treasure"]:
+	for exchange_id in ["lost_lure_loach", "river_relic_bundle", "ancient_coin_treasure"]:
 		stock.append(_exchange_entry(exchange_id, 1))
 	return stock
 

@@ -16,29 +16,17 @@ const ROD_LEVELS: Dictionary = {
 
 # Only these IDs are rolled for a new catch. Their weights total 100.
 const CATCHABLE_FISH_IDS: Array[String] = [
-	"tilapia", "perch", "catfish", "loach", "snakehead", "salmon", "koi_orange", "koi_gold"
-]
-
-# These IDs are retained for old save files. They stay sellable but are never
-# selected by the new catch roll.
-const LEGACY_FISH_IDS: Array[String] = [
-	"small_fish", "river_fish", "golden_fish", "moon_fish"
+	"tilapia", "perch", "catfish", "loach", "snakehead", "salmon", "koi_orange", "koi_gold", "moon_fish"
 ]
 
 const FISH: Dictionary = {
-	"tilapia": {"name": "tilapia", "weight": 22, "rarity": "common", "difficulty": "easy", "sell_price": 30, "order_exp": 5, "order_max": 3, "asset_path": "res://assets/fishing/fish/tilapia.png"},
-	"perch": {"name": "perch", "weight": 18, "rarity": "common", "difficulty": "easy", "sell_price": 35, "order_exp": 5, "order_max": 3, "asset_path": "res://assets/fishing/fish/perch.png"},
-	"catfish": {"name": "catfish", "weight": 16, "rarity": "common", "difficulty": "medium", "sell_price": 45, "order_exp": 5, "order_max": 2, "asset_path": "res://assets/fishing/fish/catfish.png"},
-	"loach": {"name": "loach", "weight": 14, "rarity": "uncommon", "difficulty": "medium", "sell_price": 50, "order_exp": 6, "order_max": 2, "asset_path": "res://assets/fishing/fish/loach.png"},
-	"snakehead": {"name": "snakehead", "weight": 12, "rarity": "uncommon", "difficulty": "medium", "sell_price": 60, "order_exp": 6, "order_max": 2, "asset_path": "res://assets/fishing/fish/snakehead.png"},
+	"tilapia": {"name": "tilapia", "weight": 21, "rarity": "common", "difficulty": "easy", "sell_price": 30, "order_exp": 5, "order_max": 3, "asset_path": "res://assets/fishing/fish/tilapia.png"},
+	"perch": {"name": "perch", "weight": 17, "rarity": "common", "difficulty": "easy", "sell_price": 35, "order_exp": 5, "order_max": 3, "asset_path": "res://assets/fishing/fish/perch.png"},
+	"catfish": {"name": "catfish", "weight": 15, "rarity": "common", "difficulty": "medium", "sell_price": 45, "order_exp": 5, "order_max": 2, "asset_path": "res://assets/fishing/fish/catfish.png"},
+	"loach": {"name": "loach", "weight": 13, "rarity": "uncommon", "difficulty": "medium", "sell_price": 50, "order_exp": 6, "order_max": 2, "asset_path": "res://assets/fishing/fish/loach.png"},
+	"snakehead": {"name": "snakehead", "weight": 11, "rarity": "uncommon", "difficulty": "medium", "sell_price": 60, "order_exp": 6, "order_max": 2, "asset_path": "res://assets/fishing/fish/snakehead.png"},
 	"salmon": {"name": "salmon", "weight": 8, "rarity": "rare", "difficulty": "hard", "sell_price": 85, "order_exp": 8, "order_max": 1, "asset_path": "res://assets/fishing/fish/salmon.png"},
 	"koi_orange": {"name": "koi_orange", "weight": 7, "rarity": "rare", "difficulty": "hard", "sell_price": 120, "order_exp": 8, "order_max": 1, "asset_path": "res://assets/fishing/fish/koi_orange.png"},
 	"koi_gold": {"name": "koi_gold", "weight": 3, "rarity": "legendary", "difficulty": "hard", "sell_price": 250, "order_exp": 12, "order_max": 1, "asset_path": "res://assets/fishing/fish/koi_gold.png"},
-	"small_fish": {"name": "small_fish", "weight": 0, "rarity": "common", "difficulty": "easy", "sell_price": 25, "order_exp": 5, "order_max": 3, "legacy": true},
-	"river_fish": {"name": "river_fish", "weight": 0, "rarity": "uncommon", "difficulty": "medium", "sell_price": 40, "order_exp": 5, "order_max": 2, "legacy": true},
-	"golden_fish": {"name": "golden_fish", "weight": 0, "rarity": "rare", "difficulty": "hard", "sell_price": 100, "order_exp": 5, "order_max": 1, "legacy": true},
-	"moon_fish": {"name": "moon_fish", "weight": 0, "rarity": "rare", "difficulty": "hard", "sell_price": 140, "order_exp": 8, "order_max": 1, "legacy": true}
+	"moon_fish": {"name": "moon_fish", "weight": 5, "rarity": "rare", "difficulty": "hard", "sell_price": 140, "order_exp": 10, "order_max": 1, "asset_path": "res://assets/fishing/fish/moon_fish.png"}
 }
-
-static func is_legacy_fish(fish_id: String) -> bool:
-	return fish_id in LEGACY_FISH_IDS

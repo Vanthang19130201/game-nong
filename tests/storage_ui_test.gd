@@ -103,9 +103,9 @@ func run_checks() -> void:
 	inv.player_level = 10
 	inv.normalize_exp()
 	inv.inventory_changed.emit()
-	check(inv.add_item("egg",1) and inv.add_item("milk",1) and inv.add_item("small_fish",1), "products fixture")
-	check(cells["egg"].quantity == 1 and cells["milk"].quantity == 1 and cells["small_fish"].quantity == 1, "product/fish refresh")
-	check(inv.sell_fish("small_fish") and cells["small_fish"].quantity == 0, "fish sale refresh")
+	check(inv.add_item("egg",1) and inv.add_item("milk",1) and inv.add_item("tilapia",1), "products fixture")
+	check(cells["egg"].quantity == 1 and cells["milk"].quantity == 1 and cells["tilapia"].quantity == 1, "product/fish refresh")
+	check(inv.sell_fish("tilapia") and cells["tilapia"].quantity == 0, "fish sale refresh")
 	inv.wood = 30
 	inv.stone = 15
 	inv.coins = 500

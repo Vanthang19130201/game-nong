@@ -5,6 +5,10 @@ const SETTINGS_PATH := "user://settings.cfg"
 const SFX_ROOT := "res://assets/audio/sfx/"
 const MUSIC_ROOT := "res://assets/audio/music/"
 const AMBIENCE_ROOT := "res://assets/audio/ambience/"
+const FARM_MUSIC_TRACKS := [
+	"nongtrai.mp3",
+	"nongtrai1.mp3"
+]
 const SFX_POOL_SIZE := 12
 const SPATIAL_POOL_SIZE := 4
 const DEFAULT_MUSIC_VOLUME := 0.38
@@ -25,7 +29,7 @@ const SFX_TRIM_DB := {
 	"fishing_cast": -2.0, "fishing_splash": -3.0, "fishing_bite": -2.5,
 	"fishing_reel_tick": -4.5, "fish_caught": -2.5, "fishing_fail": -3.5, "treasure_found": -2.5,
 	"chicken_cluck": -5.0, "cow_moo": -5.5, "pig_oink": -5.0, "sheep_baa": -5.5,
-	"dog_shiba_bark": -12.0, "dog_shiba_happy": -13.0,
+	"dog_shiba_bark": -6.0, "dog_shiba_happy": -13.0,
 	"dog_cream_bark": -12.5, "dog_cream_happy": -13.5,
 	"dog_blacktan_bark": -12.0, "dog_blacktan_happy": -13.0,
 	"dog_whine_soft": -15.0, "dog_eat": -15.5, "dog_lick": -16.0,
@@ -54,6 +58,7 @@ var _music_tween: Tween
 var _rain_tween: Tween
 var _last_coins := -1
 
+
 const SOUND_FILES := {
 	"ui_click": ["ui/ui_click_01.wav", "ui/ui_click_02.wav"],
 	"ui_success": ["ui/ui_success.wav"], "ui_error": ["ui/ui_error.wav"],
@@ -71,8 +76,8 @@ const SOUND_FILES := {
 	"treasure_found": ["fishing/treasure_found.wav"],
 	"chicken_cluck": ["animals/chicken_cluck.wav"], "cow_moo": ["animals/cow_moo.wav"],
 	"pig_oink": ["animals/pig_oink.wav"], "sheep_baa": ["animals/sheep_baa.wav"],
-	"dog_shiba_bark": ["animals/dogs/dog_shiba_bark_01.wav", "animals/dogs/dog_shiba_bark_02.wav"],
-	"dog_shiba_happy": ["animals/dogs/dog_shiba_happy_01.wav"],
+	"dog_shiba_bark": ["animals/dogs/dog_shiba_bark_01_new.mp3"],
+	"dog_shiba_happy": ["animals/dogs/dogsibahappy.mp3"],
 	"dog_cream_bark": ["animals/dogs/dog_cream_bark_01.wav", "animals/dogs/dog_cream_bark_02.wav"],
 	"dog_cream_happy": ["animals/dogs/dog_cream_happy_01.wav"],
 	"dog_blacktan_bark": ["animals/dogs/dog_blacktan_bark_01.wav", "animals/dogs/dog_blacktan_bark_02.wav"],
@@ -273,8 +278,8 @@ func _get_stream(path: String) -> AudioStream:
 	_streams[path] = stream
 	return stream
 
-func play_music(track_id := "farm_day", fade_seconds := 1.5) -> void:
-	var path := MUSIC_ROOT + track_id + ".wav"
+func play_music(track_id := "nongtrai", fade_seconds := 1.5) -> void:
+	var path := MUSIC_ROOT + track_id + ".mp3"
 	var stream := _get_stream(path)
 	if stream == null or not music_enabled:
 		return
@@ -292,10 +297,10 @@ func play_music(track_id := "farm_day", fade_seconds := 1.5) -> void:
 	_music_tween.tween_property(_music_player, "volume_db", 0.0, maxf(0.05, fade_seconds * 0.55))
 
 func _play_farm_music() -> void:
-	play_music("farm_day", 1.4)
+	play_music("nongtrai", 1.4)
 
 func _sync_ambience() -> void:
-	var farm_stream := _get_stream(AMBIENCE_ROOT + "farm_ambience.wav")
+	var farm_stream := _get_stream(AMBIENCE_ROOT + "nongtrai.mp3")
 	if farm_stream != null and _farm_ambience.stream != farm_stream:
 		_farm_ambience.stream = farm_stream
 		_farm_ambience.play()

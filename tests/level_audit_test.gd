@@ -101,7 +101,7 @@ func audit_core() -> void:
 		check(inv.is_zone_unlocked("fishing") == (level >= 10) and inv.has_fishing_rod == (level >= 10), "fishing level gate")
 		check(orders.item_available("egg") == (level >= 6), "egg orders unlock when egg production becomes possible")
 		check(orders.item_available("milk") == (level >= 10), "milk order gate")
-		check(orders.item_available("golden_fish") == (level >= 10), "fish order gate")
+		check(orders.item_available("koi_gold") == (level >= 10), "fish order gate")
 		for recipe in inv.Progression.RECIPES:
 			check(farm.get_node("FeedMill").can_produce(recipe) == (level >= inv.Progression.RECIPES[recipe]["level"]), "feed recipe unlock")
 		check(farm.get_node("ChickenCoop").can_produce() == (level >= 6 and not manager.adult_animal_ids("chicken").is_empty()), "egg production unlock requires adults")
@@ -199,7 +199,7 @@ func audit_core() -> void:
 	check(inv.sell_milk() and mill.collect() and not mill.collect(), "batch rewards once after freeing slot")
 	check(inv.storage_used("barn") == inv.barn_capacity, "Barn capacity respected")
 	# Malformed/unavailable saved orders cannot reward or deduct inventory.
-	var invalid: Dictionary = {"order_id":"order_900000","requirements":{"golden_fish":4},"coin_reward":500,"exp_reward":5}
+	var invalid: Dictionary = {"order_id":"order_900000","requirements":{"koi_gold":4},"coin_reward":500,"exp_reward":5}
 	orders.orders[0] = invalid
 	check(not orders._is_valid_order(invalid), "old excessive rare-fish order invalid")
 	var before_balances: Array = balances()

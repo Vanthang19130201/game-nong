@@ -81,7 +81,7 @@ func prepare() -> void:
 func core_checks() -> void:
 	await prepare()
 	check(stall.position == Vector2(920,650) and manager.LandData.zone_at(stall.position) == "farm_core","Stall on initial owned farm, separate from fishing and fields")
-	var names: Array = ["wheat","corn","carrot","soybean","sugarcane","cotton","flax","egg","milk","small_fish","river_fish","golden_fish","bread","corn_bread","carrot_pie","egg_cake","milk_cake","pancake","cream","butter","cheese"]
+	var names: Array = ["wheat","corn","carrot","soybean","sugarcane","cotton","flax","egg","milk","tilapia","perch","koi_gold","bread","corn_bread","carrot_pie","egg_cake","milk_cake","pancake","cream","butter","cheese"]
 	for item in names:
 		check(item in inv.sellable_items() and panel.rows.has(item),"catalog includes priced item: "+item)
 	for item in ["wheat_seed","axe","hammer","fishing_rod","chicken_feed","cow_feed","wood","stone","coins","quest_token","cotton_thread"]:
@@ -146,7 +146,7 @@ func core_checks() -> void:
 	check(panel.rows["wheat"]["button"].get_instance_id() == row_id and inv.inventory_changed.get_connections().size() == connection_count,"reopening reuses rows and never duplicates signals")
 	inv.player_level = 1
 	inv.inventory_changed.emit()
-	check(not panel.rows["flax"]["button"].visible and not panel.rows["small_fish"]["button"].visible and not inv.sell_item("corn",1) and not inv.sell_item("small_fish",1),"locked crops and fishing stay unavailable")
+	check(not panel.rows["flax"]["button"].visible and not panel.rows["tilapia"]["button"].visible and not inv.sell_item("corn",1) and not inv.sell_item("tilapia",1),"locked crops and fishing stay unavailable")
 	check(not farm.Placement.can_place(farm.get_node("FeedMill"),stall.position),"Stall footprint blocks placement")
 	await key(KEY_E)
 	check(panel.visible and not hud.order_panel.visible,"E cannot open world interactions behind market")

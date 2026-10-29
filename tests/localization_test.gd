@@ -69,11 +69,11 @@ func run_checks() -> void:
 	hud.open_orders()
 	inspect_text(hud)
 	hud.close_all_panels()
-	check(inv.add_item("small_fish",1), "fish item ID")
+	check(inv.add_item("tilapia",1), "fish item ID")
 	player.position = farm.get_node("FishMarket").position
 	await create_timer(0.1).timeout
 	hud.open_fish_market(farm.get_node("FishMarket"))
-	check(hud.fish_market_panel.rows["small_fish"]["label"].text.contains("Cá nhỏ"), "Vietnamese fish market")
+	check(hud.fish_market_panel.rows["tilapia"]["label"].text.contains("Cá rô"), "Vietnamese fish market")
 	inspect_text(farm)
 	check(manager.save_game(), "localized game still saves")
 	var saved := ConfigFile.new()

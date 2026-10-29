@@ -33,6 +33,8 @@ const VISUAL_TEXTURE_PATHS: Dictionary = {
 	"bakery": "res://assets/buildings/bakery/bakery.svg",
 	"dairy": "res://assets/buildings/dairy/dairy.svg",
 	"spinning_machine": "res://assets/buildings/spinning_machine/spinning_machine.svg",
+	# The clean vector is intentionally used here instead of the large scenic
+	# world render, so the Dog House remains crisp and readable in a 64px card.
 	"dog_house": "res://assets/buildings/dog_house/dog_house.svg",
 	"market_stall": "res://assets/buildings/market_stall/market_stall.svg",
 	"order_board": "res://assets/buildings/order_board/order_board.svg",
@@ -45,7 +47,8 @@ const VISUAL_TEXTURE_PATHS: Dictionary = {
 	"snakehead": "res://assets/fishing/fish/snakehead.png",
 	"salmon": "res://assets/fishing/fish/salmon.png",
 	"koi_orange": "res://assets/fishing/fish/koi_orange.png",
-	"koi_gold": "res://assets/fishing/fish/koi_gold.png"
+	"koi_gold": "res://assets/fishing/fish/koi_gold.png",
+	"moon_fish": "res://assets/fishing/fish/moon_fish.png"
 }
 
 const INK := Color("68462f")
@@ -53,12 +56,12 @@ const GREEN := Color("67974e")
 const COLORS: Dictionary = {
 	"wheat":Color("e9b84d"), "corn":Color("efc64e"), "carrot":Color("e68b45"),
 	"soybean":Color("91ad55"), "sugarcane":Color("88b36b"), "cotton":Color("f8f1dc"),
-	"flax":Color("8b97cb"), "golden_fish":Color("e4b746"), "river_fish":Color("779bba"),
+	"flax":Color("8b97cb"),
 	"golden_wheat":Color("e6bd45"), "golden_corn":Color("f1c839"), "giant_carrot":Color("e77c38"),
 	"old_bottle":Color("73a29a"), "old_boot":Color("78624f"), "coin_pouch":Color("d2a344"),
 	"small_chest":Color("b7793d"), "lost_lure":Color("b95f4c"), "ancient_coin":Color("e5be52"),
 	"map_fragment":Color("d8c59b"), "ancient_gem":Color("58c8ba"), "moon_fish":Color("8e83b1"),
-	"mystery":Color("b887c8"), "small_fish":Color("7aaec3"), "egg":Color("f2d8a2"),
+	"mystery":Color("b887c8"), "egg":Color("f2d8a2"),
 	"milk":Color("dcecf0"), "cream":Color("fff0cc"), "butter":Color("f0cc5e"), "cheese":Color("f3b95e"),
 	"pork":Color("d88378"), "wool":Color("efe7d5"), "wool_yarn":Color("d9c4ad"),
 	"cotton_thread":Color("f5f2e9"), "cotton_cloth":Color("d6e4df"), "wool_cloth":Color("d5b993"),
@@ -166,16 +169,22 @@ func _draw() -> void:
 			for p in [Vector2(23,29),Vector2(39,23),Vector2(32,16)]:
 				draw_circle(p,10 if id == "cotton" else 7,color)
 			draw_line(Vector2(32,46),Vector2(17,39),GREEN,6,true)
-	elif id in ["axe","hammer"]:
+	elif id in ["axe","hammer","fishing_rod"]:
+		# Tools share one centered 64px safe area and backing so their different
+		# silhouettes never look mismatched in the shop's fixed icon frame.
+		draw_circle(Vector2(32,32),25,Color("ead7ae"))
+		draw_circle(Vector2(32,32),23,Color("f5e9c9"))
+		if id == "fishing_rod":
+			draw_line(Vector2(18,54),Vector2(41,11),INK,6,true)
+			draw_line(Vector2(18,54),Vector2(41,11),Color("b7824f"),3,true)
+			draw_line(Vector2(41,11),Vector2(51,39),Color("7796a0"),2,true)
+			draw_arc(Vector2(47,40),5,0,PI,12,INK,2,true)
+			return
 		draw_line(Vector2(21,54),Vector2(39,14),INK,9,true)
 		draw_line(Vector2(21,54),Vector2(39,14),Color("b7824f"),5,true)
 		_poly([Vector2(29,13),Vector2(51,13),Vector2(53,30),Vector2(35,27)],Color("a6b8b8"))
 		if id == "axe":
 			_poly([Vector2(29,13),Vector2(15,13),Vector2(11,29),Vector2(31,25)],Color("d2dbd2"))
-	elif id == "fishing_rod":
-		draw_line(Vector2(16,54),Vector2(42,10),INK,5,true)
-		draw_line(Vector2(42,10),Vector2(51,38),Color("7796a0"),2,true)
-		draw_arc(Vector2(47,40),5,0,PI,12,INK,2,true)
 	elif id.ends_with("fish"):
 		# All fish use the same readable silhouette, with markings that make
 		# river, golden and moon catches immediately distinguishable.
@@ -183,13 +192,7 @@ func _draw() -> void:
 		draw_style_box(_rounded(color),Rect2(7,20,39,26))
 		draw_circle(Vector2(17,29),3,INK)
 		draw_line(Vector2(29,21),Vector2(34,17),color.lightened(0.22),3,true)
-		if id == "golden_fish":
-			for point in [Vector2(27,28),Vector2(35,34),Vector2(42,27)]:
-				draw_circle(point,2,Color("fff2b0"))
-		elif id == "river_fish":
-			for y in [25,31,37]:
-				draw_line(Vector2(27,y),Vector2(41,y + 2),Color("d3eced"),1.5,true)
-		elif id == "moon_fish":
+		if id == "moon_fish":
 			draw_arc(Vector2(33,32),9,PI * 0.45,PI * 1.55,10,Color("e8e1ff"),3,true)
 			draw_circle(Vector2(45,18),2,Color("fff6bd"))
 		else:

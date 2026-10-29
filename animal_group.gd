@@ -15,6 +15,7 @@ var growth_timer: Timer
 var vocal_timer: Timer
 var home: Node2D
 var hud: Node
+var last_home_state := ""
 
 func _ready() -> void:
 	add_to_group("farm_animal_groups")
@@ -37,6 +38,7 @@ func _ready() -> void:
 	vocal_timer.timeout.connect(_try_animal_vocal)
 	add_child(vocal_timer)
 	home.state_changed.connect(_refresh_status)
+	last_home_state = home.state
 	# farm.gd owns spawning and count synchronization, not the station scene.
 
 func animals() -> Array[Node]:
@@ -47,12 +49,24 @@ func animals() -> Array[Node]:
 	return result
 
 func _refresh_status() -> void:
+	var feeding_started: bool = home.state == "PRODUCING" and last_home_state != "PRODUCING"
 	for animal in animals():
 		animal.refresh_status()
+		if feeding_started:
+			animal.play_feed_feedback()
+	last_home_state = home.state
 
 func _refresh_growth() -> void:
 	for animal in animals():
 		animal.update_growth()
+
+
+func _on_animal_growth_stage_changed(_previous_stage: int, next_stage: int, animal: Node2D) -> void:
+	if next_stage < 3:
+		return
+	var farm_hud := get_tree().get_first_node_in_group("farm_hud")
+	if farm_hud != null and farm_hud.has_method("show_transaction_feedback"):
+		farm_hud.show_transaction_feedback(tr("ANIMAL_GROWN") % Localization.display_name(animal.animal_type), "success")
 
 func sync_count() -> void:
 	var station_id: String = Inventory.Progression.ANIMALS[animal_type]["building"]
@@ -82,6 +96,7 @@ func sync_count() -> void:
 		var animal = AnimalScene.instantiate()
 		add_child(animal)
 		animal.configure(animal_type, self, record)
+		animal.growth_stage_changed.connect(_on_animal_growth_stage_changed.bind(animal))
 		_relocate(animal)
 	set_process(not records.is_empty())
 	if not records.is_empty():

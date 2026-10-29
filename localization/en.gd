@@ -207,5 +207,6 @@ const MESSAGES: Dictionary = {
 	"TIME_PHASE_NIGHT": "Late night",
 	"TIME_PHASE_MORNING": "Morning",
 	"TIME_PHASE_NOON": "Noon",
-	"TIME_PHASE_EVENING": "Evening\nFarm lights are on."
+	"TIME_PHASE_EVENING": "Evening\nFarm lights are on.",
+	"ANIMAL_GROWN": "%s is now an adult!"
 }

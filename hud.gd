@@ -274,9 +274,9 @@ func _fit_shop_build() -> void:
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
 	var desired: Vector2 = Vector2(920, 600).min(viewport_size - Vector2(24, 32))
 	for grid in catalog_grids:
-		grid.columns = maxi(1,int((desired.x-112)/260))
+		grid.columns = maxi(1,int((desired.x-112)/276))
 	for card in catalog_cards:
-		card.actions.columns = 1 if viewport_size.x < 700 else 2
+		card.actions.columns = 1 if viewport_size.x < 700 or card.actions.get_child_count() <= 1 else 2
 	shop_build_panel.size = desired
 	shop_build_panel.position = (viewport_size - shop_build_panel.size) / 2.0
 
@@ -1435,9 +1435,9 @@ func _refresh_shop_cards() -> void:
 				buy_buttons[crop].text = tr("UI_LOCKED")
 				card.stats.text = tr("CROP_LOCKED_LEVEL") % info["unlock_level"]
 		elif id in tool_rows:
-			card.stats.text = tool_rows[id]["label"].text
+			card.stats.text = tool_rows[id]["label"].text.replace(" | ", "\n")
 		elif id == "fishing_rod":
-			card.stats.text = rod_info.text
+			card.stats.text = rod_info.text.replace(" | ", "\n")
 		else:
 			card.stats.text = tr("UI_ITEM_COUNT") % Inventory.get(id)
 			if id in product_sell_buttons:

@@ -141,8 +141,14 @@ func clear_events() -> void:
 
 func _fit() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
-	var card_size := Vector2(minf(560.0, viewport_size.x - 32.0), minf(520.0, viewport_size.y - 32.0))
-	unlock_grid.columns = 1 if viewport_size.x < 520.0 else 2
+	var column_count: int = 1 if viewport_size.x < 520.0 else 2
+	unlock_grid.columns = column_count
+	var unlock_count: int = int(active_event.get("unlocks", []).size())
+	var unlock_rows: int = ceili(float(unlock_count) / float(column_count))
+	# The old fixed 520px card left a large blank panel at levels with only a
+	# few unlocks. Keep it compact, while preserving enough room for 4+ items.
+	var desired_height: float = 282.0 + float(unlock_rows) * 58.0 if unlock_count > 0 else 282.0
+	var card_size := Vector2(minf(560.0, viewport_size.x - 32.0), minf(desired_height, viewport_size.y - 32.0))
 	card.anchor_left = 0.0
 	card.anchor_top = 0.0
 	card.anchor_right = 0.0

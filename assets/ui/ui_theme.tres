@@ -106,7 +106,7 @@ corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
 
 [sub_resource type="SystemFont" id="VietnameseFont"]
-font_names = PackedStringArray("Be Vietnam Pro", "Noto Sans", "Segoe UI", "Arial")
+font_names = PackedStringArray("Segoe UI", "Noto Sans", "Arial")
 
 [sub_resource type="FontVariation" id="PlotFont"]
 base_font = SubResource("VietnameseFont")

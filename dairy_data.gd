@@ -2,9 +2,9 @@ extends RefCounted
 
 const QUEUE_LIMIT: int = 3
 const RECIPES: Dictionary = {
-	"cream": {"name":"Cream", "level":15, "time":30.0, "price":80, "requirements":{"milk":2}},
-	"butter": {"name":"Butter", "level":15, "time":45.0, "price":120, "requirements":{"milk":3}},
-	"cheese": {"name":"Cheese", "level":15, "time":60.0, "price":180, "requirements":{"milk":4}}
+	"cream": {"name":"Cream", "level":15, "time":60.0, "price":80, "requirements":{"milk":2}},
+	"butter": {"name":"Butter", "level":15, "time":90.0, "price":120, "requirements":{"milk":3}},
+	"cheese": {"name":"Cheese", "level":15, "time":120.0, "price":180, "requirements":{"milk":4}}
 }
 
 static func restore_queue(value: Variant, limit: int = QUEUE_LIMIT) -> Array:

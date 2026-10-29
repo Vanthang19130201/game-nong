@@ -197,7 +197,7 @@ func _draw_birds() -> void:
 
 func _draw_night_glow() -> void:
 	var hour := _hour()
-	var intensity := 0.42 if hour < 5.0 or hour >= 20.0 else 0.24
+	var intensity := 0.42 if hour < 6.0 or hour >= 20.0 else 0.24
 	for point in lamp_points:
 		_draw_glow(point + Vector2(0, -25), 42.0, Color("f4c96d", intensity))
 	for point in window_points:
@@ -243,4 +243,4 @@ func _hour() -> float:
 
 func _is_night() -> bool:
 	var hour := _hour()
-	return hour < 5.0 or hour >= 18.5
+	return hour < 6.0 or hour >= 18.0

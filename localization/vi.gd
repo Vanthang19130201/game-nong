@@ -253,9 +253,6 @@ const MESSAGES: Dictionary = {
 	"ITEM_WOOL": "Len",
 	"ITEM_WOOD":  "Gỗ",
 	"ITEM_STONE":  "Đá",
-	"ITEM_SMALL_FISH":  "Cá nhỏ",
-	"ITEM_RIVER_FISH":  "Cá sông",
-	"ITEM_GOLDEN_FISH":  "Cá vàng",
 	"ITEM_CHICKEN":  "Gà",
 	"ITEM_COW":  "Bò",
 	"ITEM_PIG":  "Heo",
@@ -276,7 +273,6 @@ const MESSAGES: Dictionary = {
 	"HUD_MAIN":  "Xu: %d | Cấp độ: %d | Kinh nghiệm: %d / %d",
 	"HUD_FEED":  " | Thức ăn cho gà: %d | Trứng: %d",
 	"HUD_COW":  " | Thức ăn cho bò: %d | Sữa: %d",
-	"HUD_FISH":  "\nCá nhỏ: %d | Cá sông: %d | Cá vàng: %d",
 	"HUD_STORAGE":  "Kho nông sản: %d / %d | Kho: %d / %d | Mở tiếp: %s",
 	"HUD_MATERIALS":  "\nGỗ: %d | Đá: %d | Nhà cấp %d",
 	"HUD_PLOTS":  " | Ô đất: %d / %d",
@@ -628,5 +624,6 @@ const MESSAGES: Dictionary = {
 	"TIME_PHASE_NIGHT": "Đêm khuya",
 	"TIME_PHASE_MORNING": "Buổi sáng",
 	"TIME_PHASE_NOON": "Buổi trưa",
-	"TIME_PHASE_EVENING": "Buổi tối\nĐèn trong nông trại đã được thắp sáng."
+	"TIME_PHASE_EVENING": "Buổi tối\nĐèn trong nông trại đã được thắp sáng.",
+	"ANIMAL_GROWN": "%s đã trưởng thành!"
 }

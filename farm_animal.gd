@@ -1,5 +1,7 @@
 extends Area2D
 
+signal growth_stage_changed(previous_stage: int, next_stage: int)
+
 # Each animal uses the existing central interaction dispatcher. Production and
 # saved counts remain entirely in Inventory and the station.
 const APPEARANCE: Dictionary = {
@@ -32,6 +34,7 @@ var speed: float
 var body_radius: float
 var spacing: float
 var status_bubble: Node2D
+var feedback: Node2D
 var facing: String = "down"
 var base_sprite_position: Vector2 = Vector2.ZERO
 var base_sprite_scale: Vector2 = Vector2.ONE
@@ -57,6 +60,10 @@ func configure(kind: String, group: Node2D, record: Dictionary) -> void:
 		status_bubble = preload("res://animal_status_bubble.gd").new()
 		status_bubble.name = "StatusBubble"
 		add_child(status_bubble)
+	if not is_instance_valid(feedback):
+		feedback = preload("res://animal_feedback.gd").new()
+		feedback.name = "AnimalFeedback"
+		add_child(feedback)
 	status_bubble.configure(data["adult_size"] * AnimalData.scale_for(kind,growth_stage))
 	refresh_status()
 	rest()
@@ -78,11 +85,20 @@ func update_growth() -> void:
 	var new_stage: int = AnimalData.stage_for(animal_type,born_at)
 	if new_stage == growth_stage:
 		return
+	var previous_stage: int = growth_stage
 	growth_stage = new_stage
 	apply_appearance()
 	if is_instance_valid(status_bubble):
 		status_bubble.configure(APPEARANCE[animal_type]["adult_size"] * AnimalData.scale_for(animal_type,growth_stage))
 	refresh_status()
+	if is_instance_valid(feedback):
+		feedback.play("grown")
+	growth_stage_changed.emit(previous_stage, growth_stage)
+
+
+func play_feed_feedback() -> void:
+	if is_instance_valid(feedback):
+		feedback.play("feed")
 
 func apply_appearance() -> void:
 	var data: Dictionary = APPEARANCE[animal_type]

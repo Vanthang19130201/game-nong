@@ -100,10 +100,11 @@ var pending_fishing_reward: Dictionary = {}
 var pending_fishing_reward_claimable: bool = false
 # Monotonic nonce for deterministic Coin Pouch / Small Chest openings.
 var treasure_open_sequence: int = 0
+var _removed_fish_migration_pending: bool = false
 var PLOT_IDS: Array[String] = FarmData.plot_ids()
 var INVENTORY_DEFAULTS: Dictionary = CropData.inventory_defaults().merged({
 	"coins": 500, "chicken_feed": 0, "cow_feed": 0, "pig_feed": 0, "sheep_feed": 0, "dog_food": 0, "egg": 0, "milk": 0, "pork": 0, "wool": 0, "wool_yarn": 0, "cotton_cloth": 0, "wool_cloth": 0, "meat_pie": 0, "wood": 0, "stone": 0,
-	"tilapia": 0, "perch": 0, "catfish": 0, "loach": 0, "snakehead": 0, "salmon": 0, "koi_orange": 0, "koi_gold": 0, "small_fish": 0, "river_fish": 0, "golden_fish": 0, "moon_fish": 0,
+	"tilapia": 0, "perch": 0, "catfish": 0, "loach": 0, "snakehead": 0, "salmon": 0, "koi_orange": 0, "koi_gold": 0, "moon_fish": 0,
 	"old_bottle": 0, "old_boot": 0, "coin_pouch": 0, "small_chest": 0, "lost_lure": 0, "ancient_coin": 0, "map_fragment": 0, "ancient_gem": 0,
 	"bread": 0, "corn_bread": 0, "carrot_pie": 0,
 	"egg_cake": 0, "milk_cake": 0, "pancake": 0,
@@ -398,6 +399,8 @@ func register_station(station: Node) -> bool:
 func _ready() -> void:
 	_load_game()
 	Inventory.inventory_changed.connect(save_game)
+	if _removed_fish_migration_pending:
+		save_game.call_deferred()
 	get_tree().auto_accept_quit = false
 	autosave_timer = Timer.new()
 	autosave_timer.name = "AutosaveTimer"
@@ -448,6 +451,7 @@ func save_game() -> bool:
 	data.set_value("buildings","owns_loom",Inventory.owns_loom)
 	data.set_value("loom","queue",loom_queue)
 	data.set_value("game", "version", 18)
+	data.set_value("migrations", "removed_fish_v1", true)
 	data.set_value("daily_missions", "state", DailyMissionManager.get_save_data())
 	data.set_value("discovery", "state", DiscoveryManager.get_save_data())
 	data.set_value("weather", "state", WeatherManager.get_save_data())
@@ -702,6 +706,7 @@ func _load_game() -> void:
 	# Missing or invalid fields use defaults; valid legacy values are kept.
 	for key in INVENTORY_DEFAULTS:
 		Inventory.set(key, _read_int(data, "inventory", key, INVENTORY_DEFAULTS[key]))
+	_migrate_removed_fish(data)
 	# Legacy saves gain newly catalogued treasure at zero; owning a migrated Coin
 	# or Gem still grants its cosmetic exactly once without granting any item.
 	Inventory.reconcile_treasure_cosmetics()
@@ -845,6 +850,19 @@ func _restore_pet_dogs(raw: Variant) -> Dictionary:
 		profile["last_hunger_update_at"] = now
 		result[pet_id] = profile
 	return result
+
+func _migrate_removed_fish(data: ConfigFile) -> void:
+	if data.get_value("migrations", "removed_fish_v1", false) == true:
+		return
+	# The three retired fish are no longer stored or sold. Preserve their value
+	# exactly once for existing farms instead of silently deleting earned loot.
+	var compensation: int = 0
+	compensation += _read_int(data, "inventory", "small_fish", 0) * 25
+	compensation += _read_int(data, "inventory", "river_fish", 0) * 40
+	compensation += _read_int(data, "inventory", "golden_fish", 0) * 100
+	Inventory.coins += compensation
+	_removed_fish_migration_pending = true
+
 
 func _read_int(data: ConfigFile, section: String, key: String, fallback: int, minimum: int = 0) -> int:
 	var value = data.get_value(section, key, fallback)

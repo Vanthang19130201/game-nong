@@ -1,29 +1,33 @@
 extends PanelContainer
 
 const Icon = preload("res://item_icon.gd")
+const CARD_ICON_SIZE := Vector2(64, 64)
+const CARD_MINIMUM_SIZE := Vector2(216, 148)
 var item_id: String = ""
 var stats: Label
 var actions: GridContainer
 
 func build(id: String, title: String) -> void:
 	item_id = id
-	custom_minimum_size.x = 190
+	custom_minimum_size = CARD_MINIMUM_SIZE
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var card_style := StyleBoxFlat.new()
 	card_style.bg_color = Color("f7edcf")
 	card_style.border_color = Color("a97750")
 	card_style.set_border_width_all(2)
 	card_style.set_corner_radius_all(11)
-	card_style.set_content_margin_all(9)
+	card_style.set_content_margin_all(12)
 	add_theme_stylebox_override("panel", card_style)
 	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation",8)
+	content.add_theme_constant_override("separation",9)
 	add_child(content)
 	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation",8)
+	header.custom_minimum_size.y = CARD_ICON_SIZE.y
+	header.add_theme_constant_override("separation",10)
 	content.add_child(header)
 	var icon_frame := PanelContainer.new()
-	icon_frame.custom_minimum_size = Vector2(54, 54)
+	icon_frame.custom_minimum_size = CARD_ICON_SIZE
 	var icon_style := StyleBoxFlat.new()
 	icon_style.bg_color = Color("efe0b9")
 	icon_style.border_color = Color("d2b780")
@@ -34,23 +38,27 @@ func build(id: String, title: String) -> void:
 	var icon := Control.new()
 	icon.set_script(Icon)
 	icon.item_id = id
-	icon.custom_minimum_size = Vector2(46,46)
+	icon.custom_minimum_size = Vector2(56,56)
 	icon.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	icon.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	icon_frame.add_child(icon)
 	var label := Label.new()
 	label.text = title
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size",16)
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(label)
 	stats = Label.new()
 	stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	stats.add_theme_font_size_override("font_size",13)
+	stats.custom_minimum_size.y = 34
+	stats.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	content.add_child(stats)
 	actions = GridContainer.new()
-	actions.columns = 2
-	actions.add_theme_constant_override("h_separation",6)
-	actions.add_theme_constant_override("v_separation",6)
+	actions.columns = 1
+	actions.add_theme_constant_override("h_separation",8)
+	actions.add_theme_constant_override("v_separation",8)
 	content.add_child(actions)
 	mouse_entered.connect(_show_hint)
 	mouse_exited.connect(_hide_hint)
@@ -73,5 +81,6 @@ func add_action(button: Button) -> void:
 	button.clip_text = true
 	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.custom_minimum_size = Vector2(0,36)
+	button.custom_minimum_size = Vector2(116,40)
+	actions.columns = 1 if actions.get_child_count() <= 1 else 2
 	button.show()

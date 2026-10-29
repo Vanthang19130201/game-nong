@@ -57,6 +57,10 @@ func _ready() -> void:
 	shadow.name = "PlayerShadow"
 	shadow.set_script(preload("res://player_shadow.gd"))
 	add_child(shadow)
+	var lantern := Node2D.new()
+	lantern.name = "NightLantern"
+	lantern.set_script(preload("res://player_lantern.gd"))
+	add_child(lantern)
 	var surface_feedback := Node2D.new()
 	surface_feedback.name = "SurfaceFeedback"
 	surface_feedback.set_script(preload("res://surface_feedback.gd"))

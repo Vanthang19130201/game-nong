@@ -73,7 +73,7 @@ func check_loading() -> void:
 	for id in ["wheat", "corn", "carrot"]:
 		icon.item_id = id
 		check(icon._crop_texture != null and icon._crop_texture.resource_path == "res://assets/crops/%s/stage_3.png" % id, "crop PNG loaded " + id)
-	for id in ["wheat_seed", "egg", "milk", "chicken_feed", "bread", "egg_cake", "cream", "butter", "cheese", "river_fish", "axe"]:
+	for id in ["wheat_seed", "egg", "milk", "chicken_feed", "bread", "egg_cake", "cream", "butter", "cheese", "tilapia", "axe"]:
 		icon.item_id = id
 		check(icon._crop_texture == null, "vector icon preserved " + id)
 	icon.free()

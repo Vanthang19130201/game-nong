@@ -28,10 +28,6 @@ func _visible_fish_ids() -> Array[String]:
 	var ids: Array[String] = []
 	for fish_id in Inventory.FishingData.CATCHABLE_FISH_IDS:
 		ids.append(fish_id)
-	# Old-save catches remain visible and sellable. Their row is explicitly
-	# tagged as legacy rather than silently removing a player's saved items.
-	for fish_id in Inventory.FishingData.LEGACY_FISH_IDS:
-		ids.append(fish_id)
 	return ids
 
 
@@ -79,8 +75,6 @@ func _add_row(fish_id: String) -> void:
 	var info: Dictionary = Inventory.FishingData.FISH[fish_id]
 	var owned: int = Inventory.get(fish_id)
 	label.text = tr("MARKET_ROW") % [Localization.display_name(fish_id), owned, info["sell_price"]]
-	if Inventory.FishingData.is_legacy_fish(fish_id):
-		row.tooltip_text = tr("FISHING_LEGACY_FISH")
 	sell_one.disabled = owned <= 0
 	sell_all.disabled = owned <= 0
 	rows[fish_id] = {"label": label, "one": sell_one, "all": sell_all}

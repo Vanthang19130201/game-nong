@@ -489,6 +489,8 @@ func _catch_fish() -> void:
 
 	last_caught_fish = fish
 	DailyMissionManager.record_event("fish_caught", amount)
+	if is_instance_valid(fishing_visual):
+		fishing_visual.set_caught_fish(fish)
 
 	_set_visual_mode(
 		"CAUGHT"

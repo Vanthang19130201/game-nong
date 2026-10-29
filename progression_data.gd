@@ -141,15 +141,15 @@ const ANIMALS: Dictionary = {
 	"sheep": {"name":"Sheep","building":"sheep_barn","level":14,"capacity":3,"buy":450,"sell":300}
 }
 const RECIPES: Dictionary = {
-	"chicken_feed": {"name": "Chicken Feed", "level": 4, "time": 10.0, "requirements": {"wheat": 1, "corn": 1}},
-	"cow_feed": {"name": "Cow Feed", "level": 8, "time": 15.0, "requirements": {"corn": 2, "carrot": 1}},
-	"pig_feed": {"name":"Pig Feed","level":11,"time":25.0,"requirements":{"corn":2,"soybean":2}},
-	"sheep_feed": {"name":"Sheep Feed","level":13,"time":30.0,"requirements":{"wheat":1,"soybean":2}}
+	"chicken_feed": {"name": "Chicken Feed", "level": 4, "time": 20.0, "requirements": {"wheat": 1, "corn": 1}},
+	"cow_feed": {"name": "Cow Feed", "level": 8, "time": 30.0, "requirements": {"corn": 2, "carrot": 1}},
+	"pig_feed": {"name":"Pig Feed","level":11,"time":45.0,"requirements":{"corn":2,"soybean":2}},
+	"sheep_feed": {"name":"Sheep Feed","level":13,"time":55.0,"requirements":{"wheat":1,"soybean":2}}
 }
 const PRODUCTS: Dictionary = {
 	"chicken_coop": {"animal": "chicken", "feed": "chicken_feed", "item": "egg", "level": 6, "time": 600.0, "exp": 5},
 	"cow_shed": {"animal": "cow", "feed": "cow_feed", "item": "milk", "level": 10, "time": 900.0, "exp": 10},
-	"pig_pen": {"animal":"pig","feed":"pig_feed","item":"pork","level":12,"time":600.0,"exp":18,"harvest_animal":true},
+	"pig_pen": {"animal":"pig","feed":"pig_feed","item":"pork","level":12,"time":1500.0,"exp":18,"harvest_animal":true},
 	"sheep_barn": {"animal":"sheep","feed":"sheep_feed","item":"wool","level":14,"time":1200.0,"exp":14}
 }
 # Costs are for the NEXT level. First production-building purchase stays Coins-only.
