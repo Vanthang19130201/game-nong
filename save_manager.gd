@@ -131,6 +131,8 @@ func dog_hunger(pet_id: String) -> float:
 	return clampf(float(pet_dogs.get(pet_id, {}).get("hunger", 100.0)), 0.0, 100.0)
 
 func adopt_dog(variant_id: String) -> bool:
+	if not DogData.is_variant_enabled(variant_id):
+		return false
 	var pet_id := DogData.pet_id_for_variant(variant_id)
 	if pet_id.is_empty() or pet_dogs.has(pet_id) or not Inventory.has_dog_house:
 		return false

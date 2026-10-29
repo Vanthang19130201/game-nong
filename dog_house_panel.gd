@@ -99,6 +99,8 @@ func refresh() -> void:
 	available_title.theme_type_variation = &"SectionTitle"
 	cards.add_child(available_title)
 	for variant_id in DogData.DOG_VARIANTS:
+		if not DogData.is_variant_enabled(variant_id):
+			continue
 		if not profiles.has(str(DogData.DOG_VARIANTS[variant_id]["pet_id"])):
 			cards.add_child(_dog_card(variant_id, profiles))
 	var owned_title := Label.new()
@@ -106,6 +108,8 @@ func refresh() -> void:
 	owned_title.theme_type_variation = &"SectionTitle"
 	cards.add_child(owned_title)
 	for variant_id in DogData.DOG_VARIANTS:
+		if not DogData.is_variant_enabled(variant_id):
+			continue
 		if profiles.has(str(DogData.DOG_VARIANTS[variant_id]["pet_id"])):
 			cards.add_child(_dog_card(variant_id, profiles))
 	var food_row := HBoxContainer.new()

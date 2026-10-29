@@ -2,6 +2,7 @@ extends Node2D
 
 # Keep pet spawning here, separate from each pet's movement script.
 const FarmData = preload("res://farm_data.gd")
+const DogData = preload("res://dog_data.gd")
 const SOIL_SCENE = preload("res://soil_plot.tscn")
 const DOG_SCENE = preload("res://dog.tscn")
 const LAND_SCENE = preload("res://land_zone.tscn")
@@ -356,13 +357,17 @@ func _update_pets() -> void:
 
 	var profiles: Dictionary = SaveManager.dog_profiles()
 	for pet_id in dogs_by_id.keys():
-		if profiles.has(pet_id) and is_instance_valid(dogs_by_id[pet_id]):
+		var profile: Dictionary = profiles.get(pet_id, {})
+		if profiles.has(pet_id) and DogData.is_variant_enabled(str(profile.get("variant", ""))) and is_instance_valid(dogs_by_id[pet_id]):
 			continue
 		var stale: Node = dogs_by_id[pet_id]
 		if is_instance_valid(stale):
 			stale.queue_free()
 		dogs_by_id.erase(pet_id)
 	for pet_id in profiles:
+		var profile: Dictionary = profiles[pet_id]
+		if not DogData.is_variant_enabled(str(profile.get("variant", ""))):
+			continue
 		var runtime: CharacterBody2D = dogs_by_id.get(pet_id)
 		var slot: int = preload("res://dog_data.gd").DOG_IDS.find(pet_id)
 		if not is_instance_valid(runtime):
@@ -370,7 +375,7 @@ func _update_pets() -> void:
 			runtime.name = pet_id.capitalize()
 			add_child(runtime)
 			runtime.wander_bounds = $Player.farm_bounds
-			runtime.configure(pet_id, profiles[pet_id], home, maxi(slot, 0))
+			runtime.configure(pet_id, profile, home, maxi(slot, 0))
 			# New dogs use separated yard points. Returning dogs resume their last
 			# safe farm position instead of piling up at the Dog House after reload.
 			runtime.global_position = runtime.restored_position()
@@ -378,7 +383,7 @@ func _update_pets() -> void:
 		else:
 			runtime.set_home_point(home)
 			runtime.wander_bounds = $Player.farm_bounds
-			runtime.refresh_profile(profiles[pet_id])
+			runtime.refresh_profile(profile)
 	dog = dogs_by_id.get("dog_shiba") if dogs_by_id.has("dog_shiba") else (dogs_by_id.values()[0] if not dogs_by_id.is_empty() else null)
 
 

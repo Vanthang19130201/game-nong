@@ -93,14 +93,17 @@ func run_checks() -> void:
 	inventory.coins = 350
 	check(manager.adopt_dog("shiba") and inventory.coins == 0, "Shiba costs exactly 350 at level 3")
 	check(not manager.adopt_dog("shiba") and inventory.coins == 0 and manager.pet_dogs.size() == 1, "double adoption charges once and creates one profile")
-	check(not manager.adopt_dog("cream"), "Cream remains level locked at level 3")
+	check(not DogData.is_variant_enabled("cream") and not DogData.is_variant_enabled("blacktan") and DogData.is_variant_enabled("shiba"), "only Shiba is enabled")
+	check(not manager.adopt_dog("cream"), "Cream cannot be adopted while disabled")
 	inventory.player_level = 6
 	inventory.coins = 450
-	check(manager.adopt_dog("cream") and inventory.coins == 0, "Cream costs exactly 450 at level 6")
+	check(not manager.adopt_dog("cream") and inventory.coins == 450, "disabled Cream rejects safely without charging coins")
 	inventory.player_level = 10
 	inventory.coins = 550
-	check(manager.adopt_dog("blacktan") and inventory.coins == 0, "Black Tan costs exactly 550 at level 10")
-	check(manager.pet_dogs.size() == 3 and inventory.has_dog, "three independent owned pet profiles")
+	check(not manager.adopt_dog("blacktan") and inventory.coins == 550, "disabled Black Tan rejects safely without charging coins")
+	manager.pet_dogs["dog_cream"] = DogData.default_profile("cream")
+	manager.pet_dogs["dog_blacktan"] = DogData.default_profile("blacktan")
+	check(manager.pet_dogs.size() == 3 and inventory.has_dog, "legacy Cream and Black Tan ownership remains valid data")
 	check(not manager.adopt_dog("shiba"), "duplicate variant rejected")
 	check(manager.dog_profile("dog_shiba").get("variant") == "shiba", "Shiba identity persists")
 	check(manager.dog_profile("dog_cream").get("variant") == "cream", "Cream identity persists")
@@ -143,17 +146,16 @@ func run_checks() -> void:
 		marker.position = marker_data[1]
 		home.add_child(marker)
 	var runtime_dogs: Array[CharacterBody2D] = []
-	for index in range(DogData.DOG_IDS.size()):
-		var pet_id: String = DogData.DOG_IDS[index]
+	for pet_id in ["dog_shiba"]:
 		var runtime: CharacterBody2D = DOG_SCENE.instantiate()
 		root.add_child(runtime)
-		runtime.configure(pet_id, manager.dog_profile(pet_id), home, index)
+		runtime.configure(pet_id, manager.dog_profile(pet_id), home, DogData.DOG_IDS.find(pet_id))
 		runtime_dogs.append(runtime)
 	await process_frame
 	var dog: CharacterBody2D = runtime_dogs[0]
 	var shiba_sprite: AnimatedSprite2D = dog.get_node("DogVisual/MotionRoot/Sprite")
 	check(shiba_sprite.sprite_frames == DogData.visual_frames_for_variant("shiba"), "runtime dog uses cached Shiba animation frames")
-	for strip_variant in ["shiba", "cream"]:
+	for strip_variant in ["shiba"]:
 		check(DogData.uses_strip_system(strip_variant), "%s uses its dedicated strip runtime instead of the legacy pose board" % strip_variant.capitalize())
 		var strip_size := DogData.strip_frame_size_for_variant(strip_variant)
 		for animation_name in DogData.strip_animations_for_variant(strip_variant):

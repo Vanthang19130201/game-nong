@@ -33,6 +33,14 @@ const DOG_VARIANTS: Dictionary = {
 	}
 }
 
+# Cream and Black Tan are temporarily disabled until their visual/animation
+# assets are rebuilt. Keep all data/save compatibility intact.
+const ENABLED_DOG_VARIANTS: Dictionary = {
+	"shiba": true,
+	"cream": false,
+	"blacktan": false,
+}
+
 const DOG_IDS: Array[String] = ["dog_shiba", "dog_cream", "dog_blacktan"]
 const DOG_FOOD_PRICE: int = 20
 const MAX_DOGS: int = 3
@@ -145,6 +153,14 @@ const CREAM_STRIP_ANIMATIONS: Dictionary = {
 }
 
 static var visual_frames_cache: Dictionary = {}
+
+static func is_variant_enabled(variant_id: String) -> bool:
+	return bool(ENABLED_DOG_VARIANTS.get(variant_id, false))
+
+
+static func is_pet_enabled(pet_id: String) -> bool:
+	return is_variant_enabled(str(variant_for_pet(pet_id).get("id", "")))
+
 
 static func variant_for_pet(pet_id: String) -> Dictionary:
 	for variant in DOG_VARIANTS.values():
