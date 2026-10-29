@@ -149,3 +149,4 @@ func _fit() -> void:
 	card.anchor_bottom = 0.0
 	card.position = (viewport_size - card_size) * 0.5
 	card.size = card_size
+	card.pivot_offset = card_size * 0.5

@@ -118,6 +118,7 @@ func try_plant() -> void:
 	_update_label()
 	if Inventory.use_seed(selected):
 		AudioManager.play_sfx("plant_seed", global_position)
+		Inventory.crop_planted.emit(crop_type)
 
 
 func _on_grow_timer_timeout() -> void:

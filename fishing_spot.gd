@@ -488,6 +488,7 @@ func _catch_fish() -> void:
 	retain_pending_reward = false
 
 	last_caught_fish = fish
+	DailyMissionManager.record_event("fish_caught", amount)
 
 	_set_visual_mode(
 		"CAUGHT"

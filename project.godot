@@ -29,6 +29,7 @@ DiscoveryManager="*res://discovery_manager.gd"
 WeatherManager="*res://weather_manager.gd"
 FarmEventManager="*res://farm_event_manager.gd"
 SaveManager="*res://save_manager.gd"
+DailyMissionManager="*res://daily_mission_manager.gd"
 AudioManager="*res://audio_manager.gd"
 
 [display]

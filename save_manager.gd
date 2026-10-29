@@ -2,6 +2,8 @@ extends Node
 
 signal selected_character_changed
 signal player_name_changed
+signal dog_fed(pet_id: String)
+signal dog_greeted(pet_id: String)
 var player_name: String = ""
 const CharacterData = preload("res://character_data.gd")
 var selected_character_id: String = CharacterData.DEFAULT_ID
@@ -208,6 +210,7 @@ func feed_dog(pet_id: String) -> bool:
 		return false
 	Inventory.inventory_changed.emit()
 	get_tree().call_group("farm_pets", "begin_eating", pet_id)
+	dog_fed.emit(pet_id)
 	return true
 
 func tick_dog_hunger(pet_id: String, delta: float) -> void:
@@ -445,6 +448,7 @@ func save_game() -> bool:
 	data.set_value("buildings","owns_loom",Inventory.owns_loom)
 	data.set_value("loom","queue",loom_queue)
 	data.set_value("game", "version", 18)
+	data.set_value("daily_missions", "state", DailyMissionManager.get_save_data())
 	data.set_value("discovery", "state", DiscoveryManager.get_save_data())
 	data.set_value("weather", "state", WeatherManager.get_save_data())
 	data.set_value("farm_event", "state", FarmEventManager.get_save_data())
@@ -631,6 +635,7 @@ func reset_game() -> bool:
 	for id in STATION_IDS:
 		Inventory.set("owns_" + id, false)
 	OrderManager.reset_orders()
+	DailyMissionManager.reset_for_new_game()
 	for id in PLOT_IDS:
 		saved_plots[id] = empty_plot(id)
 		if plots.has(id) and is_instance_valid(plots[id]):
@@ -814,6 +819,7 @@ func _load_game() -> void:
 		data.get_value("orders", "active", []),
 		_read_int(data, "orders", "next_id", 1, 1)
 	)
+	DailyMissionManager.restore(data.get_value("daily_missions", "state", {}))
 	Inventory.inventory_changed.emit()
 	# Also persist newly generated orders for old saves and brand-new games.
 	save_game.call_deferred()

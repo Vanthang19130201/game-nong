@@ -93,6 +93,10 @@ var debug_panel: PanelContainer
 @onready var animal_panel: PanelContainer = $ShopBuildPanel/Margin/Content/Tabs/AnimalPanel
 @onready var animal_cards_grid: GridContainer = $ShopBuildPanel/Margin/Content/Tabs/AnimalPanel/Margin/Content/Scroll/Cards
 var dog_house_panel: PanelContainer
+var daily_mission_panel: PanelContainer
+var daily_mission_button: Button
+var _last_clock_day := -1
+var _last_time_phase := -1
 
 
 func _ready() -> void:
@@ -232,7 +236,10 @@ func _ready() -> void:
 	$OrderPanel/Margin/Content/Footer/CloseButton.pressed.connect(order_panel.hide)
 	OrderManager.orders_changed.connect(_refresh_orders)
 	OrderManager.order_completed.connect(_on_order_completed)
+	GameClock.changed.connect(_on_game_clock_changed)
+	DailyMissionManager.day_refreshed.connect(_on_daily_mission_day_refreshed)
 	_setup_cozy_ui()
+	_setup_daily_missions()
 	_setup_feed_presentation()
 	_apply_ui_theme(self)
 	_setup_profile_hud()
@@ -284,8 +291,11 @@ func _open_shop_build(tab: int) -> void:
 	_fit_shop_build()
 
 
-func show_transaction_feedback(text: String) -> void:
-	transaction_feedback.show_message(text)
+func show_transaction_feedback(text: String, notification_type: String = "") -> void:
+	if notification_type.is_empty():
+		transaction_feedback.show_message(text)
+		return
+	transaction_feedback.show_notification(text, notification_type)
 
 
 func show_floating_feedback(text: String) -> void:
@@ -680,7 +690,7 @@ func _collect() -> void:
 
 
 func blocks_world_input() -> bool:
-	return level_up_popup.visible or collection_book.visible or market_stall_panel.visible or wandering_merchant_panel.visible or animal_sale_confirmation.visible or land_panel.visible or (is_instance_valid(dog_house_panel) and dog_house_panel.visible) or edit_farm.active or bakery_panel.visible or dairy_panel.visible or spinning_machine_panel.visible or settings_panel.visible or shop_build_panel.visible or storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or station_panel.visible or order_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
+	return level_up_popup.visible or collection_book.visible or market_stall_panel.visible or wandering_merchant_panel.visible or animal_sale_confirmation.visible or land_panel.visible or (is_instance_valid(dog_house_panel) and dog_house_panel.visible) or (is_instance_valid(daily_mission_panel) and daily_mission_panel.visible) or edit_farm.active or bakery_panel.visible or dairy_panel.visible or spinning_machine_panel.visible or settings_panel.visible or shop_build_panel.visible or storage_panel.visible or fish_market_panel.visible or (is_instance_valid(debug_panel) and debug_panel.visible) or house_panel.visible or plot_purchase.visible or tools_unlock_popup.visible or station_panel.visible or order_panel.visible or reset_confirmation.visible or crop_selector.get_popup().visible or recipe_selector.get_popup().visible
 
 
 func _input(event: InputEvent) -> void:
@@ -786,6 +796,8 @@ func _close_game_panels() -> void:
 	collection_book.close()
 	if is_instance_valid(dog_house_panel):
 		dog_house_panel.close()
+	if is_instance_valid(daily_mission_panel):
+		daily_mission_panel.hide()
 	market_stall_panel.close()
 	wandering_merchant_panel.close()
 	animal_sale_confirmation.hide()
@@ -875,13 +887,13 @@ func close_all_panels() -> void:
 func _on_main_panel_visibility_changed() -> void:
 	clear_item_hint(item_hint_source)
 	# A HUD dropdown must not stack over an existing modal or fishing session.
-	crop_selector.disabled = _native_dialog_open() or fishing_ui.panel.visible or [collection_book, dog_house_panel, market_stall_panel, wandering_merchant_panel, land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel].any(func(panel): return panel.visible) or (is_instance_valid(debug_panel) and debug_panel.visible)
+	crop_selector.disabled = _native_dialog_open() or fishing_ui.panel.visible or [collection_book, dog_house_panel, daily_mission_panel, market_stall_panel, wandering_merchant_panel, land_panel, bakery_panel, dairy_panel, spinning_machine_panel, settings_panel, shop_build_panel, station_panel, house_panel, order_panel, fish_market_panel, storage_panel].any(func(panel): return is_instance_valid(panel) and panel.visible) or (is_instance_valid(debug_panel) and debug_panel.visible)
 	if is_instance_valid(hotbar):
 		hotbar.visible = not crop_selector.disabled
 	$ModalBackdrop.visible = crop_selector.disabled and not edit_farm.active and not fishing_ui.panel.visible and not level_up_popup.visible
 	# z_index controls drawing, not GUI picking. Keep the active panel after
 	# the backdrop and hotbar in tree order so its tabs/buttons receive clicks.
-	for panel in [collection_book,dog_house_panel,market_stall_panel,wandering_merchant_panel,land_panel,bakery_panel,dairy_panel,spinning_machine_panel,settings_panel,shop_build_panel,station_panel,house_panel,order_panel,fish_market_panel,storage_panel,debug_panel,level_up_popup]:
+	for panel in [collection_book,dog_house_panel,daily_mission_panel,market_stall_panel,wandering_merchant_panel,land_panel,bakery_panel,dairy_panel,spinning_machine_panel,settings_panel,shop_build_panel,station_panel,house_panel,order_panel,fish_market_panel,storage_panel,debug_panel,level_up_popup]:
 		if is_instance_valid(panel) and panel.visible:
 			move_child(panel,get_child_count()-1)
 	transaction_feedback.set_popup_mode($ModalBackdrop.visible)
@@ -1267,6 +1279,72 @@ func _setup_cozy_ui() -> void:
 	_setup_item_hints()
 	_fit_menu.call_deferred()
 	_fit_shop_build.call_deferred()
+
+
+func _setup_daily_missions() -> void:
+	daily_mission_panel = PanelContainer.new()
+	daily_mission_panel.name = "DailyMissionPanel"
+	daily_mission_panel.z_index = 31
+	daily_mission_panel.set_script(preload("res://daily_mission_panel.gd"))
+	add_child(daily_mission_panel)
+	daily_mission_panel.visibility_changed.connect(_on_main_panel_visibility_changed)
+	daily_mission_button = Button.new()
+	daily_mission_button.name = "DailyMissionsButton"
+	daily_mission_button.tooltip_text = tr("DAILY_TITLE")
+	daily_mission_button.custom_minimum_size = Vector2(42, 42)
+	daily_mission_button.pressed.connect(_open_daily_missions)
+	$ResetControls.add_child(daily_mission_button)
+	DailyMissionManager.missions_changed.connect(_refresh_daily_mission_button)
+	DailyMissionManager.mission_completed.connect(_on_daily_mission_completed)
+	get_viewport().size_changed.connect(_fit_daily_mission_button)
+	_refresh_daily_mission_button()
+	_fit_daily_mission_button.call_deferred()
+
+
+func _open_daily_missions() -> void:
+	if blocks_world_input():
+		return
+	_close_game_panels()
+	daily_mission_panel.open_panel()
+
+
+func _refresh_daily_mission_button() -> void:
+	if not is_instance_valid(daily_mission_button):
+		return
+	var ready := DailyMissionManager.unclaimed_completed_count()
+	daily_mission_button.text = "✓" if ready <= 0 else "✓%d" % ready
+
+
+func _fit_daily_mission_button() -> void:
+	if not is_instance_valid(daily_mission_button):
+		return
+	var view := get_viewport().get_visible_rect().size
+	daily_mission_button.position = Vector2(view.x - 326.0, 12.0) if view.x >= 660.0 else Vector2(12.0, 142.0)
+
+
+func _on_daily_mission_completed(_mission: Dictionary) -> void:
+	show_transaction_feedback(tr("DAILY_COMPLETE") + "\n" + tr(str(_mission.get("title_key", ""))), "mission")
+
+
+func _on_daily_mission_day_refreshed() -> void:
+	show_transaction_feedback(tr("DAILY_NEW_DAY"), "mission")
+
+
+func _on_game_clock_changed() -> void:
+	var day := GameClock.absolute_day
+	var minute := int(GameClock.minutes)
+	if _last_clock_day < 0:
+		_last_clock_day = day
+		_last_time_phase = minute / 360
+		return
+	if day != _last_clock_day:
+		_last_clock_day = day
+		show_transaction_feedback(tr("NEW_DAY_TOAST") % GameClock.day, "info")
+	var phase := minute / 360
+	if phase != _last_time_phase:
+		_last_time_phase = phase
+		var phase_key: String = str(["TIME_PHASE_NIGHT", "TIME_PHASE_MORNING", "TIME_PHASE_NOON", "TIME_PHASE_EVENING"][clampi(phase, 0, 3)])
+		show_transaction_feedback(tr(phase_key), "info" if phase != 3 else "warning")
 
 
 func _fit_menu() -> void:

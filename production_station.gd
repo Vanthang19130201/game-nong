@@ -183,6 +183,7 @@ func collect() -> bool:
 	AudioManager.play_sfx(collect_sound, global_position)
 	_update_display()
 	Inventory.inventory_changed.emit()
+	DailyMissionManager.record_event("production_collected", int(output["amount"]))
 	return true
 
 

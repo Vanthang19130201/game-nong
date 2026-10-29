@@ -63,6 +63,8 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'world_expansion_test.gd') -Dest
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'discovery_system_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'audio_manager_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'dog_pet_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'daily_mission_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'notification_ui_test.gd') -Destination $testRoot -Force
 $projectPath = Join-Path $testRoot 'project.godot'
 Add-Content -LiteralPath $projectPath -Value "`n[debug]`nfile_logging/enable_file_logging=false"
 # Generated Shiba frames retain their filenames while their canvas can grow.
@@ -118,7 +120,7 @@ $stages = @('size_core', 'size_write', 'size_read', 'character_core', 'character
     'hud_completion','calendar_write','calendar_read','calendar_legacy_write','calendar_legacy_read','calendar_invalid_write','calendar_invalid_read',
     'feed_core','feed_write','feed_read','feed_again','feed_offline_write','feed_offline_read','feed_legacy_write','feed_legacy_read','feed_reset_read',
     'feed_cancel','feed_cancel_write','feed_cancel_read','feed_cancel_again','level_up','animal_output',
-    'upgrade_treasure_core','upgrade_treasure_legacy_write','upgrade_treasure_legacy_read','dog_pet')
+    'upgrade_treasure_core','upgrade_treasure_legacy_write','upgrade_treasure_legacy_read','dog_pet','daily_missions','notification_ui')
 $onlyStage = $env:GODOT_TEST_ONLY
 if (-not [string]::IsNullOrWhiteSpace($onlyStage)) {
     $stages = @($stages | Where-Object { $_ -eq $onlyStage })
@@ -143,6 +145,8 @@ foreach ($stage in $stages) {
     if ($stage -eq 'discovery_core') { $testScript = 'discovery_system_test.gd' }
     if ($stage -eq 'audio_core') { $testScript = 'audio_manager_test.gd' }
 	if ($stage -eq 'dog_pet') { $testScript = 'dog_pet_test.gd' }
+	if ($stage -eq 'daily_missions') { $testScript = 'daily_mission_test.gd' }
+	if ($stage -eq 'notification_ui') { $testScript = 'notification_ui_test.gd' }
     if ($stage.StartsWith('bakery_')) { $testScript = 'bakery_test.gd' }
     if ($stage.StartsWith('crop_')) { $testScript = 'crop_expansion_test.gd' }
     if ($stage.StartsWith('warehouse_')) { $testScript = 'warehouse_test.gd' }

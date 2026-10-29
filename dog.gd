@@ -325,6 +325,9 @@ func interact(_player: Node2D = null) -> void:
 		dog_visual.happy()
 	if rng.randf() <= _happy_sound_chance():
 		_play_dog_sound(_happy_sound_id(), true, 5.0)
+	var manager := _save_manager()
+	if is_instance_valid(manager):
+		manager.dog_greeted.emit(pet_id)
 	hud.show_transaction_feedback(tr("DOG_HAPPY") % custom_name)
 
 

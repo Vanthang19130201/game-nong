@@ -5,6 +5,9 @@ signal action_failed(message: String)
 signal level_up(level: int, unlocks: Array, reward: Dictionary)
 signal level_up_events_cleared
 signal treasure_opened(source_item: String, reward: Dictionary)
+signal crop_planted(crop: String)
+signal crop_harvested(crop: String, amount: int)
+signal item_sold(item: String, amount: int)
 
 const FarmData = preload("res://farm_data.gd")
 const ToolData = preload("res://tool_data.gd")
@@ -139,6 +142,7 @@ func sell_egg() -> bool:
 	egg -= 1
 	coins += EGG_PRICE
 	inventory_changed.emit()
+	item_sold.emit("egg", 1)
 	return true
 
 func sell_price(item: String) -> int:
@@ -202,6 +206,7 @@ func sell_item(item: String, amount: int = 1) -> bool:
 	coins += amount*price
 	inventory_changed.emit()
 	selling_item = false
+	item_sold.emit(item, amount)
 	return true
 
 
@@ -216,6 +221,7 @@ func sell_fish(fish: String, sell_all: bool = false) -> bool:
 	set(fish, owned - amount)
 	coins += amount * FishingData.FISH[fish]["sell_price"]
 	inventory_changed.emit()
+	item_sold.emit(fish, amount)
 	return true
 
 
@@ -264,6 +270,7 @@ func buy_seed(crop: String) -> bool:
 	coins -= price
 	set(crop.to_lower() + "_seed", seed_count(crop) + 1)
 	inventory_changed.emit()
+	item_sold.emit(crop.to_lower(), 1)
 	return true
 
 
@@ -306,6 +313,7 @@ func collect_crop(crop: String, output_item: String = "", amount: int = 1) -> bo
 	add_exp(CropData.CROPS[crop]["harvest_exp"], false)
 	DiscoveryManager.discover_item(output)
 	inventory_changed.emit()
+	crop_harvested.emit(crop, amount)
 	return true
 
 func exp_to_next_level() -> int:
@@ -612,6 +620,7 @@ func sell_milk() -> bool:
 	milk -= 1
 	coins += MILK_PRICE
 	inventory_changed.emit()
+	item_sold.emit("milk", 1)
 	return true
 
 
@@ -1064,6 +1073,7 @@ func sell_bakery_item(item: String) -> bool:
 	set(item, get(item) - 1)
 	coins += BakeryData.RECIPES[item]["price"]
 	inventory_changed.emit()
+	item_sold.emit(item, 1)
 	return true
 
 func sell_dairy_item(item: String) -> bool:
@@ -1072,4 +1082,5 @@ func sell_dairy_item(item: String) -> bool:
 	set(item,get(item)-1)
 	coins += DairyData.RECIPES[item]["price"]
 	inventory_changed.emit()
+	item_sold.emit(item, 1)
 	return true
