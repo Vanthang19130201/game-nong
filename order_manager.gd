@@ -47,9 +47,7 @@ func item_info() -> Dictionary:
 	items["milk"] = {"name":"Milk","level":Inventory.Progression.PRODUCTS["cow_shed"]["level"],"price":Inventory.MILK_PRICE,"exp":10,"category":"animal"}
 	items["pork"] = {"name":"Pork","level":Inventory.Progression.PRODUCTS["pig_pen"]["level"],"price":int(Inventory.AnimalData.PRODUCT_PRICES["pork"]),"exp":18,"category":"animal","order_max":2}
 	items["wool"] = {"name":"Wool","level":Inventory.Progression.PRODUCTS["sheep_barn"]["level"],"price":int(Inventory.AnimalData.PRODUCT_PRICES["wool"]),"exp":14,"category":"animal","order_max":2}
-	for fish in Inventory.FishingData.FISH:
-		if fish == "moon_fish":
-			continue
+	for fish in Inventory.FishingData.CATCHABLE_FISH_IDS:
 		var info: Dictionary = Inventory.FishingData.FISH[fish]
 		items[fish] = {"name":info["name"],"level":Inventory.FarmData.FISHING_LEVEL,"price":info["sell_price"],"exp":info["order_exp"],"category":"fish"}
 	return items

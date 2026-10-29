@@ -7,6 +7,16 @@ const JUMP_POINTS: Array[Vector2] = [
 	Vector2(-24, 120),
 	Vector2(35, 390)
 ]
+const FISH_ART_PATHS: Array[String] = [
+	"res://assets/fishing/fish/tilapia.png",
+	"res://assets/fishing/fish/perch.png",
+	"res://assets/fishing/fish/catfish.png",
+	"res://assets/fishing/fish/loach.png",
+	"res://assets/fishing/fish/snakehead.png",
+	"res://assets/fishing/fish/salmon.png",
+	"res://assets/fishing/fish/koi_orange.png",
+	"res://assets/fishing/fish/koi_gold.png"
+]
 
 var rng := RandomNumberGenerator.new()
 var jump_point: Vector2 = Vector2.ZERO
@@ -21,10 +31,12 @@ var ripple_progress: float = 0.0:
 var fish_visible: bool = false
 var ripple_visible: bool = false
 var jump_timer: Timer
+var jump_fish_art: Texture2D
 
 
 func _ready() -> void:
 	rng.randomize()
+	jump_fish_art = load(FISH_ART_PATHS[rng.randi_range(0, FISH_ART_PATHS.size() - 1)]) as Texture2D
 	z_index = 1
 	jump_timer = Timer.new()
 	jump_timer.one_shot = true
@@ -39,6 +51,7 @@ func _schedule_next_jump() -> void:
 
 func _start_fish_jump() -> void:
 	jump_point = JUMP_POINTS[rng.randi_range(0, JUMP_POINTS.size() - 1)]
+	jump_fish_art = load(FISH_ART_PATHS[rng.randi_range(0, FISH_ART_PATHS.size() - 1)]) as Texture2D
 	jump_progress = 0.0
 	fish_visible = true
 	var tween := create_tween()
@@ -71,18 +84,14 @@ func _draw() -> void:
 
 	var progress := jump_progress
 	var fish_position := jump_point + Vector2(12.0 * (progress - 0.5), -sin(progress * PI) * 30.0)
-	var fish := PackedVector2Array([
-		fish_position + Vector2(-11, 0),
-		fish_position + Vector2(-5, -5),
-		fish_position + Vector2(5, -5),
-		fish_position + Vector2(11, 0),
-		fish_position + Vector2(5, 5),
-		fish_position + Vector2(-5, 5)
-	])
-	draw_colored_polygon(fish, Color("f1ce82"))
-	draw_colored_polygon(PackedVector2Array([
-		fish_position + Vector2(9, 0),
-		fish_position + Vector2(16, -5),
-		fish_position + Vector2(16, 5)
-	]), Color("d5a75e"))
-	draw_circle(fish_position + Vector2(-6, -1), 1.3, Color("493b2a"))
+	if jump_fish_art == null:
+		return
+	var art_size: Vector2 = jump_fish_art.get_size()
+	if art_size.x <= 0.0 or art_size.y <= 0.0:
+		return
+	# The supplied catch artwork is also used for the brief water jump. It is
+	# tiny on purpose so it reads as ambient life and never hides a real cast.
+	var scale_factor: float = 42.0 / maxf(art_size.x, art_size.y)
+	draw_set_transform(fish_position, -0.12, Vector2(scale_factor, scale_factor))
+	draw_texture(jump_fish_art, -art_size * 0.5)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)

@@ -31,7 +31,12 @@ func key(code: int, echo: bool = false) -> void:
 	await create_timer(0.04).timeout
 
 func fish_count() -> int:
-	return inv.small_fish + inv.river_fish + inv.golden_fish
+	var total: int = 0
+	for fish_id in inv.FishingData.CATCHABLE_FISH_IDS:
+		total += inv.get(fish_id)
+	for fish_id in inv.FishingData.LEGACY_FISH_IDS:
+		total += inv.get(fish_id)
+	return total
 
 func start_session() -> bool:
 	var target: Dictionary = player._find_fishing_target()
@@ -270,10 +275,14 @@ func check_fishing() -> void:
 	check(not inv.upgrade_fishing_rod() and inv.fishing_rod_level == 4, "rod max level")
 	# Deterministic statistical check of reward weights; sampling does not grant items.
 	spot.rng.seed = 9876
-	var counts: Dictionary = {"small_fish":0,"river_fish":0,"golden_fish":0}
+	var counts: Dictionary = {}
+	for fish_id in inv.FishingData.CATCHABLE_FISH_IDS:
+		counts[fish_id] = 0
 	for index in range(10000):
-		counts[spot._roll_fish()] += 1
-	check(absf(counts["small_fish"]/10000.0 - 0.6) < 0.025 and absf(counts["river_fish"]/10000.0 - 0.3) < 0.025 and absf(counts["golden_fish"]/10000.0 - 0.1) < 0.025, "60/30/10 reward table")
+		var rolled: String = spot._roll_fish()
+		check(rolled in inv.FishingData.CATCHABLE_FISH_IDS, "new catch never rolls a legacy fish")
+		counts[rolled] += 1
+	check(absf(counts["tilapia"] / 10000.0 - 0.22) < 0.025 and absf(counts["perch"] / 10000.0 - 0.18) < 0.025 and absf(counts["catfish"] / 10000.0 - 0.16) < 0.025 and absf(counts["loach"] / 10000.0 - 0.14) < 0.025 and absf(counts["snakehead"] / 10000.0 - 0.12) < 0.025 and absf(counts["salmon"] / 10000.0 - 0.08) < 0.02 and absf(counts["koi_orange"] / 10000.0 - 0.07) < 0.02 and absf(counts["koi_gold"] / 10000.0 - 0.03) < 0.012, "8-species reward weights")
 	check(start_session(), "reset mid-session")
 	check(manager.reset_game(), "reset fishing data")
 	check(spot.state == spot.State.IDLE and inv.reserved_barn_slots == 0 and fish_count() == 0 and not inv.has_fishing_rod and inv.fishing_rod_level == 0, "reset clears fish/rod/session")

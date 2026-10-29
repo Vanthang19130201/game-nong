@@ -586,18 +586,14 @@ func _roll_fish(roll_rng: RandomNumberGenerator = null) -> String:
 	var available: Array[String] = []
 	var weights: Array[int] = []
 	var total: int = 0
-	for fish_id in Data.FISH:
+	for fish_id in Data.CATCHABLE_FISH_IDS:
 		var info: Dictionary = Data.FISH[fish_id]
-		if not _fish_is_available(info):
-			continue
 		var weight: int = int(info["weight"])
-		if fish_id == "golden_fish" and WeatherManager.is_raining():
-			weight += 2
 		available.append(fish_id)
 		weights.append(weight)
 		total += weight
 	if total <= 0:
-		return "small_fish"
+		return "tilapia"
 
 	var roll: int = active_rng.randi_range(
 		1,
@@ -610,7 +606,7 @@ func _roll_fish(roll_rng: RandomNumberGenerator = null) -> String:
 		if roll <= 0:
 			return available[index]
 
-	return "small_fish"
+	return "tilapia"
 
 
 func _fish_is_available(info: Dictionary) -> bool:

@@ -1078,6 +1078,9 @@ func _rarity_name(
 	rarity: String
 ) -> String:
 
+	if rarity == "legendary":
+		return tr("RARITY_LEGENDARY").to_upper()
+
 	match rarity:
 		"rare":
 			return "HIẾM"
@@ -1092,6 +1095,9 @@ func _rarity_name(
 func _rarity_color(
 	rarity: String
 ) -> Color:
+
+	if rarity == "legendary":
+		return Color("c58921")
 
 	match rarity:
 		"rare":

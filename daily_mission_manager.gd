@@ -134,7 +134,11 @@ func claim_completion_bonus() -> bool:
 
 
 func unclaimed_completed_count() -> int:
-	return daily_missions.count(func(m: Dictionary) -> bool: return int(m.get("progress", 0)) >= int(m.get("target", 1)) and not bool(m.get("claimed", false)))
+	var completed: int = 0
+	for mission in daily_missions:
+		if int(mission.get("progress", 0)) >= int(mission.get("target", 1)) and not bool(mission.get("claimed", false)):
+			completed += 1
+	return completed
 
 
 func _on_clock_changed() -> void:

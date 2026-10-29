@@ -37,7 +37,15 @@ const VISUAL_TEXTURE_PATHS: Dictionary = {
 	"market_stall": "res://assets/buildings/market_stall/market_stall.svg",
 	"order_board": "res://assets/buildings/order_board/order_board.svg",
 	"fish_market": "res://assets/buildings/fish_market/fish_market.svg",
-	"fishing_bridge": "res://assets/buildings/fishing_bridge/fishing_bridge.svg"
+	"fishing_bridge": "res://assets/buildings/fishing_bridge/fishing_bridge.svg",
+	"tilapia": "res://assets/fishing/fish/tilapia.png",
+	"perch": "res://assets/fishing/fish/perch.png",
+	"catfish": "res://assets/fishing/fish/catfish.png",
+	"loach": "res://assets/fishing/fish/loach.png",
+	"snakehead": "res://assets/fishing/fish/snakehead.png",
+	"salmon": "res://assets/fishing/fish/salmon.png",
+	"koi_orange": "res://assets/fishing/fish/koi_orange.png",
+	"koi_gold": "res://assets/fishing/fish/koi_gold.png"
 }
 
 const INK := Color("68462f")

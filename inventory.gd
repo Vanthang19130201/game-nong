@@ -24,7 +24,7 @@ const EGG_PRICE: int = 18
 const MILK_PRICE: int = 30
 const Progression = preload("res://progression_data.gd")
 var SILO_ITEMS: Array[String] = CropData.silo_items()
-const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "pig_feed", "sheep_feed", "dog_food", "egg", "milk", "pork", "wool", "wool_yarn", "cotton_cloth", "wool_cloth", "meat_pie", "small_fish", "river_fish", "golden_fish", "moon_fish", "bread", "corn_bread", "carrot_pie", "egg_cake", "milk_cake", "pancake", "cream", "butter", "cheese", "cotton_thread", "old_bottle", "old_boot", "coin_pouch", "small_chest", "lost_lure", "ancient_coin", "map_fragment", "ancient_gem"]
+const BARN_ITEMS: Array[String] = ["chicken_feed", "cow_feed", "pig_feed", "sheep_feed", "dog_food", "egg", "milk", "pork", "wool", "wool_yarn", "cotton_cloth", "wool_cloth", "meat_pie", "tilapia", "perch", "catfish", "loach", "snakehead", "salmon", "koi_orange", "koi_gold", "small_fish", "river_fish", "golden_fish", "moon_fish", "bread", "corn_bread", "carrot_pie", "egg_cake", "milk_cake", "pancake", "cream", "butter", "cheese", "cotton_thread", "old_bottle", "old_boot", "coin_pouch", "small_chest", "lost_lure", "ancient_coin", "map_fragment", "ancient_gem"]
 var owns_spinning_machine: bool = false
 var owns_loom: bool = false
 var cotton_thread: int = 0
@@ -60,6 +60,14 @@ var pancake: int = 0
 var small_fish: int = 0
 var river_fish: int = 0
 var golden_fish: int = 0
+var tilapia: int = 0
+var perch: int = 0
+var catfish: int = 0
+var loach: int = 0
+var snakehead: int = 0
+var salmon: int = 0
+var koi_orange: int = 0
+var koi_gold: int = 0
 var has_fishing_rod: bool = false
 var fishing_rod_level: int = 0
 var fishing_attempts_used: int = 0
@@ -552,7 +560,7 @@ func reconcile_treasure_cosmetics() -> void:
 
 
 func reserve_fishing_slot() -> bool:
-	if reserved_barn_slots != 0 or not can_add_item("small_fish", 1):
+	if reserved_barn_slots != 0 or not can_add_item("tilapia", 1):
 		return false
 	reserved_barn_slots = 1
 	return true

@@ -103,7 +103,7 @@ var treasure_open_sequence: int = 0
 var PLOT_IDS: Array[String] = FarmData.plot_ids()
 var INVENTORY_DEFAULTS: Dictionary = CropData.inventory_defaults().merged({
 	"coins": 500, "chicken_feed": 0, "cow_feed": 0, "pig_feed": 0, "sheep_feed": 0, "dog_food": 0, "egg": 0, "milk": 0, "pork": 0, "wool": 0, "wool_yarn": 0, "cotton_cloth": 0, "wool_cloth": 0, "meat_pie": 0, "wood": 0, "stone": 0,
-	"small_fish": 0, "river_fish": 0, "golden_fish": 0, "moon_fish": 0,
+	"tilapia": 0, "perch": 0, "catfish": 0, "loach": 0, "snakehead": 0, "salmon": 0, "koi_orange": 0, "koi_gold": 0, "small_fish": 0, "river_fish": 0, "golden_fish": 0, "moon_fish": 0,
 	"old_bottle": 0, "old_boot": 0, "coin_pouch": 0, "small_chest": 0, "lost_lure": 0, "ancient_coin": 0, "map_fragment": 0, "ancient_gem": 0,
 	"bread": 0, "corn_bread": 0, "carrot_pie": 0,
 	"egg_cake": 0, "milk_cake": 0, "pancake": 0,

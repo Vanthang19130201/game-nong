@@ -13,7 +13,7 @@ const CATEGORIES: Array[Dictionary] = [
 
 const ITEMS: Dictionary = {
 	"crops": ["wheat","corn","carrot","soybean","sugarcane","cotton","flax"],
-	"fish": ["small_fish","river_fish","golden_fish","moon_fish"],
+	"fish": ["tilapia","perch","catfish","loach","snakehead","salmon","koi_orange","koi_gold","small_fish","river_fish","golden_fish","moon_fish"],
 	"animal_products": ["egg","milk","chicken_feed","cow_feed","pig_feed","sheep_feed","pork","wool"],
 	"production_items": ["bread","corn_bread","carrot_pie","egg_cake","milk_cake","pancake","meat_pie","cream","butter","cheese","cotton_thread","wool_yarn","cotton_cloth","wool_cloth"],
 	"rare_finds": ["golden_wheat","giant_carrot","golden_corn"],
@@ -25,7 +25,7 @@ const ITEMS: Dictionary = {
 
 const ITEM_CATEGORIES: Dictionary = {
 	"wheat":"crops", "corn":"crops", "carrot":"crops", "soybean":"crops", "sugarcane":"crops", "cotton":"crops", "flax":"crops",
-	"small_fish":"fish", "river_fish":"fish", "golden_fish":"fish", "moon_fish":"fish",
+	"tilapia":"fish", "perch":"fish", "catfish":"fish", "loach":"fish", "snakehead":"fish", "salmon":"fish", "koi_orange":"fish", "koi_gold":"fish", "small_fish":"fish", "river_fish":"fish", "golden_fish":"fish", "moon_fish":"fish",
 	"egg":"animal_products", "milk":"animal_products", "chicken_feed":"animal_products", "cow_feed":"animal_products", "pig_feed":"animal_products", "sheep_feed":"animal_products", "pork":"animal_products", "wool":"animal_products",
 	"golden_wheat":"rare_finds", "giant_carrot":"rare_finds", "golden_corn":"rare_finds",
 	"old_bottle":"treasures", "old_boot":"treasures", "coin_pouch":"treasures", "small_chest":"treasures", "lost_lure":"treasures", "ancient_coin":"treasures", "map_fragment":"treasures", "ancient_gem":"treasures",
