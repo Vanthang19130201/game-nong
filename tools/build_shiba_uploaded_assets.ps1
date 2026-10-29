@@ -4,195 +4,193 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $sourceDir = Join-Path $root 'assets/animals/dogs/shiba/from_uploaded'
 $outputDir = Join-Path $root 'assets/animals/dogs/shiba/animations'
-# A generously padded runtime canvas.  The art itself stays at the same
-# on-screen size; only the transparent frame grows so ears, curled tails and
-# paws have room throughout every pose.
 $canvas = 256
 $safeMargin = 24
 $groundY = 210
-$scale = 0.46
 
-$runSource = [System.Drawing.Bitmap]::new((Join-Path $sourceDir 'uploaded_run_sequence.png'))
-$actionSource = [System.Drawing.Bitmap]::new((Join-Path $sourceDir 'uploaded_action_poses.png'))
+$runSource = [System.Drawing.Bitmap]::new((Join-Path $sourceDir 'source_run_10.png'))
+$actionSource = [System.Drawing.Bitmap]::new((Join-Path $sourceDir 'source_actions.png'))
+if ($runSource.Width -ne 1983 -or $runSource.Height -ne 793) { throw "Unexpected uploaded run source size: $($runSource.Width)x$($runSource.Height)" }
+if ($actionSource.Width -ne 1536 -or $actionSource.Height -ne 1024) { throw "Unexpected uploaded action source size: $($actionSource.Width)x$($actionSource.Height)" }
 
-function Get-CellRectangle([System.Drawing.Bitmap]$source, [int]$index) {
-    $column = $index % 5; $row = [math]::Floor($index / 5)
-    $left = [math]::Floor($column * $source.Width / 5.0)
-    $right = [math]::Floor(($column + 1) * $source.Width / 5.0)
-    $top = [math]::Floor($row * $source.Height / 2.0)
-    $bottom = [math]::Floor(($row + 1) * $source.Height / 2.0)
-    return [System.Drawing.Rectangle]::new($left, $top, $right - $left, $bottom - $top)
+function Get-GridRectangle([System.Drawing.Bitmap]$source, [int]$columns, [int]$rows, [int]$index) {
+	$column = $index % $columns
+	$row = [math]::Floor($index / $columns)
+	$left = [math]::Floor($column * $source.Width / [double]$columns)
+	$right = [math]::Floor(($column + 1) * $source.Width / [double]$columns)
+	$top = [math]::Floor($row * $source.Height / [double]$rows)
+	$bottom = [math]::Floor(($row + 1) * $source.Height / [double]$rows)
+	return [System.Drawing.Rectangle]::FromLTRB($left, $top, $right, $bottom)
 }
 
-function Get-CleanCell([System.Drawing.Bitmap]$source, [System.Drawing.Rectangle]$cell) {
-    $width = $cell.Width; $height = $cell.Height; $length = $width * $height
-    $active = [bool[]]::new($length); $visited = [bool[]]::new($length)
-    for ($y = 0; $y -lt $height; $y++) {
-        for ($x = 0; $x -lt $width; $x++) {
-			# The upload's opaque grid/separators live at cell edges. The dog itself
-			# has room inside the grid, so ignore that matte before component analysis.
-            $insideSourceSafeZone = $x -ge 16 -and $y -ge 16 -and $x -lt $width - 16 -and $y -lt $height - 16
-            $active[$y * $width + $x] = $insideSourceSafeZone -and $source.GetPixel($cell.X + $x, $cell.Y + $y).A -gt 32
-        }
-    }
-    $components = [System.Collections.Generic.List[object]]::new()
-    for ($seed = 0; $seed -lt $length; $seed++) {
-        if (-not $active[$seed] -or $visited[$seed]) { continue }
-        $queue = [System.Collections.Generic.Queue[int]]::new()
-        $pixels = [System.Collections.Generic.List[int]]::new()
-		$warmPixels = 0
-        $queue.Enqueue($seed); $visited[$seed] = $true
-        $minX = $width; $minY = $height; $maxX = -1; $maxY = -1
-        while ($queue.Count -gt 0) {
-            $point = $queue.Dequeue(); $pixels.Add($point)
-            $x = $point % $width; $y = [math]::Floor($point / $width)
-			$color = $source.GetPixel($cell.X + $x, $cell.Y + $y)
-			if ($color.R -gt $color.G * 1.08 -and $color.G -gt $color.B * 0.85) { $warmPixels++ }
-            $minX = [math]::Min($minX, $x); $minY = [math]::Min($minY, $y)
-            $maxX = [math]::Max($maxX, $x); $maxY = [math]::Max($maxY, $y)
-            for ($dy = -1; $dy -le 1; $dy++) {
-                for ($dx = -1; $dx -le 1; $dx++) {
-                    if ($dx -eq 0 -and $dy -eq 0) { continue }
-                    $nx = $x + $dx; $ny = $y + $dy
-                    if ($nx -lt 0 -or $ny -lt 0 -or $nx -ge $width -or $ny -ge $height) { continue }
-                    $next = $ny * $width + $nx
-                    if ($active[$next] -and -not $visited[$next]) { $visited[$next] = $true; $queue.Enqueue($next) }
-                }
-            }
-        }
-        $components.Add([pscustomobject]@{ Pixels = $pixels; WarmPixels = $warmPixels; Bounds = [System.Drawing.Rectangle]::FromLTRB($minX, $minY, $maxX + 1, $maxY + 1) })
-    }
-	# The upload includes checker/grid remnants that can form large transparent
-	#-matte components. A dog is a warm, central component that does not touch
-	# the cell's top or bottom separator, so score those features first.
-	$candidates = $components | Where-Object { $_.Bounds.Top -gt 2 -and $_.Bounds.Bottom -lt $height - 2 }
-	if ($null -eq $candidates -or @($candidates).Count -eq 0) { $candidates = $components }
-	$body = $candidates | Sort-Object @{ Expression = { $_.WarmPixels * 4 + $_.Pixels.Count }; Descending = $true } | Select-Object -First 1
-    if ($null -eq $body) { throw 'Uploaded Shiba cell has no visible dog component.' }
-	if ($body.Pixels.Count -lt 100) { throw "Uploaded Shiba body selection is too small: $($body.Pixels.Count) pixels." }
-	$bodyBounds = $body.Bounds
-    $keep = [bool[]]::new($length)
-    # Some real legs/paws are separated from the main paint mass by a fully
-    # transparent line in the uploaded artwork.  Keeping only the biggest
-    # alpha component therefore made a running Shiba lose a foot.  Retain all
-    # small, warm components that belong to the body neighbourhood, while
-    # rejecting the border-attached grid/checker remnants.
-    $bodyZone = [System.Drawing.Rectangle]::FromLTRB(
-        [math]::Max(16, $bodyBounds.Left - 36),
-        [math]::Max(16, $bodyBounds.Top - 36),
-        [math]::Min($width - 16, $bodyBounds.Right + 36),
-        [math]::Min($height - 16, $bodyBounds.Bottom + 36)
-    )
-	foreach ($component in $components) {
-		$componentBounds = $component.Bounds
-		$touchesCellBorder = $componentBounds.Left -le 2 -or $componentBounds.Top -le 2 -or $componentBounds.Right -ge $width - 2 -or $componentBounds.Bottom -ge $height - 2
-		$belongsToDog = $component -eq $body -or (
-			-not $touchesCellBorder -and
-			$component.Pixels.Count -ge 6 -and
-			$component.WarmPixels -ge 2 -and
-			$componentBounds.IntersectsWith($bodyZone)
-		)
-		if (-not $belongsToDog) { continue }
-		for ($pixelIndex = 0; $pixelIndex -lt $component.Pixels.Count; $pixelIndex++) {
-			$keep[[int]$component.Pixels[$pixelIndex]] = $true
+function Get-ActionRectangle([int]$side, [int]$row, [int]$index) {
+	# The uploaded board has two measured 768px halves with five source poses
+	# per half.  The vertical bands deliberately start below each printed label.
+	$bands = @(
+		@(38, 142), @(157, 270), @(300, 412), @(438, 552),
+		@(582, 697), @(727, 833), @(840, 937), @(944, 1024)
+	)
+	$left = [math]::Floor($side * 768 + $index * 768.0 / 5.0)
+	$right = [math]::Floor($side * 768 + ($index + 1) * 768.0 / 5.0)
+	return [System.Drawing.Rectangle]::FromLTRB($left, $bands[$row][0], $right, $bands[$row][1])
+}
+
+function Get-OpaqueBounds([System.Drawing.Bitmap]$source, [System.Drawing.Rectangle]$region, [bool]$keepEffects = $false) {
+	$minX = $region.Width; $minY = $region.Height; $maxX = -1; $maxY = -1
+	for ($y = 0; $y -lt $region.Height; $y++) {
+		for ($x = 0; $x -lt $region.Width; $x++) {
+			$pixel = $source.GetPixel($region.X + $x, $region.Y + $y)
+			if ($pixel.A -le 32) { continue }
+			# The board background is stored with alpha 0.  Exclude only detached
+			# blue sleep Zs from runtime frames: the game already owns a Zzz effect.
+			$isSleepZ = -not $keepEffects -and $pixel.B -gt $pixel.R * 1.25 -and $pixel.B -gt $pixel.G * 1.1
+			if ($isSleepZ) { continue }
+			$minX = [math]::Min($minX, $x); $minY = [math]::Min($minY, $y)
+			$maxX = [math]::Max($maxX, $x); $maxY = [math]::Max($maxY, $y)
 		}
 	}
-    $clean = [System.Drawing.Bitmap]::new($width, $height, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
-    for ($index = 0; $index -lt $length; $index++) {
-        if ($keep[$index]) {
-            $x = $index % $width; $y = [math]::Floor($index / $width)
-            $clean.SetPixel($x, $y, $source.GetPixel($cell.X + $x, $cell.Y + $y))
-        }
-    }
-    return [pscustomobject]@{ Image = $clean; Bounds = $bodyBounds }
+	if ($maxX -lt 0) { throw "No visible Shiba pixels in source region $region." }
+	# Preserve a small source gutter so anti-aliased edge pixels never clip.
+	return [System.Drawing.Rectangle]::FromLTRB(
+		[math]::Max(0, $minX - 2), [math]::Max(0, $minY - 2),
+		[math]::Min($region.Width, $maxX + 3), [math]::Min($region.Height, $maxY + 3)
+	)
 }
 
-function New-AlignedFrame([System.Drawing.Bitmap]$source, [int]$index) {
-    $cell = Get-CellRectangle $source $index
-    $clean = Get-CleanCell $source $cell
-    $frame = [System.Drawing.Bitmap]::new($canvas, $canvas, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
-    $graphics = [System.Drawing.Graphics]::FromImage($frame)
-    $graphics.Clear([System.Drawing.Color]::Transparent)
-    $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
-    $graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
-    $graphics.CompositingQuality = [System.Drawing.Drawing2D.CompositingQuality]::HighQuality
-    $drawX = [math]::Round($canvas * 0.5 - ($clean.Bounds.Left + $clean.Bounds.Width * 0.5) * $scale)
-    $drawY = [math]::Round($groundY - $clean.Bounds.Bottom * $scale)
-    $target = [System.Drawing.Rectangle]::new($drawX, $drawY, [math]::Round($cell.Width * $scale), [math]::Round($cell.Height * $scale))
-    $graphics.DrawImage($clean.Image, $target, [System.Drawing.Rectangle]::new(0, 0, $cell.Width, $cell.Height), [System.Drawing.GraphicsUnit]::Pixel)
-    $graphics.Dispose(); $clean.Image.Dispose()
-    return $frame
+function New-AlignedFrame([System.Drawing.Bitmap]$source, [System.Drawing.Rectangle]$region, [double]$scale, [string]$label) {
+	$bounds = Get-OpaqueBounds $source $region
+	$frame = [System.Drawing.Bitmap]::new($canvas, $canvas, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+	$graphics = [System.Drawing.Graphics]::FromImage($frame)
+	$graphics.Clear([System.Drawing.Color]::Transparent)
+	$graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
+	$graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::Half
+	$graphics.CompositingMode = [System.Drawing.Drawing2D.CompositingMode]::SourceCopy
+	$width = [math]::Round($bounds.Width * $scale)
+	$height = [math]::Round($bounds.Height * $scale)
+	$drawX = [math]::Round($canvas * 0.5 - $width * 0.5)
+	$drawY = [math]::Round($groundY - $height)
+	$destination = [System.Drawing.Rectangle]::new($drawX, $drawY, $width, $height)
+	$sourceRect = [System.Drawing.Rectangle]::new($region.X + $bounds.X, $region.Y + $bounds.Y, $bounds.Width, $bounds.Height)
+	$graphics.DrawImage($source, $destination, $sourceRect, [System.Drawing.GraphicsUnit]::Pixel)
+	$graphics.Dispose()
+	Test-SafeFrame $frame $label
+	return $frame
 }
 
 function Test-SafeFrame([System.Drawing.Bitmap]$image, [string]$label) {
-    $minX = $canvas; $minY = $canvas; $maxX = -1; $maxY = -1
-    for ($y = 0; $y -lt $canvas; $y++) {
-        for ($x = 0; $x -lt $canvas; $x++) {
-            if ($image.GetPixel($x, $y).A -gt 26) {
-                $minX = [math]::Min($minX, $x); $minY = [math]::Min($minY, $y)
-                $maxX = [math]::Max($maxX, $x); $maxY = [math]::Max($maxY, $y)
-            }
-        }
-    }
-    if ($maxX -lt 0 -or $minX -lt $safeMargin -or $minY -lt $safeMargin -or $maxX -ge $canvas - $safeMargin -or $maxY -ge $canvas - $safeMargin) {
-        throw "Shiba uploaded frame is cropped: $label ($minX,$minY)-($maxX,$maxY)"
-    }
+	$minX = $canvas; $minY = $canvas; $maxX = -1; $maxY = -1
+	for ($y = 0; $y -lt $canvas; $y++) {
+		for ($x = 0; $x -lt $canvas; $x++) {
+			if ($image.GetPixel($x, $y).A -gt 26) {
+				$minX = [math]::Min($minX, $x); $minY = [math]::Min($minY, $y)
+				$maxX = [math]::Max($maxX, $x); $maxY = [math]::Max($maxY, $y)
+			}
+		}
+	}
+	if ($maxX -lt 0 -or $minX -lt $safeMargin -or $minY -lt $safeMargin -or $maxX -ge $canvas - $safeMargin -or $maxY -ge $canvas - $safeMargin) {
+		throw "Cropped Shiba frame: $label ($minX,$minY)-($maxX,$maxY)"
+	}
 }
 
-function Save-Frame([System.Drawing.Bitmap]$frame, [string]$path, [string]$label) {
-	Test-SafeFrame $frame $label
-    $frame.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)
+function Save-Strip([string]$name, [System.Collections.Generic.List[System.Drawing.Bitmap]]$frames) {
+	if ($frames.Count -lt 1) { throw "No frames for $name" }
+	$strip = [System.Drawing.Bitmap]::new($canvas * $frames.Count, $canvas, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+	$graphics = [System.Drawing.Graphics]::FromImage($strip)
+	$graphics.Clear([System.Drawing.Color]::Transparent)
+	for ($index = 0; $index -lt $frames.Count; $index++) {
+		$graphics.DrawImageUnscaled($frames[$index], $index * $canvas, 0)
+	}
+	$strip.Save((Join-Path $outputDir ("shiba_{0}.png" -f $name)), [System.Drawing.Imaging.ImageFormat]::Png)
+	$graphics.Dispose(); $strip.Dispose()
+}
+
+function Copy-Frame([System.Drawing.Bitmap]$frame) {
+	$copy = [System.Drawing.Bitmap]::new($canvas, $canvas, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+	$graphics = [System.Drawing.Graphics]::FromImage($copy)
+	$graphics.DrawImageUnscaled($frame, 0, 0)
+	$graphics.Dispose()
+	return $copy
 }
 
 New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
-$actionCells = [ordered]@{
-    idle = 0; walk = 1; sit = 3; lie = 4; sleep = 5; eat = 6; happy = 7; sniff = 8; scratch = 9
+Get-ChildItem -LiteralPath $outputDir -Filter 'shiba_*.png' -File | Remove-Item -Force
+
+$animationFrames = @{}
+function Read-Action([string]$name, [int]$side, [int]$row) {
+	$frames = [System.Collections.Generic.List[System.Drawing.Bitmap]]::new()
+	for ($index = 0; $index -lt 5; $index++) {
+		$frames.Add((New-AlignedFrame $actionSource (Get-ActionRectangle $side $row $index) 1.18 ("$name/$($index + 1)")))
+	}
+	$animationFrames[$name] = $frames
 }
-$actions = @{}
-foreach ($entry in $actionCells.GetEnumerator()) {
-    $frame = New-AlignedFrame $actionSource $entry.Value
-    Save-Frame $frame (Join-Path $sourceDir ("shiba_{0}_pose.png" -f $entry.Key)) ("action/{0}" -f $entry.Key)
-    $actions[$entry.Key] = $frame
-}
+
+Read-Action 'idle' 0 0
+Read-Action 'walk' 1 0
+Read-Action 'run_fast' 1 1
+Read-Action 'happy' 0 2
+Read-Action 'bark' 1 2
+Read-Action 'sit_idle' 0 3
+Read-Action 'sit_to_stand' 1 3
+Read-Action 'stand_to_sit' 0 4
+Read-Action 'lie_down' 1 4
+Read-Action 'sleep' 0 5
+Read-Action 'eat' 1 5
+Read-Action 'drink' 0 6
+Read-Action 'shake' 1 6
+Read-Action 'hurt' 0 7
+# The final action row places DEAD in the centre and GET_UP in the right half.
+Read-Action 'dead' 1 7
+Read-Action 'get_up' 1 7
 
 $runFrames = [System.Collections.Generic.List[System.Drawing.Bitmap]]::new()
 for ($index = 0; $index -lt 10; $index++) {
-    $frame = New-AlignedFrame $runSource $index
-    Save-Frame $frame (Join-Path $sourceDir ("shiba_run_{0:D2}.png" -f ($index + 1))) ("run/{0:D2}" -f ($index + 1))
-    $runFrames.Add($frame)
+	$runFrames.Add((New-AlignedFrame $runSource (Get-GridRectangle $runSource 5 2 $index) 0.52 ("run/$($index + 1)")))
+}
+$animationFrames['run'] = $runFrames
+
+# Runtime API mappings.  These use only the newly uploaded source; unavailable
+# source actions resolve to compatible new animation strips instead of old art.
+$runtimeMap = [ordered]@{
+	idle = 'idle'; blink = 'idle'; walk = 'walk'; run = 'run'
+	sit = 'stand_to_sit'; sit_idle = 'sit_idle'; lie_down = 'lie_down'
+	lie_idle = 'lie_down'; sleep = 'sleep'; wake_up = 'get_up'
+	eat = 'eat'; happy = 'happy'; sniff = 'idle'; scratch = 'sit_idle'
+	shake = 'shake'; alert = 'bark'
+}
+foreach ($entry in $runtimeMap.GetEnumerator()) {
+	$sourceFrames = $animationFrames[$entry.Value]
+	if ($entry.Key -eq 'lie_idle') {
+		$single = [System.Collections.Generic.List[System.Drawing.Bitmap]]::new()
+		$single.Add((Copy-Frame $sourceFrames[$sourceFrames.Count - 1]))
+		Save-Strip $entry.Key $single
+		$single[0].Dispose()
+	} else {
+		Save-Strip $entry.Key $sourceFrames
+	}
 }
 
-$singlePoseMap = @{ idle = 'idle'; blink = 'idle'; walk = 'walk'; sit = 'sit'; sit_idle = 'sit'; lie_down = 'lie'; lie_idle = 'lie'; sleep = 'sleep'; wake_up = 'sit'; eat = 'eat'; happy = 'happy'; sniff = 'sniff'; scratch = 'scratch'; shake = 'happy'; alert = 'idle' }
-foreach ($entry in $singlePoseMap.GetEnumerator()) {
-    $actions[$entry.Value].Save((Join-Path $outputDir ("shiba_{0}.png" -f $entry.Key)), [System.Drawing.Imaging.ImageFormat]::Png)
+foreach ($name in @('run_fast', 'bark', 'sit_to_stand', 'stand_to_sit', 'drink', 'hurt', 'dead', 'get_up')) {
+	Save-Strip $name $animationFrames[$name]
 }
 
-# The source includes a few airborne poses whose occluded legs become unclear
-# at the game's world scale.  Keep the archive of all ten exact source frames,
-# but play only the four clearest full-body stride frames in the live loop.
-$runtimeRunCells = @(0, 1, 2, 4)
-$runStrip = [System.Drawing.Bitmap]::new($canvas * $runtimeRunCells.Count, $canvas, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
-$runGraphics = [System.Drawing.Graphics]::FromImage($runStrip)
-$runGraphics.Clear([System.Drawing.Color]::Transparent)
-for ($index = 0; $index -lt $runtimeRunCells.Count; $index++) {
-	$runGraphics.DrawImage($runFrames[$runtimeRunCells[$index]], [System.Drawing.Rectangle]::new($index * $canvas, 0, $canvas, $canvas))
-}
-$runStrip.Save((Join-Path $outputDir 'shiba_run.png'), [System.Drawing.Imaging.ImageFormat]::Png)
-$runGraphics.Dispose(); $runStrip.Dispose()
+# The store/static recovery art is new source frame 1, not the old Shiba board.
+$animationFrames['idle'][0].Save((Join-Path $outputDir 'shiba_card.png'), [System.Drawing.Imaging.ImageFormat]::Png)
 
-$preview = [System.Drawing.Bitmap]::new($canvas * 5, $canvas * 4, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+$preview = [System.Drawing.Bitmap]::new($canvas * 5, $canvas * 6, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
 $previewGraphics = [System.Drawing.Graphics]::FromImage($preview)
 $previewGraphics.Clear([System.Drawing.Color]::Transparent)
-$previewOrder = @('idle', 'walk', 'sit', 'lie', 'sleep', 'eat', 'happy', 'sniff', 'scratch')
+$previewOrder = @('idle', 'walk', 'run_fast', 'happy', 'bark', 'sit_idle', 'sit_to_stand', 'stand_to_sit', 'lie_down', 'sleep', 'eat', 'drink', 'shake', 'hurt', 'dead', 'get_up')
 for ($index = 0; $index -lt $previewOrder.Count; $index++) {
-    $previewGraphics.DrawImage($actions[$previewOrder[$index]], [System.Drawing.Rectangle]::new(($index % 5) * $canvas, [math]::Floor($index / 5) * $canvas, $canvas, $canvas))
+	$previewGraphics.DrawImageUnscaled($animationFrames[$previewOrder[$index]][0], ($index % 5) * $canvas, [math]::Floor($index / 5) * $canvas)
 }
-for ($index = 0; $index -lt 10; $index++) {
-    $previewGraphics.DrawImage($runFrames[$index], [System.Drawing.Rectangle]::new(($index % 5) * $canvas, 2 * $canvas + [math]::Floor($index / 5) * $canvas, $canvas, $canvas))
+for ($index = 0; $index -lt $runFrames.Count; $index++) {
+	$previewGraphics.DrawImageUnscaled($runFrames[$index], ($index % 5) * $canvas, (4 + [math]::Floor($index / 5)) * $canvas)
 }
 $preview.Save((Join-Path $root 'assets/animals/dogs/shiba/shiba_animation_preview.png'), [System.Drawing.Imaging.ImageFormat]::Png)
 $previewGraphics.Dispose(); $preview.Dispose()
 
-foreach ($frame in $runFrames) { $frame.Dispose() }
-foreach ($frame in $actions.Values) { $frame.Dispose() }
+foreach ($frames in $animationFrames.Values) {
+	foreach ($frame in $frames) { $frame.Dispose() }
+}
 $runSource.Dispose(); $actionSource.Dispose()
+Write-Output 'Built Shiba runtime strips from the two uploaded source images.'
