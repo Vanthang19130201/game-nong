@@ -112,14 +112,14 @@ const SHIBA_STRIP_ANIMATIONS: Dictionary = {
 	"sit_idle": {"frames": 4, "fps": 4.5, "loop": true},
 	"lie_down": {"frames": 6, "fps": 7.0, "loop": false},
 	"lie_idle": {"frames": 4, "fps": 4.5, "loop": true},
-	"sleep": {"frames": 1, "fps": 5.0, "loop": true},
-	"wake_up": {"frames": 1, "fps": 6.0, "loop": false},
-	"eat": {"frames": 1, "fps": 8.0, "loop": true},
-	"happy": {"frames": 1, "fps": 8.0, "loop": false},
-	"sniff": {"frames": 1, "fps": 7.0, "loop": false},
-	"scratch": {"frames": 1, "fps": 8.0, "loop": false},
-	"shake": {"frames": 1, "fps": 8.0, "loop": false},
-	"alert": {"frames": 1, "fps": 6.0, "loop": false}
+	"sleep": {"frames": 6, "fps": 4.5, "loop": true},
+	"wake_up": {"frames": 6, "fps": 7.0, "loop": false},
+	"eat": {"frames": 8, "fps": 7.5, "loop": true},
+	"happy": {"frames": 6, "fps": 9.0, "loop": false},
+	"sniff": {"frames": 6, "fps": 6.5, "loop": false},
+	"scratch": {"frames": 8, "fps": 8.5, "loop": false},
+	"shake": {"frames": 8, "fps": 11.0, "loop": false},
+	"alert": {"frames": 6, "fps": 6.5, "loop": false}
 }
 const CREAM_STRIP_FRAME_SIZE := Vector2i(160, 160)
 const CREAM_STRIP_GROUND_Y := 142.0
