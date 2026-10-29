@@ -164,6 +164,9 @@ func run_checks() -> void:
 			check_strip_safe(strip_variant, strip_path, str(animation_name), expected_frames)
 	check(ResourceLoader.exists("res://assets/animals/dogs/shiba/from_uploaded/source_run_10.png"), "Shiba run source archive contains the uploaded 10-frame board")
 	check(shiba_sprite.sprite_frames.get_frame_count(&"run") == 10 and distinct_atlas_regions(shiba_sprite.sprite_frames, &"run") == 10, "Shiba run uses all ten uploaded full-body stride frames")
+	for animation_name in [&"idle", &"idle_blink", &"walk", &"sit", &"sit_idle", &"lie_down", &"lie_idle"]:
+		var configured_frames := int(DogData.SHIBA_STRIP_ANIMATIONS[String(animation_name)]["frames"])
+		check(shiba_sprite.sprite_frames.get_frame_count(animation_name) == configured_frames and distinct_atlas_regions(shiba_sprite.sprite_frames, animation_name) >= 2, "Shiba %s uses every extracted full-body source frame" % animation_name)
 	for runtime in runtime_dogs:
 		var sprite: AnimatedSprite2D = runtime.get_node("DogVisual/MotionRoot/Sprite")
 		var visual: Node = runtime.get_node("DogVisual")

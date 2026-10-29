@@ -102,16 +102,16 @@ const SHIBA_STRIP_GROUND_Y := 210.0
 const SHIBA_STRIP_SCALE := 0.40
 const SHIBA_STRIP_SAFE_MARGIN := 24
 const SHIBA_STRIP_ANIMATIONS: Dictionary = {
-	# The user-uploaded source contains single key poses for actions. Keep those
-	# transparent instead of pretending repeated art is a multi-frame sequence.
-	"idle": {"frames": 1, "fps": 6.0, "loop": true},
-	"idle_blink": {"frames": 1, "fps": 6.0, "loop": false},
-	"walk": {"frames": 1, "fps": 8.0, "loop": true},
+	# Seven action sheets use the same padded full-body pipeline as RUN.  Each
+	# source pose is retained as a distinct atlas frame; RUN stays untouched.
+	"idle": {"frames": 6, "fps": 5.5, "loop": true},
+	"idle_blink": {"frames": 4, "fps": 7.5, "loop": false},
+	"walk": {"frames": 8, "fps": 8.5, "loop": true},
 	"run": {"frames": 10, "fps": 11.0, "loop": true},
-	"sit": {"frames": 1, "fps": 6.0, "loop": false},
-	"sit_idle": {"frames": 1, "fps": 5.0, "loop": true},
-	"lie_down": {"frames": 1, "fps": 6.0, "loop": false},
-	"lie_idle": {"frames": 1, "fps": 5.0, "loop": true},
+	"sit": {"frames": 5, "fps": 7.0, "loop": false},
+	"sit_idle": {"frames": 4, "fps": 4.5, "loop": true},
+	"lie_down": {"frames": 6, "fps": 7.0, "loop": false},
+	"lie_idle": {"frames": 4, "fps": 4.5, "loop": true},
 	"sleep": {"frames": 1, "fps": 5.0, "loop": true},
 	"wake_up": {"frames": 1, "fps": 6.0, "loop": false},
 	"eat": {"frames": 1, "fps": 8.0, "loop": true},
