@@ -162,8 +162,8 @@ func run_checks() -> void:
 			var expected_frames := int(DogData.strip_animations_for_variant(strip_variant)[animation_name]["frames"])
 			check(strip != null and strip.get_width() == strip_size.x * expected_frames and strip.get_height() == strip_size.y, "%s strip dimensions use its configured full-body cells: %s" % [strip_variant.capitalize(), animation_name])
 			check_strip_safe(strip_variant, strip_path, str(animation_name), expected_frames)
-	check(ResourceLoader.exists("res://assets/animals/dogs/shiba/from_uploaded/uploaded_action_poses.png") and ResourceLoader.exists("res://assets/animals/dogs/shiba/from_uploaded/uploaded_run_sequence.png"), "Shiba runtime source archive contains exactly the two user uploads")
-	check(shiba_sprite.sprite_frames.get_frame_count(&"run") == 4 and distinct_atlas_regions(shiba_sprite.sprite_frames, &"run") == 4, "Shiba run uses four vetted full-body stride frames from the user upload")
+	check(ResourceLoader.exists("res://assets/animals/dogs/shiba/from_uploaded/source_run_10.png"), "Shiba run source archive contains the uploaded 10-frame board")
+	check(shiba_sprite.sprite_frames.get_frame_count(&"run") == 10 and distinct_atlas_regions(shiba_sprite.sprite_frames, &"run") == 10, "Shiba run uses all ten uploaded full-body stride frames")
 	for runtime in runtime_dogs:
 		var sprite: AnimatedSprite2D = runtime.get_node("DogVisual/MotionRoot/Sprite")
 		var visual: Node = runtime.get_node("DogVisual")
@@ -178,7 +178,7 @@ func run_checks() -> void:
 					var expected_strip_source := "assets/animals/dogs/%s/animations/" % runtime.variant_id
 					check(expected_strip_source in str((frame_texture as AtlasTexture).atlas.resource_path), "%s runtime frame uses dedicated strips, never the legacy pose board" % runtime.variant_id.capitalize())
 		if runtime.variant_id == "shiba":
-			check(sprite.sprite_frames.get_frame_count(&"run") == 4 and distinct_atlas_regions(sprite.sprite_frames, &"run") == 4, "Shiba run retains four distinct full-body stride frames")
+			check(sprite.sprite_frames.get_frame_count(&"run") == 10 and distinct_atlas_regions(sprite.sprite_frames, &"run") == 10, "Shiba run retains ten distinct full-body stride frames")
 		else:
 			check(distinct_atlas_regions(sprite.sprite_frames, &"walk") >= 4, "legacy/cream walk has multiple verified source regions")
 			check(distinct_atlas_regions(sprite.sprite_frames, &"run") >= 2, "legacy/cream run uses multiple real source regions")

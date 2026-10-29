@@ -107,10 +107,7 @@ const SHIBA_STRIP_ANIMATIONS: Dictionary = {
 	"idle": {"frames": 1, "fps": 6.0, "loop": true},
 	"idle_blink": {"frames": 1, "fps": 6.0, "loop": false},
 	"walk": {"frames": 1, "fps": 8.0, "loop": true},
-	# Four distinct, full-body stride poses from the uploaded run sheet.  The
-	# remaining source poses are preserved in from_uploaded/, but their airborne
-	# silhouette loses too much leg readability at gameplay scale.
-	"run": {"frames": 4, "fps": 10.0, "loop": true},
+	"run": {"frames": 10, "fps": 11.0, "loop": true},
 	"sit": {"frames": 1, "fps": 6.0, "loop": false},
 	"sit_idle": {"frames": 1, "fps": 5.0, "loop": true},
 	"lie_down": {"frames": 1, "fps": 6.0, "loop": false},
