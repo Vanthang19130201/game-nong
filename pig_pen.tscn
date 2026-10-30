@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" path="res://world_body.gd" id="1_body"]
 [ext_resource type="Script" path="res://building_visual.gd" id="2_building"]
-[ext_resource type="Texture2D" path="res://assets/buildings/pig_pen/pig_pen.png" id="3_art"]
 [ext_resource type="Script" path="res://artwork_sprite.gd" id="4_artwork"]
 [ext_resource type="Script" path="res://production_station.gd" id="5_station"]
 [ext_resource type="PackedScene" path="res://station_status.tscn" id="6_status"]
@@ -57,10 +56,10 @@ building_kind = "pig_pen"
 
 [node name="BuildingSprite" type="Sprite2D" parent="Visuals"]
 z_index = -2
-texture = ExtResource("3_art")
 scale = Vector2(0.15, 0.15)
 position = Vector2(0, -38)
 script = ExtResource("4_artwork")
+artwork_id = "pig_pen"
 fallback_paths = Array[NodePath]([NodePath("../../Visual"), NodePath("../../StatusLabel")])
 
 [node name="ProductionStatus" parent="Visuals" instance=ExtResource("6_status")]

@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://dowldrfhoky1g"]
 
 [ext_resource type="Script" uid="uid://rhxig8gxyrdc" path="res://player.gd" id="1_0xm2m"]
-[ext_resource type="Texture2D" uid="uid://bj4pvscqk6ixm" path="res://assets/buildings/house/house_cozy_v2.png" id="4_getpj"]
 [ext_resource type="PackedScene" path="res://hud.tscn" id="4_hud"]
 [ext_resource type="Script" uid="uid://cv4b8aubh8cw0" path="res://farm.gd" id="5_farm"]
 [ext_resource type="PackedScene" path="res://feed_mill.tscn" id="6_mill"]
@@ -158,8 +157,8 @@ script = ExtResource("94_building")
 z_index = -1
 position = Vector2(-3.9999847, -3.0000153)
 scale = Vector2(0.17783856, 0.21654274)
-texture = ExtResource("4_getpj")
 script = ExtResource("90_art")
+artwork_id = "house"
 target_size = Vector2(218, 160)
 fallback_paths = Array[NodePath]([NodePath("../../Visual")])
 

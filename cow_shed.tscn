@@ -4,7 +4,6 @@
 
 [ext_resource type="Script" path="res://building_visual.gd" id="94_building"]
 
-[ext_resource type="Texture2D" path="res://assets/buildings/cow_shed/cow_shed.png" id="95_shed"]
 
 [ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
 
@@ -67,12 +66,10 @@ building_kind = "cow_shed"
 # Keep the large shed artwork behind the Player; the interaction/body footprint
 # still determines collision and placement exactly as before.
 z_index = -2
-texture = ExtResource("95_shed")
-region_enabled = true
-region_rect = Rect2(0, 38, 1240, 1200)
 scale = Vector2(0.15, 0.15)
 position = Vector2(0, -38)
 script = ExtResource("90_art")
+artwork_id = "cow_shed"
 fallback_paths = Array[NodePath]([NodePath("../../Visual"), NodePath("../../StatusLabel"), NodePath("../../Roof")])
 
 [node name="ProductionStatus" parent="Visuals" instance=ExtResource("96_status")]

@@ -1,4 +1,5 @@
 extends SceneTree
+const ArtV2 = preload("res://building_art_v2.gd")
 
 const IDS: Array[String] = ["feed_mill", "bakery", "dairy", "spinning_machine", "market_stall", "order_board", "fish_market"]
 const TARGETS: Array[Vector2] = [Vector2(160, 120), Vector2(180, 135), Vector2(180, 135), Vector2(170, 125), Vector2(160, 120), Vector2(150, 115), Vector2(180, 135)]
@@ -59,7 +60,7 @@ func check_loading() -> void:
 	check(custom.get_child(1).texture == crop and not custom.get_child(0).visible, "custom path works without an artwork id")
 	custom.free()
 	var standard := fixture("bakery", ["res://assets/crops/wheat/stage_3.png"])
-	check(standard.get_child(1).texture.resource_path.ends_with("bakery.svg"), "standard SVG precedes optional custom paths")
+	check(standard.get_child(1).texture == ArtV2.texture_for("bakery"), "uploaded building artwork precedes optional custom paths")
 	standard.free()
 	var authored: Sprite2D = load("res://artwork_sprite.gd").new()
 	authored.texture = crop
@@ -81,11 +82,11 @@ func check_loading() -> void:
 func check_visual(building: Node2D, index: int, preview: Image) -> void:
 	var id := IDS[index]
 	var sprite := artwork(building)
-	var path := "res://assets/buildings/%s/%s.svg" % [id, id]
-	check(sprite.artwork_id == id and sprite.texture != null and sprite.texture.resource_path == path, "scene auto loads SVG " + id)
+	var path: String = ArtV2.ROOT + str(ArtV2.ENTRIES[id]["file"]) if ArtV2.ENTRIES.has(id) else "res://assets/buildings/%s/%s.svg" % [id, id]
+	check(sprite.artwork_id == id and sprite.texture != null and sprite.texture.resource_path == path, "scene loads intended artwork " + id)
 	check(building.find_children("*", "Sprite2D", true, false).size() == 1, "exactly one building sprite " + id)
 	check(sprite.target_size == TARGETS[index] and is_equal_approx(sprite.scale.x, sprite.scale.y), "target size and uniform aspect ratio " + id)
-	var fitted_size := sprite.texture.get_size() * sprite.scale
+	var fitted_size := sprite.get_rect().size * sprite.scale
 	check(fitted_size.x <= TARGETS[index].x + 0.01 and fitted_size.y <= TARGETS[index].y + 0.01, "artwork fits target " + id)
 	check(building.get_node("CollisionShape2D").shape.size == AREA_SIZES[index], "interaction range unchanged " + id)
 	check(farm.Placement.bounds(building) == building.global_transform * FOOTPRINTS[index], "placement footprint unchanged " + id)
@@ -101,14 +102,19 @@ func check_visual(building: Node2D, index: int, preview: Image) -> void:
 	for path_to_fallback in sprite.fallback_paths:
 		check(not sprite.get_node(path_to_fallback).visible, "restoring artwork hides fallback " + id)
 	var image := sprite.texture.get_image()
-	check(image != null and image.get_size() == Vector2i(256, 192), "SVG imports at native resolution " + id)
+	check(image != null, "texture imported successfully " + id)
 	check(image.get_pixel(0, 0).a == 0.0 and image.get_pixel(128, 0).a == 0.0, "transparent canvas " + id)
 	var used := image.get_used_rect()
-	check(used.position.x > 0 and used.position.y > 0 and used.end.x < 256 and used.end.y < 192, "artwork has canvas margins " + id)
-	preview.blend_rect(image, Rect2i(0, 0, 256, 192), Vector2i(12 + (index % 3) * 280, 12 + (index / 3) * 216))
+	check(used.has_area(), "artwork has visible pixels " + id)
+	var thumb := image.get_region(used)
+	var ratio: float = minf(256.0 / thumb.get_width(), 192.0 / thumb.get_height())
+	thumb.resize(roundi(thumb.get_width() * ratio), roundi(thumb.get_height() * ratio), Image.INTERPOLATE_NEAREST)
+	preview.blend_rect(thumb, Rect2i(Vector2i.ZERO, thumb.get_size()), Vector2i(12 + (index % 3) * 280, 12 + (index / 3) * 216))
 	var label: Label = building.get_node("Visuals/NameLabel" if id == "market_stall" else ("Label" if id in ["order_board", "fish_market"] else "StatusLabel"))
 	var visible_art := Rect2(Vector2(used.position) - image.get_size() * 0.5, Vector2(used.size))
 	visible_art = sprite.transform * visible_art
+	if ArtV2.ENTRIES.has(id):
+		visible_art = sprite.transform * sprite.get_rect()
 	var gap := visible_art.position.y - label.get_rect().end.y
 	check(gap >= 8.0 and gap <= 12.0, "text sits 8-12 px above visible artwork " + id + " gap=" + str(gap))
 	check(label.vertical_alignment == VERTICAL_ALIGNMENT_BOTTOM, "text is anchored to the bottom of its local label rect " + id)
@@ -156,7 +162,9 @@ func run_checks() -> void:
 	inv.coins = 100000
 	inv.normalize_exp()
 	for id in ["feed_mill", "bakery"]:
-		check(inv.buy_building(id), "purchase existing building " + id)
+		# Art fixtures use owned buildings. Purchases/ghost placement are covered
+		# separately; these buildings now require an explicit placement source.
+		inv.set("owns_" + id, true)
 	# Placement purchases are covered by the existing Dairy/Spinning regressions.
 	inv.owns_dairy = true
 	inv.owns_spinning_machine = true

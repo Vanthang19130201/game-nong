@@ -80,6 +80,7 @@ static func create_preview(source: Node2D) -> Node2D:
 		if graphic is Sprite2D:
 			var sprite := Sprite2D.new()
 			sprite.texture = graphic.texture
+			sprite.texture_filter = graphic.texture_filter
 			sprite.centered = graphic.centered
 			sprite.offset = graphic.offset
 			sprite.region_enabled = graphic.region_enabled

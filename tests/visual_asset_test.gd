@@ -1,4 +1,5 @@
 extends SceneTree
+const ArtV2 = preload("res://building_art_v2.gd")
 
 var farm: Node
 var inv: Node
@@ -17,7 +18,7 @@ func check(value: bool, message: String) -> void:
 func check_building(id: String, bounds: Rect2, shape_size: Vector2, floor_y: float, animal_id: String) -> void:
 	var building = manager.buildings[id]
 	var sprite: Sprite2D = building.get_node("Visuals/BuildingSprite")
-	check(sprite.texture.resource_path == "res://assets/buildings/%s/%s.png" % [id,id],"correct building artwork "+id)
+	check(sprite.texture == ArtV2.texture_for(id),"correct building artwork "+id)
 	check(sprite.region_enabled and is_equal_approx(sprite.scale.x,sprite.scale.y),"uniform building scale "+id)
 	check(is_equal_approx(sprite.position.y+sprite.get_rect().end.y*sprite.scale.y,floor_y),"building feet match original ground "+id)
 	check(farm.Placement.bounds(building) == building.global_transform*bounds,"original placement footprint "+id)
@@ -26,7 +27,10 @@ func check_building(id: String, bounds: Rect2, shape_size: Vector2, floor_y: flo
 	var group = farm.animal_groups[animal_id]
 	check(group.animals().size() == inv.get(animal_id+"_count"),"animal instances match inventory "+animal_id)
 	var animal: AnimatedSprite2D = group.animals()[0].get_node("AnimatedSprite2D")
-	check(animal.is_visible_in_tree() and is_equal_approx(animal.scale.x,animal.scale.y),"owned animal shown without stretching "+animal_id)
+	var base_scale: Vector2 = group.animals()[0].base_sprite_scale
+	# The animal already breathes/squashes during idle; inspect its fitted base
+	# scale rather than sampling that animated transform at an arbitrary frame.
+	check(animal.is_visible_in_tree() and is_equal_approx(base_scale.x,base_scale.y),"owned animal keeps uniform fitted scale "+animal_id)
 	var frame: AtlasTexture = animal.sprite_frames.get_frame_texture("idle_down",0)
 	check(frame.atlas.resource_path == "res://assets/animals/%s/%s.png" % [animal_id,animal_id],"correct animal texture "+animal_id)
 	check(is_zero_approx((animal.offset.y+frame.get_height()/2.0)*animal.scale.y),"animal feet anchored at its own ground position "+animal_id)
@@ -63,7 +67,7 @@ func run_checks() -> void:
 	current_scene = farm
 	player = farm.get_node("Player")
 	var house_sprite: Sprite2D = farm.get_node("House/Visuals/HouseSprite")
-	check(house_sprite.texture != null and house_sprite.texture.resource_path == "res://assets/buildings/house/house_cozy_v2.png", "main House uses the cozy replacement artwork")
+	check(house_sprite.texture == ArtV2.texture_for("house"), "main House uses supplied v2 artwork")
 	check(farm.get_node("WorldAmbient") is Node2D and farm.get_node("WorldDepth") is Node, "ambient and Y-depth presentation layers exist")
 	await create_timer(0.1).timeout
 	for id in ["chicken_coop","cow_shed"]:
@@ -72,7 +76,10 @@ func run_checks() -> void:
 	inv.tools_unlock_notified = true
 	inv.coins = 10000
 	inv.normalize_exp()
-	check(inv.buy_building("chicken_coop") and inv.buy_building("cow_shed"),"existing purchase flow")
+	# Ownership is a visual fixture; actual purchases now require placement.
+	inv.owns_chicken_coop = true
+	inv.owns_cow_shed = true
+	inv.inventory_changed.emit()
 	await create_timer(0.1).timeout
 	for id in ["chicken_coop","cow_shed"]:
 		check(farm.animal_groups["chicken" if id == "chicken_coop" else "cow"].animals().is_empty(),"no animal image at zero animals")

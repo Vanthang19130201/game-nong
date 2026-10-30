@@ -46,6 +46,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'plot_purchase_test.gd') -Destin
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'ui_polish_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'visual_asset_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'building_artwork_test.gd') -Destination $testRoot -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'building_pack_v2_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'farm_world_presence_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'collision_animal_test.gd') -Destination $testRoot -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'character_selection_test.gd') -Destination $testRoot -Force
@@ -101,6 +102,7 @@ $stages = @('size_core', 'size_write', 'size_read', 'character_core', 'character
     'backup_write', 'backup_read', 'defaults_write', 'defaults_read', 'duplicates',
     'fishing_core', 'fishing_limits', 'fishing_write', 'fishing_read', 'market_core', 'market_read', 'stall_core', 'stall_write', 'stall_read', 'stall_reset_read',
     'audit_core', 'animal_output', 'audit_write', 'audit_read', 'audit_again', 'audit_close', 'discovery_core', 'audio_core', 'localization', 'storage_ui', 'cozy_ui', 'plot_popup', 'ui_polish', 'art_core', 'building_artwork', 'world_presence',
+    'v2_write', 'v2_legacy_prepare', 'v2_read',
     'orders_core', 'orders_write', 'orders_read', 'orders_expired_read', 'orders_legacy_write', 'orders_legacy_read',
     'bakery_core', 'bakery_write', 'bakery_read', 'bakery_again', 'bakery_reset_read',
     'bakery_cakes', 'bakery_cakes_write', 'bakery_cakes_read', 'bakery_cakes_again', 'bakery_legacy_write', 'bakery_legacy_read',
@@ -137,6 +139,7 @@ foreach ($stage in $stages) {
     if ($stage.StartsWith('upgrade_treasure_')) { $testScript = 'upgrade_treasure_test.gd' }
     if ($stage -in @('collision_core','animal_context','fixes_write','fixes_read','fixes_hungry_read')) { $testScript = 'collision_animal_test.gd' }
     if ($stage.StartsWith('character_')) { $testScript = 'character_selection_test.gd' }
+    if ($stage.StartsWith('v2_')) { $testScript = 'building_pack_v2_test.gd' }
 	if ($stage -eq 'new_game_flow') { $testScript = 'new_game_flow_test.gd' }
     if ($stage.StartsWith('size_')) { $testScript = 'character_size_test.gd' }
     if ($stage.StartsWith('market_')) { $testScript = 'fish_market_test.gd' }

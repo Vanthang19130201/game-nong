@@ -4,7 +4,6 @@
 
 [ext_resource type="Script" path="res://building_visual.gd" id="94_building"]
 
-[ext_resource type="Texture2D" path="res://assets/buildings/chicken_coop/chicken_coop.png" id="95_coop"]
 
 [ext_resource type="Script" path="res://artwork_sprite.gd" id="90_art"]
 
@@ -59,12 +58,10 @@ building_kind = "chicken_coop"
 
 [node name="BuildingSprite" type="Sprite2D" parent="Visuals"]
 z_index = -1
-texture = ExtResource("95_coop")
-region_enabled = true
-region_rect = Rect2(56, 29, 1180, 1225)
 scale = Vector2(0.11755102, 0.11755102)
 position = Vector2(0, -36)
 script = ExtResource("90_art")
+artwork_id = "chicken_coop"
 fallback_paths = Array[NodePath]([NodePath("../../Visual"), NodePath("../../StatusLabel")])
 
 [node name="ProductionStatus" parent="Visuals" instance=ExtResource("96_status")]

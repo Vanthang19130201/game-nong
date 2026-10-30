@@ -3,12 +3,14 @@ extends Control
 # Crop artwork with project-owned vector fallbacks for other items and seeds.
 var _crop_texture: Texture2D
 var _visual_texture: Texture2D
+const BuildingArtV2 = preload("res://building_art_v2.gd")
 
 @export var item_id: String = "":
 	set(value):
 		item_id = value
 		_crop_texture = _get_crop_texture()
 		_visual_texture = _get_visual_texture()
+		texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST if BuildingArtV2.ENTRIES.has(item_id) else CanvasItem.TEXTURE_FILTER_PARENT_NODE
 		queue_redraw()
 
 const CROP_TEXTURE_PATHS: Dictionary = {
@@ -23,20 +25,11 @@ const VISUAL_TEXTURE_PATHS: Dictionary = {
 	"cow": "res://assets/animals/cow/cow.png",
 	"pig": "res://assets/animals/pig/pig.png",
 	"sheep": "res://assets/animals/sheep/sheep.png",
-	"house": "res://assets/buildings/house/house_cozy_v2.png",
 	"warehouse": "res://assets/buildings/warehouse/warehouse.svg",
-	"feed_mill": "res://assets/buildings/feed_mill/feed_mill.svg",
-	"chicken_coop": "res://assets/buildings/chicken_coop/chicken_coop.png",
-	"cow_shed": "res://assets/buildings/cow_shed/cow_shed.png",
-	"pig_pen": "res://assets/buildings/pig_pen/pig_pen.png",
-	"sheep_barn": "res://assets/buildings/sheep_barn/sheep_barn.png",
-	"bakery": "res://assets/buildings/bakery/bakery.svg",
 	"dairy": "res://assets/buildings/dairy/dairy.svg",
-	"spinning_machine": "res://assets/buildings/spinning_machine/spinning_machine.svg",
 	# The clean vector is intentionally used here instead of the large scenic
 	# world render, so the Dog House remains crisp and readable in a 64px card.
 	"dog_house": "res://assets/buildings/dog_house/dog_house.svg",
-	"market_stall": "res://assets/buildings/market_stall/market_stall.svg",
 	"order_board": "res://assets/buildings/order_board/order_board.svg",
 	"fish_market": "res://assets/buildings/fish_market/fish_market.svg",
 	"fishing_bridge": "res://assets/buildings/fishing_bridge/fishing_bridge.svg",
@@ -385,6 +378,8 @@ func _get_crop_texture() -> Texture2D:
 	return loaded if loaded is Texture2D else null
 
 func _get_visual_texture() -> Texture2D:
+	if BuildingArtV2.ENTRIES.has(item_id):
+		return BuildingArtV2.thumbnail_for(item_id)
 	var path: String = VISUAL_TEXTURE_PATHS.get(item_id, "")
 	if path.is_empty():
 		return null
