@@ -1,5 +1,8 @@
 extends Node2D
 
+signal swing_cycle_started
+signal swing_stopped
+
 const ROD_TEXTURE: Texture2D = preload("res://assets/characters/fishing_rod.png")
 const AXE_TEXTURE: Texture2D = preload("res://assets/characters/farm_axe.png")
 const HAMMER_TEXTURE: Texture2D = preload("res://assets/characters/farm_hammer.png")
@@ -15,6 +18,8 @@ var fishing_tween: Tween
 var rod_sprite: Sprite2D
 var axe_sprite: Sprite2D
 var hammer_sprite: Sprite2D
+var body_cycle_count: int = 0
+var body_pose_active: bool = false
 
 
 func _ready() -> void:
@@ -105,7 +110,7 @@ func set_facing(direction: String) -> void:
 	queue_redraw()
 
 
-func play_swing(target_world_position: Vector2) -> void:
+func play_swing(target_world_position: Vector2, body_cycle_duration: float = 0.0) -> void:
 	if tool_id not in ["axe", "hammer"] or swinging:
 		return
 	end_fishing_action()
@@ -114,6 +119,16 @@ func play_swing(target_world_position: Vector2) -> void:
 	var aim_rotation := direction.angle() + PI * 0.5
 	var windup := base_rotation - signf(wrapf(aim_rotation - base_rotation, -PI, PI)) * 0.42
 	swing_tween = create_tween().set_loops()
+	body_cycle_count = 0
+	body_pose_active = body_cycle_duration > 0.0
+	if body_pose_active:
+		swing_tween.tween_callback(_begin_body_cycle)
+		swing_tween.tween_interval(body_cycle_duration)
+		var visual := get_parent().get_node_or_null("AnimatedSprite2D")
+		if visual != null and visual.has_method("_apply_tool_action_pose"):
+			visual._apply_tool_action_pose()
+		return
+	# Other characters retain the original tool tween and timing.
 	swing_tween.tween_property(self, "position", rest_position - direction * 2.5, 0.16).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	swing_tween.parallel().tween_property(self, "rotation", windup, 0.16).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	swing_tween.parallel().tween_property(self, "scale", Vector2(1.04, 0.96), 0.16)
@@ -125,6 +140,19 @@ func play_swing(target_world_position: Vector2) -> void:
 	swing_tween.parallel().tween_property(self, "scale", Vector2.ONE, 0.18)
 
 
+func sync_body_pose(grip_position: Vector2, angle: float) -> void:
+	if body_pose_active and swinging:
+		position = grip_position
+		rotation = angle
+		scale = Vector2.ONE
+
+
+func _begin_body_cycle() -> void:
+	body_cycle_count += 1
+	if body_cycle_count > 1:
+		swing_cycle_started.emit()
+
+
 func stop_swing() -> void:
 	if swing_tween != null and swing_tween.is_valid():
 		swing_tween.kill()
@@ -133,6 +161,9 @@ func stop_swing() -> void:
 	rotation = base_rotation
 	position = rest_position
 	scale = Vector2.ONE
+	body_cycle_count = 0
+	body_pose_active = false
+	swing_stopped.emit()
 
 
 func _finish_swing() -> void:

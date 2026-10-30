@@ -1,5 +1,11 @@
 extends AnimatedSprite2D
 
+const Player1Frames = preload("res://player1_animation_frames.gd")
+var current_action: StringName = &""
+var action_locked: bool = false
+var locomotion_scale: Vector2 = Vector2.ONE
+var locomotion_offset: Vector2 = Vector2.ZERO
+
 @export var fallback_paths: Array[NodePath] = []
 
 @export var presentation_enabled: bool = true
@@ -26,6 +32,8 @@ var walk_phase: float = 0.0
 
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	animation_finished.connect(_on_tool_action_finished)
+	frame_changed.connect(_apply_tool_action_pose)
 	if use_selected_character:
 		SaveManager.selected_character_changed.connect(
 			refresh_character
@@ -35,6 +43,7 @@ func _ready() -> void:
 
 
 func refresh_character() -> void:
+	cancel_tool_action()
 	sprite_frames = preload(
 		"res://character_data.gd"
 	).frames_for(
@@ -148,11 +157,19 @@ func refresh_character_size() -> void:
 		) / factor
 	)
 	base_offset = offset
+	locomotion_scale = scale
+	locomotion_offset = offset
+	if action_locked:
+		_apply_tool_action_pose()
 
 
 func _process(
 	delta: float
 ) -> void:
+	if action_locked:
+		speed_scale = 1.0
+		visible = presentation_enabled
+		return
 
 	var moving: bool = false
 
@@ -263,6 +280,7 @@ func _process(
 func force_facing(
 	direction: String
 ) -> void:
+	cancel_tool_action()
 
 	if direction not in [
 		"left",
@@ -291,3 +309,56 @@ func clear_forced_facing() -> void:
 	forced_facing = ""
 
 	facing = facing_before_force
+
+
+func play_tool_action(tool: String, direction: String) -> bool:
+	var requested := StringName(tool + "_swing_" + direction)
+	if action_locked or not forced_facing.is_empty() or sprite_frames == null:
+		return false
+	if not Player1Frames.TOOL_ACTION_FIT.has(str(requested)) or not sprite_frames.has_animation(requested):
+		return false
+	current_action = requested
+	action_locked = true
+	facing = direction
+	speed_scale = 1.0
+	play(requested)
+	_apply_tool_action_pose()
+	visible = presentation_enabled
+	return true
+
+
+func _apply_tool_action_pose() -> void:
+	if not action_locked or not Player1Frames.TOOL_ACTION_FIT.has(str(current_action)):
+		return
+	var fit: Array = Player1Frames.TOOL_ACTION_FIT[str(current_action)]
+	var anchor: Vector2 = fit[1][clampi(frame, 0, 5)]
+	var factor: float = target_character_height / float(fit[0])
+	var ground_y: float = 0.0
+	var collision := get_parent().get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if collision != null:
+		ground_y = collision.position.y
+	scale = Vector2.ONE * factor
+	offset = Player1Frames.TOOL_FRAME_SIZE * 0.5 - anchor + Vector2(0, (ground_y - position.y) / factor)
+	var tool := get_parent().get_node_or_null("ToolVisual")
+	if tool != null and tool.has_method("sync_body_pose"):
+		var grip: Vector2 = Player1Frames.TOOL_GRIPS[str(current_action)][clampi(frame,0,5)]
+		var angle: float = Player1Frames.TOOL_ANGLES[facing][clampi(frame,0,5)]
+		tool.sync_body_pose(position + (offset + grip - Player1Frames.TOOL_FRAME_SIZE * 0.5) * scale, angle)
+
+
+func _on_tool_action_finished() -> void:
+	if action_locked and animation == current_action:
+		cancel_tool_action()
+
+
+func cancel_tool_action() -> void:
+	if not action_locked:
+		return
+	action_locked = false
+	current_action = &""
+	scale = locomotion_scale
+	offset = locomotion_offset
+	base_offset = locomotion_offset
+	speed_scale = 1.0
+	if sprite_frames != null and sprite_frames.has_animation("idle_" + facing):
+		play("idle_" + facing)

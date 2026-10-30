@@ -31,6 +31,7 @@ var action_motion_tween: Tween
 var action_motion_base_position: Vector2 = Vector2.ZERO
 var action_motion_base_rotation: float = 0.0
 var action_motion_active: bool = false
+var tool_action_facing: String = ""
 
 @export var speed: float = 200.0
 @export var acceleration: float = 1450.0
@@ -69,6 +70,8 @@ func _ready() -> void:
 	tool_visual.name = "ToolVisual"
 	tool_visual.set_script(preload("res://tool_visual.gd"))
 	add_child(tool_visual)
+	tool_visual.connect("swing_cycle_started", _on_tool_body_cycle)
+	tool_visual.connect("swing_stopped", _on_tool_visual_stopped)
 
 	mouse_interaction = Node.new()
 
@@ -147,7 +150,7 @@ func _physics_process(
 	z_as_relative = false
 	z_index = clampi(floori(global_position.y / 8.0), 1, 600)
 	if is_instance_valid(tool_visual):
-		tool_visual.set_facing(_facing_name())
+		tool_visual.set_facing(tool_action_facing if not tool_action_facing.is_empty() and tool_visual.swinging else _facing_name())
 
 	_update_fishing_prompt()
 
@@ -169,7 +172,26 @@ func play_tool_swing(item_id: String, target_world_position: Vector2) -> void:
 	if item_id != equipped_tool_id or not is_instance_valid(tool_visual):
 		return
 	AudioManager.play_sfx("axe_swing" if item_id == "axe" else "hammer_swing", global_position)
-	tool_visual.play_swing(target_world_position)
+	var visual := get_node_or_null("AnimatedSprite2D")
+	var body_action: bool = visual != null and visual.has_method("play_tool_action") and visual.play_tool_action(item_id, _facing_name())
+	tool_action_facing = _facing_name() if body_action else ""
+	# Six non-looping body frames at 8 FPS; tool impact lands at frame 3.
+	tool_visual.play_swing(target_world_position, 0.75 if body_action else 0.0)
+
+
+func _on_tool_body_cycle() -> void:
+	var visual := get_node_or_null("AnimatedSprite2D")
+	if visual == null or equipped_tool_id not in ["axe", "hammer"] or tool_action_facing.is_empty():
+		return
+	visual.cancel_tool_action()
+	visual.play_tool_action(equipped_tool_id, tool_action_facing)
+
+
+func _on_tool_visual_stopped() -> void:
+	tool_action_facing = ""
+	var visual := get_node_or_null("AnimatedSprite2D")
+	if visual != null and visual.has_method("cancel_tool_action"):
+		visual.cancel_tool_action()
 
 
 func stop_tool_swing() -> void:
@@ -190,6 +212,8 @@ func start_action_motion(action: String, target_world_position: Vector2 = Vector
 	stop_action_motion()
 	var visual := get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
 	if not is_instance_valid(visual):
+		return
+	if action == "gather" and visual.get("action_locked") == true:
 		return
 	action_motion_base_position = visual.position
 	action_motion_base_rotation = visual.rotation
